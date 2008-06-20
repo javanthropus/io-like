@@ -1,0 +1,13 @@
+= News and Notifications by Version
+
+This file lists noteworthy changes which may affect users of this project.  More
+detailed information is available in the rest of the documentation.
+
+<b>NOTE:</b> Date stamps in the following entries are in YYYY/MM/DD format.
+
+
+== v0.1.0 (2008/07/03)
+
+* Initial release
+* All read, write, and seek functions implemented as defined in Ruby 1.8.6
+* Most other IO methods also provided as no-ops and similar

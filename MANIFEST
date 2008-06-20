@@ -1,0 +1,10 @@
+CONTRIBUTORS
+GPL
+HACKING
+LEGAL
+LICENSE
+MANIFEST
+NEWS
+README
+lib/io/like.rb
+test/lib/likestringio.rb
