@@ -124,7 +124,7 @@ end
 
 desc 'Tag the current HEAD with the current version string'
 task :tag do
-  sh "git tag -s v#{PKG_VERSION}"
+  sh "git tag -s -m 'Release v#{PKG_VERSION}' v#{PKG_VERSION}"
 end
 
 desc 'Create the CHANGELOG file'
