@@ -164,11 +164,6 @@ task :publish => [:rdoc] do
   sh "rsync -r --delete \"#{LOCAL_DOCS}\" \"#{REMOTE_DOCS}\""
 end
 
-desc 'Publish the project packages to Rubyforge'
-task :release => [:package] do
-  sh "rubyforge"
-end
-
 # Create the test task.
 Rake::TestTask.new do |t|
   t.libs << 'test/lib'
