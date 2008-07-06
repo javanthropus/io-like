@@ -777,8 +777,8 @@ class IO # :nodoc:
             # Record if the user requested paragraphs rather than lines.
             paragraph_requested = sep_string.empty?
             # An empty line separator string indicates that the user wants to
-            # return paragraphs.  A pair of newlines in the stream is used to mark
-            # this.
+            # return paragraphs.  A pair of newlines in the stream is used to
+            # mark this.
             sep_string = "\n\n" if paragraph_requested
 
             # Add each character from the input to the buffer until either the
@@ -792,11 +792,11 @@ class IO # :nodoc:
               # If the user requested paragraphs instead of lines, we need to
               # consume and discard all newlines remaining at the front of the
               # input.
-              while char == "\n" && (char = readchar) do
+              while char == ?\n && (char = readchar) do
                 nil
               end
               # Put back the last character.
-              ungetc(char[0])
+              ungetc(char)
             end
           rescue Errno::EAGAIN, Errno::EINTR
             retry if read_ready?
