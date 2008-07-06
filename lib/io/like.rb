@@ -792,7 +792,9 @@ class IO # :nodoc:
               # If the user requested paragraphs instead of lines, we need to
               # consume and discard all newlines remaining at the front of the
               # input.
-              while (char = readchar) && char == "\n" do; end
+              while char == "\n" && (char = readchar) do
+                nil
+              end
               # Put back the last character.
               ungetc(char[0])
             end
@@ -1175,7 +1177,7 @@ class IO # :nodoc:
     # NOTE: Because this method relies on #unbuffered_write, it raises all
     # errors raised by #unbuffered_write and blocks when #unbuffered_write
     # blocks.
-    def buffered_flush # :nodoc:
+    def buffered_flush
       raise IOError, 'not opened for writing' unless writable?
 
       until internal_write_buffer.empty? do
@@ -1196,7 +1198,7 @@ class IO # :nodoc:
     # NOTE: Because this method relies on #unbuffered_read, it raises all errors
     # raised by #unbuffered_read and blocks when #unbuffered_read blocks
     # whenever the internal read buffer is unable to fulfill the request.
-    def buffered_read(length) # :nodoc:
+    def buffered_read(length)
       # Check the validity of the method arguments.
       raise ArgumentError, "non-positive length #{length} given" if length < 0
 
@@ -1240,7 +1242,7 @@ class IO # :nodoc:
     # NOTE: Because this method relies on #unbuffered_seek and #unbuffered_write
     # (when the internal write buffer is not empty), it will raise the same
     # errors and block at the same times as those functions.
-    def buffered_seek(offset, whence = IO::SEEK_SET) # :nodoc:
+    def buffered_seek(offset, whence = IO::SEEK_SET)
       raise Errno::ESPIPE, 'Illegal seek' unless seekable?
 
       # Flush the internal buffers.
@@ -1256,7 +1258,7 @@ class IO # :nodoc:
     # Returns the current position in the stream.
     #
     # Raises Errno::ESPIPE unless #seekable? returns +true+.
-    def buffered_tell # :nodoc:
+    def buffered_tell
       raise Errno::ESPIPE, 'Illegal seek' unless seekable?
 
       unless internal_read_buffer.empty? then
@@ -1280,7 +1282,7 @@ class IO # :nodoc:
     # errors raised by #unbuffered_write and blocks when #unbuffered_write
     # blocks whenever the internal write buffer is unable to fulfill the
     # request.
-    def buffered_write(string) # :nodoc:
+    def buffered_write(string)
       raise IOError, 'not opened for writing' unless writable?
 
       # Flush the internal read buffer and set the unbuffered position to the
@@ -1315,12 +1317,12 @@ class IO # :nodoc:
     end
 
     # Returns a reference to the internal read buffer.
-    def internal_read_buffer # :nodoc:
+    def internal_read_buffer
       @__io_like__read_buffer ||= ''
     end
 
     # Returns a reference to the internal write buffer.
-    def internal_write_buffer # :nodoc:
+    def internal_write_buffer
       @__io_like__write_buffer ||= ''
     end
   end
