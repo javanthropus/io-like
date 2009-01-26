@@ -126,7 +126,7 @@ A simple ROT13 codec:
    guarantees that an appropriate close method will be called after executing a
    block.  Other than that, be diligent about calling the close methods.
 3. Testcases needed.  Maybe use some of rubyspec along with some test classes
-   act like the important parts of IO, File, and/or StringIO.
+   which act like the important parts of IO, File, and/or StringIO.
 
 
 == Contributing

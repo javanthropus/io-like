@@ -183,12 +183,12 @@ class IO # :nodoc:
     end
 
     # call-seq:
-    #   ios.each_byte {|byte| block} -> ios
+    #   ios.each_byte { |byte| block } -> ios
     #
     # Reads each byte (0..255) from the stream using #getc and calls the given
     # block once for each byte, passing the byte as an argument.
     #
-    # NOTE: This method ignores Errno::EAGAIN and Errno::EINTR raised by
+    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
     # #unbuffered_read.  Therefore, this method always blocks.  Aside from that
     # exception and the conversion of EOFError results into +nil+ results, this
     # method will also raise the same errors and block at the same times as
@@ -201,17 +201,17 @@ class IO # :nodoc:
     end
 
     # call-seq:
-    #   ios.each_line(sep_string = $/) {|line| block } -> ios
-    #   ios.each(sep_string = $/) {|line| block } -> ios
+    #   ios.each_line(sep_string = $/) { |line| block } -> ios
+    #   ios.each(sep_string = $/) { |line| block } -> ios
     #
     # Reads each line from the stream using #gets and calls the given block once
     # for each line, passing the line as an argument.
     #
-    # NOTE: When _sep_string_ is not +nil+, this method ignores Errno::EAGAIN
-    # and Errno::EINTR raised by #unbuffered_read.  Therefore, this method
-    # always blocks.  Aside from that exception and the conversion of EOFError
-    # results into +nil+ results, this method will also raise the same errors
-    # and block at the same times as #unbuffered_read.
+    # <b>NOTE:</b> When _sep_string_ is not +nil+, this method ignores
+    # Errno::EAGAIN and Errno::EINTR raised by #unbuffered_read.  Therefore,
+    # this method always blocks.  Aside from that exception and the conversion
+    # of EOFError results into +nil+ results, this method will also raise the
+    # same errors and block at the same times as #unbuffered_read.
     def each_line(sep_string = $/)
       while (line = gets(sep_string)) do
         yield(line)
@@ -230,7 +230,7 @@ class IO # :nodoc:
     # put the character back if one was fetched.  It may be a good idea to
     # replace this implementation in derivative classes.
     #
-    # NOTE: This method ignores Errno::EAGAIN and Errno::EINTR raised by
+    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
     # #unbuffered_read.  Therefore, this method always blocks.  Aside from that
     # exception and the conversion of EOFError results into +nil+ results, this
     # method will also raise the same errors and block at the same times as
@@ -307,7 +307,7 @@ class IO # :nodoc:
     # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
-    # NOTE: This method ignores Errno::EAGAIN and Errno::EINTR raised by
+    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
     # #unbuffered_write.  Therefore, this method always blocks if unable to
     # flush the internal write buffer.  Aside from that exception, this
     # method will also raise the same errors and block at the same times as
@@ -368,7 +368,7 @@ class IO # :nodoc:
     # #readable? returns +true+.  Raises all errors raised by #unbuffered_read
     # except for EOFError.
     #
-    # NOTE: This method ignores Errno::EAGAIN and Errno::EINTR raised by
+    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
     # #unbuffered_read.  Therefore, this method always blocks.  Aside from that
     # exception and the conversion of EOFError results into +nil+ results, this
     # method will also raise the same errors and block at the same times as
@@ -391,11 +391,11 @@ class IO # :nodoc:
     # #readable? returns +true+.  Raises all errors raised by #unbuffered_read
     # except for EOFError.
     #
-    # NOTE: When _sep_string_ is not +nil+, this method ignores Errno::EAGAIN
-    # and Errno::EINTR raised by #unbuffered_read.  Therefore, this method
-    # always blocks.  Aside from that exception and the conversion of EOFError
-    # results into +nil+ results, this method will also raise the same errors
-    # and block at the same times as #unbuffered_read.
+    # <b>NOTE:</b> When _sep_string_ is not +nil+, this method ignores
+    # Errno::EAGAIN and Errno::EINTR raised by #unbuffered_read.  Therefore,
+    # this method always blocks.  Aside from that exception and the conversion
+    # of EOFError results into +nil+ results, this method will also raise the
+    # same errors and block at the same times as #unbuffered_read.
     def gets(sep_string = $/)
       # Set the last read line in the global.
       $_ = readline(sep_string)
@@ -464,9 +464,9 @@ class IO # :nodoc:
     # Raises IOError if #closed? returns +true+.  Raises Errno::ESPIPE unless
     # #seekable? returns +true+.
     #
-    # NOTE: Because this method relies on #unbuffered_seek and #unbuffered_write
-    # (when the internal write buffer is not empty), it will also raise the same
-    # errors and block at the same times as those functions.
+    # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
+    # #unbuffered_write (when the internal write buffer is not empty), it will
+    # also raise the same errors and block at the same times as those functions.
     def pos=(position)
       seek(position, IO::SEEK_SET)
       position
@@ -485,7 +485,7 @@ class IO # :nodoc:
     # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
-    # NOTE: This method ignores Errno::EAGAIN and Errno::EINTR raised by
+    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
     # #unbuffered_write.  Therefore, this method always blocks if unable to
     # immediately write +[obj, ...]+ completely.  Aside from that exception,
     # this method will also raise the same errors and block at the same times as
@@ -525,7 +525,7 @@ class IO # :nodoc:
     # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
-    # NOTE: This method ignores Errno::EAGAIN and Errno::EINTR raised by
+    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
     # #unbuffered_write.  Therefore, this method always blocks if unable to
     # immediately write its arguments completely.  Aside from that exception,
     # this method will also raise the same errors and block at the same times as
@@ -544,7 +544,7 @@ class IO # :nodoc:
     # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
-    # NOTE: This method ignores Errno::EAGAIN and Errno::EINTR raised by
+    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
     # #unbuffered_write.  Therefore, this method always blocks if unable to
     # immediately write _obj_ completely.  Aside from that exception, this
     # method will also raise the same errors and block at the same times as
@@ -572,15 +572,15 @@ class IO # :nodoc:
     # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
-    # NOTE: This method ignores Errno::EAGAIN and Errno::EINTR raised by
+    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
     # #unbuffered_write.  Therefore, this method always blocks if unable to
     # immediately write +[obj, ...]+ completely.  Aside from that exception,
     # this method will also raise the same errors and block at the same times as
     # #unbuffered_write.
     #
-    # NOTE: In order to be compatible with IO#puts, the record separator is
-    # currently hardcoded to be a single newline (<tt>"\n"</tt>) even though the
-    # documentation implies that the output record separator (<tt>$\\</tt>)
+    # <b>NOTE:</b> In order to be compatible with IO#puts, the record separator
+    # is currently hardcoded to be a single newline (<tt>"\n"</tt>) even though
+    # the documentation implies that the output record separator (<tt>$\\</tt>)
     # should be used.
     def puts(*args)
       # Set the output record separator such that this method is compatible with
@@ -625,8 +625,8 @@ class IO # :nodoc:
     # Raises IOError if #closed_read? returns +true+.  Raises IOError unless
     # #readable? returns +true+.
     #
-    # NOTE: Because this method relies on #unbuffered_read, it will also raise
-    # the same errors and block at the same times as that function.
+    # <b>NOTE:</b> Because this method relies on #unbuffered_read, it will also
+    # raise the same errors and block at the same times as that function.
     def read(length = nil, buffer = nil)
       # Check the validity of the method arguments.
       unless length.nil? || length >= 0 then
@@ -707,8 +707,8 @@ class IO # :nodoc:
     #
     # This method is basically copied from IO#readbytes.
     #
-    # NOTE: Because this method relies on #unbuffered_read, it will also raise
-    # the same errors and block at the same times as that function.
+    # <b>NOTE:</b> Because this method relies on #unbuffered_read, it will also
+    # raise the same errors and block at the same times as that function.
     def readbytes(length)
       buffer = read(length)
       if buffer.nil? then
@@ -729,7 +729,7 @@ class IO # :nodoc:
     # if #closed_read? returns +true+.  Raises IOError unless #readable? returns
     # +true+.
     #
-    # NOTE: This method ignores Errno::EAGAIN and Errno::EINTR raised by
+    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
     # #unbuffered_read.  Therefore, this method always blocks.  Aside from that
     # exception, this method will also raise the same errors and block at the
     # same times as #unbuffered_read.
@@ -757,10 +757,11 @@ class IO # :nodoc:
     # if #closed_read? returns +true+.  Raises IOError unless #readable? returns
     # +true+.
     #
-    # NOTE: When _sep_string_ is not +nil+, this method ignores Errno::EAGAIN
-    # and Errno::EINTR raised by #unbuffered_read.  Therefore, this method
-    # always blocks.  Aside from that exception, this method will also raise the
-    # same errors and block at the same times as #unbuffered_read.
+    # <b>NOTE:</b> When _sep_string_ is not +nil+, this method ignores
+    # Errno::EAGAIN and Errno::EINTR raised by #unbuffered_read.  Therefore,
+    # this method always blocks.  Aside from that exception, this method will
+    # also raise the same errors and block at the same times as
+    # #unbuffered_read.
     def readline(sep_string = $/)
       raise IOError, 'closed stream' if closed_read?
 
@@ -826,10 +827,11 @@ class IO # :nodoc:
     # if #closed_read? returns +true+.  Raises IOError unless #readable? returns
     # +true+.
     #
-    # NOTE: When _sep_string_ is not +nil+, this method ignores Errno::EAGAIN
-    # and Errno::EINTR raised by #unbuffered_read.  Therefore, this method
-    # always blocks.  Aside from that exception, this method will also raise the
-    # same errors and block at the same times as #unbuffered_read.
+    # <b>NOTE:</b> When _sep_string_ is not +nil+, this method ignores
+    # Errno::EAGAIN and Errno::EINTR raised by #unbuffered_read.  Therefore,
+    # this method always blocks.  Aside from that exception, this method will
+    # also raise the same errors and block at the same times as
+    # #unbuffered_read.
     def readlines(sep_string = $/)
       lines = []
       each_line(sep_string) { |line| lines << line }
@@ -849,7 +851,7 @@ class IO # :nodoc:
     # if #closed_read? returns +true+.  Raises IOError unless #readable? returns
     # +true+.
     #
-    # NOTE: This method ignores Errno::EAGAIN and Errno::EINTR raised by
+    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
     # #unbuffered_read.  Therefore, this method always blocks if unable to
     # immediately return _length_ bytes.  Aside from that exception, this method
     # will also raise the same errors and block at the same times as
@@ -891,9 +893,9 @@ class IO # :nodoc:
     # Raises IOError if #closed? returns +true+.  Raises Errno::ESPIPE unless
     # #seekable? returns +true+.
     #
-    # NOTE: Because this method relies on #unbuffered_seek and #unbuffered_write
-    # (when the internal write buffer is not empty), it will also raise the same
-    # errors and block at the same times as those functions.
+    # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
+    # #unbuffered_write (when the internal write buffer is not empty), it will
+    # also raise the same errors and block at the same times as those functions.
     def rewind
       seek(0, IO::SEEK_SET)
       self.lineno = 0
@@ -913,9 +915,9 @@ class IO # :nodoc:
     # Raises IOError if #closed? returns +true+.  Raises Errno::ESPIPE unless
     # #seekable? returns +true+.
     #
-    # NOTE: Because this method relies on #unbuffered_seek and #unbuffered_write
-    # (when the internal write buffer is not empty), it will also raise the same
-    # errors and block at the same times as those functions.
+    # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
+    # #unbuffered_write (when the internal write buffer is not empty), it will
+    # also raise the same errors and block at the same times as those functions.
     def seek(offset, whence = IO::SEEK_SET)
       raise IOError, 'closed stream' if closed?
 
@@ -975,8 +977,8 @@ class IO # :nodoc:
     # IOError if the internal read buffer is not empty.  Raises IOError if
     # #closed_read? returns +true+.
     #
-    # NOTE: Because this method relies on #unbuffered_read, it will also raise
-    # the same errors and block at the same times as that function.
+    # <b>NOTE:</b> Because this method relies on #unbuffered_read, it will also
+    # raise the same errors and block at the same times as that function.
     def sysread(length, buffer = nil)
       buffer = '' if buffer.nil?
       buffer.slice!(0..-1)
@@ -1003,8 +1005,8 @@ class IO # :nodoc:
     # See the description of the operation of #unbuffered_seek for information
     # concerning how to interpret _offset_ and _whence_.
     #
-    # NOTE: Because this method relies on #unbuffered_seek, it will also raise
-    # the same errors and block at the same times as that function.
+    # <b>NOTE:</b> Because this method relies on #unbuffered_seek, it will also
+    # raise the same errors and block at the same times as that function.
     def sysseek(offset, whence = IO::SEEK_SET)
       raise IOError, 'closed stream' if closed?
       raise Errno::ESPIPE, 'Illegal seek' unless seekable?
@@ -1027,8 +1029,8 @@ class IO # :nodoc:
     # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
-    # NOTE: Because this method relies on #unbuffered_write, it will also raise
-    # the same errors and block at the same times as that function.
+    # <b>NOTE:</b> Because this method relies on #unbuffered_write, it will also
+    # raise the same errors and block at the same times as that function.
     def syswrite(string)
       raise IOError, 'closed stream' if closed_write?
       raise IOError, 'not opened for writing' unless writable?
@@ -1054,9 +1056,9 @@ class IO # :nodoc:
     # a duplexed object.  This is for compatibility with the behavior of
     # IO#tell.
     #
-    # NOTE: Because this method relies on #unbuffered_seek and #unbuffered_write
-    # (when the internal write buffer is not empty), it will also raise the same
-    # errors and block at the same times as those functions.
+    # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
+    # #unbuffered_write (when the internal write buffer is not empty), it will
+    # also raise the same errors and block at the same times as those functions.
     def tell
       raise IOError, 'closed stream' if closed?
 
@@ -1145,7 +1147,7 @@ class IO # :nodoc:
     # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
-    # NOTE: This method ignores Errno::EAGAIN and Errno::EINTR raised by
+    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
     # #unbuffered_write.  Therefore, this method always blocks if unable to
     # immediately write _string_ completely.  Aside from that exception, this
     # method will also raise the same errors and block at the same times as
@@ -1174,8 +1176,8 @@ class IO # :nodoc:
     #
     # Raises IOError unless #writable? returns +true+.
     #
-    # NOTE: Because this method relies on #unbuffered_write, it raises all
-    # errors raised by #unbuffered_write and blocks when #unbuffered_write
+    # <b>NOTE:</b> Because this method relies on #unbuffered_write, it raises
+    # all errors raised by #unbuffered_write and blocks when #unbuffered_write
     # blocks.
     def buffered_flush
       raise IOError, 'not opened for writing' unless writable?
@@ -1195,8 +1197,8 @@ class IO # :nodoc:
     # Raises EOFError if the internal read buffer is empty and reading begins at
     # the end of the stream.  Raises IOError unless #readable? returns +true+.
     #
-    # NOTE: Because this method relies on #unbuffered_read, it raises all errors
-    # raised by #unbuffered_read and blocks when #unbuffered_read blocks
+    # <b>NOTE:</b> Because this method relies on #unbuffered_read, it raises all
+    # errors raised by #unbuffered_read and blocks when #unbuffered_read blocks
     # whenever the internal read buffer is unable to fulfill the request.
     def buffered_read(length)
       # Check the validity of the method arguments.
@@ -1239,9 +1241,9 @@ class IO # :nodoc:
     #
     # See #seek for the usage of _offset_ and _whence_.
     #
-    # NOTE: Because this method relies on #unbuffered_seek and #unbuffered_write
-    # (when the internal write buffer is not empty), it will raise the same
-    # errors and block at the same times as those functions.
+    # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
+    # #unbuffered_write (when the internal write buffer is not empty), it will
+    # raise the same errors and block at the same times as those functions.
     def buffered_seek(offset, whence = IO::SEEK_SET)
       raise Errno::ESPIPE, 'Illegal seek' unless seekable?
 
@@ -1278,8 +1280,8 @@ class IO # :nodoc:
     # the internal write buffer cannot be immediately flushed due to the
     # underlying stream not blocking when unable to accept more data.
     #
-    # NOTE: Because this method relies on #unbuffered_write, it raises all
-    # errors raised by #unbuffered_write and blocks when #unbuffered_write
+    # <b>NOTE:</b> Because this method relies on #unbuffered_write, it raises
+    # all errors raised by #unbuffered_write and blocks when #unbuffered_write
     # blocks whenever the internal write buffer is unable to fulfill the
     # request.
     def buffered_write(string)
