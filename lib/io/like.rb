@@ -1101,7 +1101,7 @@ class IO # :nodoc:
     def unread(string)
       raise IOError, 'closed stream' if closed_read?
       raise IOError, 'not opened for reading' unless readable?
-      internal_read_buffer.insert(0, data.to_s)
+      internal_read_buffer.insert(0, string.to_s)
       nil
     end
 
