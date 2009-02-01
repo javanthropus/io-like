@@ -1063,7 +1063,7 @@ class IO # :nodoc:
       raise IOError, 'closed stream' if closed?
 
       buffered_flush unless internal_write_buffer.empty?
-      buffered_tell
+      buffered_seek(0, IO::SEEK_CUR)
     end
     alias :pos :tell
 
@@ -1247,26 +1247,35 @@ class IO # :nodoc:
     def buffered_seek(offset, whence = IO::SEEK_SET)
       raise Errno::ESPIPE, 'Illegal seek' unless seekable?
 
-      # Flush the internal buffers.
-      internal_read_buffer.slice!(0..-1)
-      buffered_flush unless internal_write_buffer.empty?
-      # Move the data stream's position as requested.
-      unbuffered_seek(offset, whence)
-    end
-
-    # call-seq:
-    #   ios.buffered_tell
-    #
-    # Returns the current position in the stream.
-    #
-    # Raises Errno::ESPIPE unless #seekable? returns +true+.
-    def buffered_tell
-      raise Errno::ESPIPE, 'Illegal seek' unless seekable?
-
-      unless internal_read_buffer.empty? then
+      if whence == IO::SEEK_CUR && offset == 0 then
+        # The seek is only determining the current position, so return the
+        # buffered position based on the read buffer if it's not empty and the
+        # write buffer otherwise.
+        internal_read_buffer.empty? ?
+          unbuffered_seek(0, IO::SEEK_CUR) + internal_write_buffer.length :
+          unbuffered_seek(0, IO::SEEK_CUR) - internal_read_buffer.length
+      elsif whence == IO::SEEK_CUR && offset > 0 &&
+            internal_write_buffer.empty? &&
+            offset <= internal_read_buffer.length then
+        # The seek is within the read buffer, so just discard a sufficient
+        # amount of the buffer and report the new buffered position.
+        internal_read_buffer.slice!(0, offset)
         unbuffered_seek(0, IO::SEEK_CUR) - internal_read_buffer.length
       else
-        unbuffered_seek(0, IO::SEEK_CUR) + internal_write_buffer.length
+        # The seek target is outside of the buffers, so flush the buffers and
+        # jump to the new position.
+        if whence == IO::SEEK_CUR then
+          # Adjust relative offsets based on the current buffered offset.
+          offset += internal_read_buffer.empty? ?
+            internal_write_buffer.length :
+            -internal_read_buffer.length
+        end
+
+        # Flush the internal buffers.
+        internal_read_buffer.slice!(0..-1)
+        buffered_flush unless internal_write_buffer.empty?
+        # Move the data stream's position as requested.
+        unbuffered_seek(offset, whence)
       end
     end
 
