@@ -247,7 +247,7 @@ class IO # :nodoc:
     # call-seq:
     #   ios.fcntl
     #
-    # Raises NotImplementedError
+    # Raises NotImplementedError.
     def fcntl(*args)
       raise NotImplementedError, 'not implemented'
     end
@@ -910,7 +910,9 @@ class IO # :nodoc:
     # counts from the end of the data (_offset_ should be negative here).  If
     # _whence_ is IO::SEEK_CUR, _offset_ is relative to the current position.
     #
-    # As a side effect, the internal read and write buffers are flushed.
+    # As a side effect, the internal read and write buffers are flushed except
+    # when seeking relative to the current position (whence is IO::SEEK_CUR) to
+    # a location within the internal read buffer.
     #
     # Raises IOError if #closed? returns +true+.  Raises Errno::ESPIPE unless
     # #seekable? returns +true+.
@@ -994,16 +996,17 @@ class IO # :nodoc:
     end
 
     # call-seq:
-    #   ios.sysseek(offset, whence) -> integer
+    #   ios.sysseek(offset[, whence]) -> integer
     #
-    # Sets the data pointer of the data stream to the position requested by
-    # _offset_ and _whence_ and returns the new position.
+    # Sets the current data position to _offset_ based on the setting of
+    # _whence_.  If _whence_ is unspecified or IO::SEEK_SET, _offset_ counts
+    # from the beginning of the data.  If _whence_ is IO::SEEK_END, _offset_
+    # counts from the end of the data (_offset_ should be negative here).  If
+    # _whence_ is IO::SEEK_CUR, _offset_ is relative to the current position.
     #
     # Raises IOError if the internal read buffer is not empty.  Raises IOError
-    # if #closed? returns +true+.
-    #
-    # See the description of the operation of #unbuffered_seek for information
-    # concerning how to interpret _offset_ and _whence_.
+    # if #closed? returns +true+.  Raises Errno::ESPIPE unless #seekable?
+    # returns +true+.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_seek, it will also
     # raise the same errors and block at the same times as that function.
@@ -1232,10 +1235,15 @@ class IO # :nodoc:
     # call-seq:
     #   ios.buffered_seek(offset[, whence]) -> integer
     #
-    # Sets the new position for read or write operations using _offset_ and
-    # _whence_ to computer the position.  Returns the new position.
+    # Sets the current data position to _offset_ based on the setting of
+    # _whence_.  If _whence_ is unspecified or IO::SEEK_SET, _offset_ counts
+    # from the beginning of the data.  If _whence_ is IO::SEEK_END, _offset_
+    # counts from the end of the data (_offset_ should be negative here).  If
+    # _whence_ is IO::SEEK_CUR, _offset_ is relative to the current position.
     #
-    # As a side effect, the internal read and write buffers are flushed.
+    # As a side effect, the internal read and write buffers are flushed except
+    # when seeking relative to the current position (whence is IO::SEEK_CUR) to
+    # a location within the internal read buffer.
     #
     # Raises Errno::ESPIPE unless #seekable? returns +true+.
     #
