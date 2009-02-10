@@ -619,8 +619,9 @@ class IO # :nodoc:
     # If _length_ is unspecified or +nil+, all remaining data is returned.  If
     # no data would be returned at all, an empty String is returned.
     #
-    # If _buffer_ is specified, it is assumed to be a String and will be filled
-    # with the returned data if any.
+    # If _buffer_ is specified, it will be converted to a String using its
+    # +to_str+ method if necessary and will be filled with the returned data if
+    # any.
     #
     # Raises IOError if #closed_read? returns +true+.  Raises IOError unless
     # #readable? returns +true+.
@@ -633,6 +634,7 @@ class IO # :nodoc:
         raise ArgumentError, "negative length #{length} given"
       end
       buffer = '' if buffer.nil?
+      buffer = buffer.to_str unless buffer.kind_of?(String)
       # Flush the buffer.
       buffer.slice!(0..-1)
 
