@@ -749,9 +749,11 @@ class IO # :nodoc:
     # _sep_string_.  Increments #lineno.
     #
     # If _sep_string_ is +nil+, a line is defined as the remaining contents of
-    # the stream.  If _sep_string_ is empty, a paragraph is returned, where a
-    # paragraph is defined as data followed by 2 or more successive newline
-    # characters (only 2 newlines are returned at the end of the returned data).
+    # the stream.  If _sep_string_ is not a String, it is converted to one using
+    # its +to_str+ method.  If _sep_string_ is empty, a paragraph is returned,
+    # where a paragraph is defined as data followed by 2 or more successive
+    # newline characters (only 2 newlines are returned at the end of the
+    # returned data).
     #
     # In any case, the end of the stream terminates the current line.
     #
@@ -766,6 +768,11 @@ class IO # :nodoc:
     # #unbuffered_read.
     def readline(sep_string = $/)
       raise IOError, 'closed stream' if closed_read?
+
+      # Ensure that sep_string is either nil or a String.
+      unless sep_string.nil? || sep_string.kind_of?(String) then
+        sep_string = sep_string.to_str
+      end
 
       buffer = ''
       begin
@@ -819,9 +826,11 @@ class IO # :nodoc:
     # Returns an Array containing the lines in the stream using #each_line.
     #
     # If _sep_string_ is +nil+, a line is defined as the remaining contents of
-    # the stream.  If _sep_string_ is empty, a paragraph is returned, where a
-    # paragraph is defined as data followed by 2 or more successive newline
-    # characters (only 2 newlines are returned at the end of the returned data).
+    # the stream.  If _sep_string_ is not a String, it is converted to one using
+    # its +to_str+ method.  If _sep_string_ is empty, a paragraph is returned,
+    # where a paragraph is defined as data followed by 2 or more successive
+    # newline characters (only 2 newlines are returned at the end of the
+    # returned data).
     #
     # In any case, the end of the stream terminates the current line.
     #
