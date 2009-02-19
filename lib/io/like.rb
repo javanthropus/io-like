@@ -1167,9 +1167,11 @@ class IO # :nodoc:
     # method will also raise the same errors and block at the same times as
     # #unbuffered_write.
     def write(string)
+      string = string.to_s
+      return 0 if string.empty?
+
       raise IOError, 'closed stream' if closed_write?
 
-      string = string.to_s
       bytes_written = 0
       while bytes_written < string.length do
         begin
