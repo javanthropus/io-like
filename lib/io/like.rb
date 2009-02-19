@@ -1049,7 +1049,7 @@ class IO # :nodoc:
       raise IOError, 'closed stream' if closed_write?
       raise IOError, 'not opened for writing' unless writable?
       unless duplexed? || internal_read_buffer.empty? then
-        internal_read_buffer.slice(0..-1)
+        internal_read_buffer.slice!(0..-1)
       end
       unless internal_write_buffer.empty? then
         warn('warning: syswrite on buffered IO')
