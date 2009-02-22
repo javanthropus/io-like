@@ -459,6 +459,28 @@ class IO # :nodoc:
     end
 
     # call-seq:
+    #   ios.pos              -> integer
+    #
+    # Returns the current offest of ios.
+    #
+    # Raises IOError if #closed? returns +true+.  Raises Errno::ESPIPE unless
+    # #seekable? returns +true+.
+    #
+    # As a side effect, the internal write buffer is flushed unless this is
+    # a writable, non-duplexed object.  This is for compatibility with the
+    # behavior of IO#pos.
+    #
+    # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
+    # #unbuffered_write (when the internal write buffer is not empty), it will
+    # also raise the same errors and block at the same times as those functions.
+    def pos
+      # Flush the internal write buffer for writable, non-duplexed objects.
+      buffered_flush if writable? && ! duplexed?
+      buffered_seek(0, IO::SEEK_CUR)
+    end
+    alias :tell :pos
+
+    # call-seq:
     #   ios.print([obj, ...]) -> nil
     #
     # Writes the given object(s), if any, to the stream using #write after
@@ -1038,29 +1060,6 @@ class IO # :nodoc:
 
       unbuffered_write(string)
     end
-
-    # call-seq:
-    #   ios.tell             -> integer
-    #
-    # Returns the current offest of ios.
-    #
-    # Raises IOError if #closed? returns +true+.  Raises Errno::ESPIPE unless
-    # #seekable? returns +true+.
-    #
-    # As a side effect, the internal write buffer is flushed unless this is
-    # a duplexed object.  This is for compatibility with the behavior of
-    # IO#tell.
-    #
-    # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
-    # #unbuffered_write (when the internal write buffer is not empty), it will
-    # also raise the same errors and block at the same times as those functions.
-    def tell
-      raise IOError, 'closed stream' if closed?
-
-      buffered_flush unless internal_write_buffer.empty?
-      buffered_seek(0, IO::SEEK_CUR)
-    end
-    alias :pos :tell
 
     # call-seq:
     #   ios.to_io            -> ios
