@@ -1275,7 +1275,8 @@ class IO # :nodoc:
 
         # Flush the internal buffers.
         internal_read_buffer.slice!(0..-1)
-        buffered_flush unless internal_write_buffer.empty?
+        buffered_flush if writable?
+
         # Move the data stream's position as requested.
         unbuffered_seek(offset, whence)
       end
