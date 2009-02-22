@@ -100,77 +100,65 @@ class IO # :nodoc:
     # returns +true+ and then sets a flag so that #closed? will return +true+.
     def close
       raise IOError, 'closed stream' if closed?
-      if duplexed? then
-        close_read unless closed_read?
-        close_write unless closed_write?
-      else
-        flush if writable?
-        @__io_like__closed = true
-      end
+      @__io_like__closed_read = true
+      flush if writable?
+      @__io_like__closed_write = true
       nil
     end
 
     # call-seq:
     #   ios.close_read       -> nil
     #
-    # For duplexed objects, arranges for #closed_read? to return +true+.
+    # Closes the read end of a duplexed object or the whole object if the object
+    # is read-only.
     #
-    # Raises IOError if #duplexed returns +false+.  Raises IOError if
-    # #closed_read? returns +true+.
+    # Raises IOError if #closed? returns +true+.  Raises IOError for duplexed
+    # objects if called more than once.  Raises IOError for non-duplexed objects
+    # if #writable? returns +true+.
     def close_read
-      raise IOError, 'closed stream' if closed_read?
-      raise IOError, 'closing non-duplex IO for reading' unless duplexed?
-      @__io_like__closed_read = true
+      raise IOError, 'closed stream' if closed?
+      if @__io_like__closed_read || ! duplexed? && writable? then
+        raise IOError, 'closing non-duplex IO for reading'
+      end
+      if duplexed? then
+        @__io_like__closed_read = true
+      else
+        close
+      end
       nil
     end
 
     # call-seq:
     #   ios.close_write      -> nil
     #
-    # For duplexed objects, calls #flush and arranges for #closed_write? to
-    # return +true+.
+    # Closes the write end of a duplexed object or the whole object if the
+    # object is write-only.
     #
-    # Raises IOError if #duplexed? returns +false+.  Raises IOError if
-    # #closed_write? returns +true+.
+    # Raises IOError if #closed? returns +true+.  Raises IOError for duplexed
+    # objects if called more than once.  Raises IOError for non-duplexed objects
+    # if #readable? returns +true+.
     def close_write
-      raise IOError, 'closed stream' if closed_write?
-      raise IOError, 'closing non-duplex IO for writing' unless duplexed?
-      flush
-      @__io_like__closed_write = true
+      raise IOError, 'closed stream' if closed?
+      if @__io_like__closed_write || ! duplexed? && readable? then
+        raise IOError, 'closing non-duplex IO for reading'
+      end
+      if duplexed? then
+        flush
+        @__io_like__closed_write = true
+      else
+        close
+      end
       nil
     end
 
     # call-seq:
     #   ios.closed?          -> true or false
     #
-    # For non-duplexed objects, returns +true+ if #close was called, +false+
-    # otherwise.  For duplexed objects, returns +true+ if both #closed_read?
-    # and #closed_write? return true.
+    # Returns +true+ if this object is closed or otherwise unusable for read and
+    # write operations.
     def closed?
-      return closed_read? && closed_write? if duplexed?
-      @__io_like__closed || false
-    end
-
-    # call-seq:
-    #   ios.closed_read?     -> true or false
-    #
-    # Returns the result of calling #closed? for non-duplexed objects.  For
-    # duplexed objects, returns +true+ if close_read was called, +false+
-    # otherwise.
-    def closed_read?
-      return closed? unless duplexed?
-      @__io_like__closed_read || false
-    end
-
-    # call-seq:
-    #   ios.closed_write?    -> true or false
-    #
-    # Returns the result of calling #closed? for non-duplexed objects.  For
-    # duplexed objects, returns +true+ if close_write was called, +false+
-    # otherwise.
-    def closed_write?
-      return closed? unless duplexed?
-      @__io_like__closed_read || false
+      (@__io_like__closed_read || ! readable?) &&
+      (@__io_like__closed_write || ! writable?)
     end
 
     # call-seq:
@@ -267,10 +255,10 @@ class IO # :nodoc:
     # buffer needs to be refilled.  Unless set explicitly via #fill_size=, this
     # defaults to 4096.
     #
-    # Raises IOError if #closed_read? returns +true+.  Raises IOError if the
+    # Raises IOError if #closed? returns +true+.  Raises IOError if the
     # stream is not opened for reading.
     def fill_size
-      raise IOError, 'closed stream' if closed_read?
+      raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
 
       @__io_like__fill_size ||= 4096
@@ -283,10 +271,10 @@ class IO # :nodoc:
     # buffer needs to be refilled.  The new value must be a number greater than
     # or equal to 0.  Setting this to 0 effectively disables buffering.
     #
-    # Raises IOError if #closed_read? returns +true+.  Raises IOError if the
+    # Raises IOError if #closed? returns +true+.  Raises IOError if the
     # stream is not opened for reading.
     def fill_size=(fill_size)
-      raise IOError, 'closed stream' if closed_read?
+      raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
 
       unless fill_size >= 0 then
@@ -304,7 +292,7 @@ class IO # :nodoc:
     # during writing, this method will block until either all the data is
     # flushed or until an error is raised.
     #
-    # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
     # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
@@ -313,8 +301,6 @@ class IO # :nodoc:
     # method will also raise the same errors and block at the same times as
     # #unbuffered_write.
     def flush
-      raise IOError, 'closed stream' if closed_write?
-
       begin
         buffered_flush
       rescue Errno::EAGAIN, Errno::EINTR
@@ -330,10 +316,10 @@ class IO # :nodoc:
     # automatically to the data stream.  Unless set explicitly via #flush_size=,
     # this defaults to 4096.
     #
-    # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     def flush_size
-      raise IOError, 'closed stream' if closed_write?
+      raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for writing' unless writable?
 
       @__io_like__flush_size ||= 4096
@@ -346,10 +332,10 @@ class IO # :nodoc:
     # automatically to the data stream.  The new value must be a number greater
     # than or equal to 0.  Setting this to 0 effectively disables buffering.
     #
-    # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     def flush_size=(flush_size)
-      raise IOError, 'closed stream' if closed_write?
+      raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for writing' unless writable?
 
       unless flush_size >= 0 then
@@ -364,7 +350,7 @@ class IO # :nodoc:
     # Calls #readchar and either returns the result or +nil+ if #readchar raises
     # EOFError.
     #
-    # Raises IOError if #closed_read? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #readable? returns +true+.  Raises all errors raised by #unbuffered_read
     # except for EOFError.
     #
@@ -387,7 +373,7 @@ class IO # :nodoc:
     # data, the returned data is assigned to <tt>$_</tt> and <tt>$.</tt> is set
     # to the value of #lineno.
     #
-    # Raises IOError if #closed_read? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #readable? returns +true+.  Raises all errors raised by #unbuffered_read
     # except for EOFError.
     #
@@ -424,10 +410,10 @@ class IO # :nodoc:
     # the other line-based reading methods with a non-default value for
     # _sep_string_ or after changing <tt>$/</tt> will affect this.
     #
-    # Raises IOError if #closed_read? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #readable? returns +true+.
     def lineno
-      raise IOError, 'closed stream' if closed_read?
+      raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
       @__io_like__lineno ||= 0
     end
@@ -438,10 +424,10 @@ class IO # :nodoc:
     # Sets the current line number to the given value.  <tt>$.</tt> is updated
     # by the _next_ call to #gets.
     #
-    # Raises IOError if #closed_read? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #readable? returns +true+.
     def lineno=(integer)
-      raise IOError, 'closed stream' if closed_read?
+      raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
       @__io_like__lineno = integer
     end
@@ -482,7 +468,7 @@ class IO # :nodoc:
     # record separator (<tt>$\\</tt>) is written after all other data if it is
     # not nil.
     #
-    # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
     # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
@@ -522,7 +508,7 @@ class IO # :nodoc:
     # Writes the String returned by calling Kernel.sprintf using the given
     # arguments.
     #
-    # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
     # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
@@ -541,7 +527,7 @@ class IO # :nodoc:
     # If _obj_ is Numeric, write the result of <tt>obj.chr</tt>; otherwise,
     # write the first character of <tt>obj.to_s</tt>.
     #
-    # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
     # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
@@ -569,7 +555,7 @@ class IO # :nodoc:
     # is written after each object which does not end with the record separator
     # already.  If no objects are given, a single record separator is written.
     #
-    # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
     # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
@@ -623,7 +609,7 @@ class IO # :nodoc:
     # +to_str+ method if necessary and will be filled with the returned data if
     # any.
     #
-    # Raises IOError if #closed_read? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #readable? returns +true+.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_read, it will also
@@ -669,8 +655,8 @@ class IO # :nodoc:
     # This default implementation of #read_ready? is a hack which should be able
     # to work for both real IO objects and IO-like objects; however, it is
     # inefficient since it merely sleeps for 1 second and then returns +true+ as
-    # long as #closed_read? returns +false+.  IO.select should be used for real
-    # IO objects to wait for a readable condition on platforms with support for
+    # long as #closed? returns +false+.  IO.select should be used for real IO
+    # objects to wait for a readable condition on platforms with support for
     # IO.select.  Other solutions should be found as necessary to improve this
     # implementation on a case by case basis.
     #
@@ -686,12 +672,12 @@ class IO # :nodoc:
     #
     # Returns +true+ if the stream is both open and readable, +false+ otherwise.
     #
-    # This implementation calls #closed_read? and checks to see if
-    # #unbuffered_read is defined in order to make its determination.  Override
-    # this if the implementing class always provides the #unbuffered_read method
-    # but may not always be open in a readable mode.
+    # This implementation checks to see if #unbuffered_read is defined in order
+    # to make its determination.  Override this if the implementing class always
+    # provides the #unbuffered_read method but may not always be open in a
+    # readable mode.
     def readable?
-      ! closed_read? && respond_to?(:unbuffered_read, true)
+      ! @__io_like__closed_read && respond_to?(:unbuffered_read, true)
     end
 
     # call-seq:
@@ -700,9 +686,9 @@ class IO # :nodoc:
     # Reads and returns _length_ bytes from the data stream.
     #
     # Raises EOFError if reading begins at the end of the stream.  Raises
-    # IOError if #closed_read? returns +true+.  Raises IOError unless
-    # #readable? returns +true+.  Raises TruncatedDataError if insufficient
-    # data is immediately available to satisfy the request.
+    # IOError if #closed? returns +true+.  Raises IOError unless #readable?
+    # returns +true+.  Raises TruncatedDataError if insufficient data is
+    # immediately available to satisfy the request.
     #
     # In the case of TruncatedDataError being raised, the retrieved data can be
     # fetched from the _data_ attribute of the exception.
@@ -728,7 +714,7 @@ class IO # :nodoc:
     # Returns the next 8-bit byte (0..255) from the stream.
     #
     # Raises EOFError when there is no more data in the stream.  Raises IOError
-    # if #closed_read? returns +true+.  Raises IOError unless #readable? returns
+    # if #closed? returns +true+.  Raises IOError unless #readable? returns
     # +true+.
     #
     # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
@@ -736,7 +722,6 @@ class IO # :nodoc:
     # exception, this method will also raise the same errors and block at the
     # same times as #unbuffered_read.
     def readchar
-      raise IOError, 'closed stream' if closed_read?
       buffered_read(1)[0]
     rescue Errno::EAGAIN, Errno::EINTR
       retry if read_ready?
@@ -758,7 +743,7 @@ class IO # :nodoc:
     # In any case, the end of the stream terminates the current line.
     #
     # Raises EOFError when there is no more data in the stream.  Raises IOError
-    # if #closed_read? returns +true+.  Raises IOError unless #readable? returns
+    # if #closed? returns +true+.  Raises IOError unless #readable? returns
     # +true+.
     #
     # <b>NOTE:</b> When _sep_string_ is not +nil+, this method ignores
@@ -767,8 +752,6 @@ class IO # :nodoc:
     # also raise the same errors and block at the same times as
     # #unbuffered_read.
     def readline(sep_string = $/)
-      raise IOError, 'closed stream' if closed_read?
-
       # Ensure that sep_string is either nil or a String.
       unless sep_string.nil? || sep_string.kind_of?(String) then
         sep_string = sep_string.to_str
@@ -835,7 +818,7 @@ class IO # :nodoc:
     # In any case, the end of the stream terminates the current line.
     #
     # Raises EOFError when there is no more data in the stream.  Raises IOError
-    # if #closed_read? returns +true+.  Raises IOError unless #readable? returns
+    # if #closed? returns +true+.  Raises IOError unless #readable? returns
     # +true+.
     #
     # <b>NOTE:</b> When _sep_string_ is not +nil+, this method ignores
@@ -859,7 +842,7 @@ class IO # :nodoc:
     # whether or not the data stream would block.
     #
     # Raises EOFError when there is no more data in the stream.  Raises IOError
-    # if #closed_read? returns +true+.  Raises IOError unless #readable? returns
+    # if #closed? returns +true+.  Raises IOError unless #readable? returns
     # +true+.
     #
     # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
@@ -876,9 +859,6 @@ class IO # :nodoc:
       # Flush the buffer.
       buffer.slice!(0..-1)
 
-      raise IOError, 'closed stream' if closed_read?
-      raise IOError, 'not opened for reading' unless readable?
-
       # Read and return up to length bytes.
       if internal_read_buffer.empty? then
         begin
@@ -887,6 +867,9 @@ class IO # :nodoc:
           retry if read_ready?
         end
       else
+        raise IOError, 'closed stream' if closed?
+        raise IOError, 'not opened for reading' unless readable?
+
         buffer << internal_read_buffer.slice!(0, length)
       end
       buffer
@@ -932,8 +915,6 @@ class IO # :nodoc:
     # #unbuffered_write (when the internal write buffer is not empty), it will
     # also raise the same errors and block at the same times as those functions.
     def seek(offset, whence = IO::SEEK_SET)
-      raise IOError, 'closed stream' if closed?
-
       buffered_seek(offset, whence)
       0
     end
@@ -941,14 +922,14 @@ class IO # :nodoc:
     # call-seq:
     #   ios.seekable?        -> true or false
     #
-    # Returns +true+ if the stream is both open and seekable, +false+ otherwise.
+    # Returns +true+ if the stream is seekable, +false+ otherwise.
     #
-    # This implementation calls #closed? and checks to see if #unbuffered_seek
-    # is defined in order to make its determination.  Override this if the
-    # implementing class always provides the #unbuffered_seek method but may not
-    # always be seekable.
+    # This implementation always returns +false+ for duplexed objects and
+    # checks to see if #unbuffered_seek is defined in order to make its
+    # determination otherwise.  Override this if the implementing class always
+    # provides the #unbuffered_seek method but may not always be seekable.
     def seekable?
-      ! closed? && respond_to?(:unbuffered_seek, true)
+      ! duplexed? && respond_to?(:unbuffered_seek, true)
     end
 
     # call-seq:
@@ -957,9 +938,9 @@ class IO # :nodoc:
     # Returns true if the internal write buffer is currently being bypassed,
     # false otherwise.
     #
-    # Raises IOError if #closed_write? returns +true+.
+    # Raises IOError if #closed? returns +true+.
     def sync
-      raise IOError, 'closed stream' if closed_write?
+      raise IOError, 'closed stream' if closed?
       @__io_like__sync ||= false
     end
 
@@ -971,9 +952,9 @@ class IO # :nodoc:
     # operation.  When set to +false+, the internal write buffer will be
     # enabled.
     #
-    # Raises IOError if #closed_write? returns +true+.
+    # Raises IOError if #closed? returns +true+.
     def sync=(sync)
-      raise IOError, 'closed stream' if closed_write?
+      raise IOError, 'closed stream' if closed?
       @__io_like__sync = sync
     end
 
@@ -988,7 +969,7 @@ class IO # :nodoc:
     #
     # Raises EOFError if reading begins at the end of the stream.  Raises
     # IOError if the internal read buffer is not empty.  Raises IOError if
-    # #closed_read? returns +true+.
+    # #closed? returns +true+.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_read, it will also
     # raise the same errors and block at the same times as that function.
@@ -997,7 +978,7 @@ class IO # :nodoc:
       buffer.slice!(0..-1)
       return buffer if length == 0
 
-      raise IOError, 'closed stream' if closed_read?
+      raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
       unless internal_read_buffer.empty? then
         raise IOError, 'sysread on buffered IO'
@@ -1040,13 +1021,13 @@ class IO # :nodoc:
     # As a side effect for non-duplex objects, the internal read buffer is
     # flushed.
     #
-    # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_write, it will also
     # raise the same errors and block at the same times as that function.
     def syswrite(string)
-      raise IOError, 'closed stream' if closed_write?
+      raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for writing' unless writable?
       unless duplexed? || internal_read_buffer.empty? then
         internal_read_buffer.slice!(0..-1)
@@ -1094,7 +1075,7 @@ class IO # :nodoc:
     #
     # Calls #unread with <tt>integer.chr</tt> as an argument.
     #
-    # Raises IOError if #closed_read? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #readable? returns +true+.
     def ungetc(integer)
       unread(integer.chr)
@@ -1107,10 +1088,10 @@ class IO # :nodoc:
     # returns +nil+.  If _string_ is not a String, it is converted to one using
     # its +to_s+ method.
     #
-    # Raises IOError if #closed_read? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #readable? returns +true+.
     def unread(string)
-      raise IOError, 'closed stream' if closed_read?
+      raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
       internal_read_buffer.insert(0, string.to_s)
       nil
@@ -1125,7 +1106,7 @@ class IO # :nodoc:
     # This default implementation of #write_ready? is a hack which should be
     # able to work for both real IO objects and IO-like objects; however, it is
     # inefficient since it merely sleeps for 1 second and then returns +true+ as
-    # long as #closed_write? returns +false+.  IO.select should be used for real
+    # long as #closed? returns +false+.  IO.select should be used for real
     # IO objects to wait for a writeable condition on platforms with support for
     # IO.select.  Other solutions should be found as necessary to improve this
     # implementation on a case by case basis.
@@ -1142,12 +1123,12 @@ class IO # :nodoc:
     #
     # Returns +true+ if the stream is both open and writable, +false+ otherwise.
     #
-    # This implementation calls #closed_write? and checks to see if
-    # #unbuffered_write is defined in order to make its determination.  Override
-    # this if the implementing class always provides the #unbuffered_write
-    # method but may not always be open in a writable mode.
+    # This implementation checks to see if #unbuffered_write is defined in order
+    # to make its determination.  Override this if the implementing class always
+    # provides the #unbuffered_write method but may not always be open in a
+    # writable mode.
     def writable?
-      ! closed_write? && respond_to?(:unbuffered_write, true)
+      ! @__io_like__closed_write && respond_to?(:unbuffered_write, true)
     end
 
     # call-seq:
@@ -1158,7 +1139,7 @@ class IO # :nodoc:
     # convert it into one.  The entire contents of _string_ are written,
     # blocking as necessary even if the data stream does not block.
     #
-    # Raises IOError if #closed_write? returns +true+.  Raises IOError unless
+    # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
     #
     # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
@@ -1169,8 +1150,6 @@ class IO # :nodoc:
     def write(string)
       string = string.to_s
       return 0 if string.empty?
-
-      raise IOError, 'closed stream' if closed_write?
 
       bytes_written = 0
       while bytes_written < string.length do
@@ -1196,6 +1175,7 @@ class IO # :nodoc:
     # all errors raised by #unbuffered_write and blocks when #unbuffered_write
     # blocks.
     def buffered_flush
+      raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for writing' unless writable?
 
       until internal_write_buffer.empty? do
@@ -1220,10 +1200,11 @@ class IO # :nodoc:
       # Check the validity of the method arguments.
       raise ArgumentError, "non-positive length #{length} given" if length < 0
 
+      raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
 
-      # Flush the internal write buffer for non-duplexed objects.
-      buffered_flush unless internal_write_buffer.empty? || duplexed?
+      # Flush the internal write buffer for writable, non-duplexed objects.
+      buffered_flush if writable? && ! duplexed?
 
       # Ensure that the internal read buffer has at least enough data to satisfy
       # the request.
@@ -1266,6 +1247,7 @@ class IO # :nodoc:
     # #unbuffered_write (when the internal write buffer is not empty), it will
     # raise the same errors and block at the same times as those functions.
     def buffered_seek(offset, whence = IO::SEEK_SET)
+      raise IOError, 'closed stream' if closed?
       raise Errno::ESPIPE, 'Illegal seek' unless seekable?
 
       if whence == IO::SEEK_CUR && offset == 0 then
@@ -1315,11 +1297,12 @@ class IO # :nodoc:
     # blocks whenever the internal write buffer is unable to fulfill the
     # request.
     def buffered_write(string)
+      raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for writing' unless writable?
 
       # Flush the internal read buffer and set the unbuffered position to the
       # buffered position when dealing with non-duplexed objects.
-      if ! (duplexed? || internal_read_buffer.empty?) then
+      unless duplexed? || internal_read_buffer.empty? then
         unbuffered_seek(-internal_read_buffer.length, IO::SEEK_CUR)
         internal_read_buffer.slice!(0..-1)
       end
