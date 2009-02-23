@@ -425,14 +425,20 @@ class IO # :nodoc:
     #   ios.lineno = lineno  -> lineno
     #
     # Sets the current line number to the given value.  <tt>$.</tt> is updated
-    # by the _next_ call to #gets.
+    # by the _next_ call to #gets.  If the object given is not an integer, it is
+    # converted to one using its to_int method.
     #
     # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #readable? returns +true+.
     def lineno=(integer)
       raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
-      @__io_like__lineno = integer
+      if integer.nil? then
+        raise TypeError, 'no implicit conversion from nil to integer'
+      elsif ! integer.respond_to?(:to_int) then
+        raise TypeError, "can't convert #{integer.class} into Integer"
+      end
+      @__io_like__lineno = integer.to_int
     end
 
     # call-seq:
