@@ -986,7 +986,7 @@ class IO # :nodoc:
     # Raises IOError if #closed? returns +true+.
     def sync=(sync)
       raise IOError, 'closed stream' if closed?
-      @__io_like__sync = sync
+      @__io_like__sync = sync ? true : false
     end
 
     # call-seq:
