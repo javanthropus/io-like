@@ -397,7 +397,10 @@ class IO # :nodoc:
     #   ios.isatty           -> false
     #
     # Returns +false+.  Just for compatibility with IO.
+    #
+    # Raises IOError if #closed? returns +true+.
     def isatty
+      raise IOError, 'closed stream' if closed?
       false
     end
     alias :tty? :isatty
