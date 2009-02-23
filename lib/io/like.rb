@@ -799,7 +799,7 @@ class IO # :nodoc:
             # Add each character from the input to the buffer until either the
             # buffer has the right ending or the end of the input is reached.
             while buffer.index(sep_string, -sep_string.length).nil? &&
-                  (char = readchar) do
+                  (char = buffered_read(1)) do
               buffer << char
             end
 
@@ -807,11 +807,11 @@ class IO # :nodoc:
               # If the user requested paragraphs instead of lines, we need to
               # consume and discard all newlines remaining at the front of the
               # input.
-              while char == ?\n && (char = readchar) do
+              while char == "\n" && (char = buffered_read(1)) do
                 nil
               end
               # Put back the last character.
-              ungetc(char)
+              ungetc(char[0])
             end
           rescue Errno::EAGAIN, Errno::EINTR
             retry if read_ready?
