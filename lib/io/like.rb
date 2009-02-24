@@ -555,8 +555,8 @@ class IO # :nodoc:
     # call-seq:
     #   ios.putc(obj)        -> obj
     #
-    # If _obj_ is Numeric, write the result of <tt>obj.chr</tt>; otherwise,
-    # write the first character of <tt>obj.to_s</tt>.
+    # If _obj_ is a String, write the first byte; otherwise, convert _obj_ to a
+    # integer using its _to_int_ method and write the low order byte.
     #
     # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #writable? returns +true+.
@@ -568,10 +568,10 @@ class IO # :nodoc:
     # #unbuffered_write.
     def putc(obj)
       char = case obj
-             when Numeric
-               obj.chr
+             when String
+               obj[0].chr
              else
-               obj.to_s[0].chr
+               [obj.to_int].pack('V')[0].chr
              end
       write(char)
       obj
