@@ -650,10 +650,8 @@ class IO # :nodoc:
       unless length.nil? || length >= 0 then
         raise ArgumentError, "negative length #{length} given"
       end
-      buffer = '' if buffer.nil?
-      buffer = buffer.to_str unless buffer.kind_of?(String)
-      # Flush the buffer.
-      buffer.slice!(0..-1)
+      buffer = buffer.nil? ? '' : buffer.to_str
+      buffer.slice!(0..-1) unless buffer.empty?
 
       if length.nil? then
         # Read and return everything.
@@ -1005,8 +1003,8 @@ class IO # :nodoc:
     # <b>NOTE:</b> Because this method relies on #unbuffered_read, it will also
     # raise the same errors and block at the same times as that function.
     def sysread(length, buffer = nil)
-      buffer = '' if buffer.nil?
-      buffer.slice!(0..-1)
+      buffer = buffer.nil? ? '' : buffer.to_str
+      buffer.slice!(0..-1) unless buffer.empty?
       return buffer if length == 0
 
       raise IOError, 'closed stream' if closed?
