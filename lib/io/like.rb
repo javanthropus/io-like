@@ -613,13 +613,13 @@ class IO # :nodoc:
       # Write each argument followed by the record separator.  Recursively
       # process arguments which are Array instances.
       args.each do |arg|
-        if arg.kind_of?(Array) then
-          puts(*arg)
-        else
-          line = arg.nil? ? 'nil' : arg.to_s
-          line += ors if line.index(ors, -ors.length).nil?
-          write(line)
-        end
+        line = arg.nil? ?
+                 'nil' :
+                 arg.kind_of?(Array) ?
+                   arg.join(ors) :
+                   arg.to_s
+        line += ors if line.index(ors, -ors.length).nil?
+        write(line)
       end
 
       nil
