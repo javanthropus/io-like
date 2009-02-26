@@ -616,7 +616,7 @@ class IO # :nodoc:
         line = arg.nil? ?
                  'nil' :
                  arg.kind_of?(Array) ?
-                   arg.join(ors) :
+                   array_join(arg, ors) :
                    arg.to_s
         line += ors if line.index(ors, -ors.length).nil?
         write(line)
@@ -1346,6 +1346,47 @@ class IO # :nodoc:
     # Returns a reference to the internal write buffer.
     def internal_write_buffer
       @__io_like__write_buffer ||= ''
+    end
+
+    # This method joins the elements of _array_ together with _separator_
+    # between each element and returns the result.  _seen_ is a list of object
+    # IDs representing arrays which have already started processing.
+    #
+    # This method exists only because Array#join apparently behaves in an
+    # implementation dependent manner when joining recursive arrays and so does
+    # not always produce the expected results.  Specifically, MRI 1.8.6 and
+    # 1.8.7 behave as follows:
+    #
+    #   x = []
+    #   x << 1 << x << 2
+    #   x.join(', ')              => "1, 1, [...], 2, 2"
+    #
+    # The expected and necessary result for use with #puts is:
+    #
+    #   "1, [...], 2"
+    #
+    # Things get progressively worse as the nesting and recursion become more
+    # convoluted.
+    def array_join(array, separator, *seen)
+      seen << array.object_id
+      first = true
+      array.inject('') do |memo, item|
+        if first then
+          first = false
+        else
+          memo << separator
+        end
+
+        memo << if item.kind_of?(Array) then
+                  if seen.include?(item.object_id) then
+                    '[...]'
+                  else
+                    array_join(item, separator, *seen)
+                  end
+                else
+                  item.to_s
+                end
+      end
     end
   end
 end
