@@ -1013,6 +1013,9 @@ class IO # :nodoc:
         raise IOError, 'sysread on buffered IO'
       end
 
+      # Flush the internal write buffer for writable, non-duplexed objects.
+      buffered_flush if writable? && ! duplexed?
+
       buffer << unbuffered_read(length)
     end
 
