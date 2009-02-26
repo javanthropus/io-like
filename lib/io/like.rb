@@ -1375,10 +1375,10 @@ class IO # :nodoc:
     #
     # Things get progressively worse as the nesting and recursion become more
     # convoluted.
-    def array_join(array, separator, *seen)
-      seen << array.object_id
+    def array_join(array, separator, seen = [])
       first = true
-      array.inject('') do |memo, item|
+      seen.push(array.object_id)
+      result = array.inject('') do |memo, item|
         if first then
           first = false
         else
@@ -1389,12 +1389,15 @@ class IO # :nodoc:
                   if seen.include?(item.object_id) then
                     '[...]'
                   else
-                    array_join(item, separator, *seen)
+                    array_join(item, separator, seen)
                   end
                 else
                   item.to_s
                 end
       end
+      seen.pop
+
+      result
     end
   end
 end
