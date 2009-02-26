@@ -1058,11 +1058,15 @@ class IO # :nodoc:
     def syswrite(string)
       raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for writing' unless writable?
-      unless duplexed? || internal_read_buffer.empty? then
-        internal_read_buffer.slice!(0..-1)
-      end
       unless internal_write_buffer.empty? then
         warn('warning: syswrite on buffered IO')
+      end
+
+      # Flush the internal read buffer and set the unbuffered position to the
+      # buffered position when dealing with non-duplexed objects.
+      unless duplexed? || internal_read_buffer.empty? then
+        unbuffered_seek(-internal_read_buffer.length, IO::SEEK_CUR)
+        internal_read_buffer.slice!(0..-1)
       end
 
       unbuffered_write(string)
