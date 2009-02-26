@@ -1041,6 +1041,7 @@ class IO # :nodoc:
       unless internal_write_buffer.empty? then
         warn('warning: sysseek on buffered IO')
       end
+
       unbuffered_seek(offset, whence)
     end
 
