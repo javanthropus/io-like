@@ -12,10 +12,13 @@ methods.
 
 == License
 
-Copyright © 2008 Jeremy Bopp <jeremy at bopp dot net>
+Copyright © 2008,2009 Jeremy Bopp <jeremy at bopp dot net>
 
 Licensed under the same terms as Ruby -- See the included LICENSE file for
 details
+
+Some parts licensed under the same terms as the rubyspec project -- See the
+included LEGAL and LICENSE.rubyspec files for details
 
 
 == Installation/Removal
@@ -125,8 +128,6 @@ A simple ROT13 codec:
    collected.  Define a class open method in the manner of File.open which
    guarantees that an appropriate close method will be called after executing a
    block.  Other than that, be diligent about calling the close methods.
-3. Testcases needed.  Maybe use some of rubyspec along with some test classes
-   which act like the important parts of IO, File, and/or StringIO.
 
 
 == Contributing

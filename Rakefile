@@ -36,11 +36,17 @@ TEST_FILES  = FileList.new(
   'test/**/*.rb'
 )
 
+# Spec files used with mspec and their support files.
+SPEC_FILES  = FileList.new(
+  'spec/**/*'
+)
+
 # Files to be included for documentation purposes only.
 DOC_FILES   = FileList.new(
   'CONTRIBUTORS',
   'HACKING',
   'LICENSE',
+  'LICENSE.rubyspec',
   'GPL',
   'LEGAL',
   'NEWS',
@@ -165,8 +171,9 @@ task :publish => [:rdoc] do
 end
 
 # Create the test task.
-Rake::TestTask.new do |t|
-  t.libs << 'test/lib'
+desc 'Run tests'
+task :test do
+  sh "mspec"
 end
 
 # Clean up to a pristine state.
