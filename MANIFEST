@@ -3,8 +3,8 @@ GPL
 HACKING
 LEGAL
 LICENSE
+LICENSE.rubyspec
 MANIFEST
 NEWS
 README
 lib/io/like.rb
-test/lib/likestringio.rb
