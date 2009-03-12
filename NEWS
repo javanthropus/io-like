@@ -6,6 +6,13 @@ detailed information is available in the rest of the documentation.
 <b>NOTE:</b> Date stamps in the following entries are in YYYY/MM/DD format.
 
 
+== v0.2.0 (2009/03/11)
+
+* Added mspec tests borrowed from the rubyspec project
+* Fixed many, many defects related to IO compatibility (Mostly obscure corner
+  cases)
+
+
 == v0.1.0 (2008/07/03)
 
 * Initial release
