@@ -37,7 +37,7 @@ class ROT13Filter
     encode_rot13(@delegate_io.sysread(length))
   end
 
-  def unbuffered_seek(offset, whence = IO::SEEKSET)
+  def unbuffered_seek(offset, whence = IO::SEEK_SET)
     @delegate_io.sysseek(offset, whence)
   end
 
@@ -66,6 +66,20 @@ if $0 == __FILE__ then
   File.open('rot13_file.txt') do |f|
     ROT13Filter.open(f) do |rot13|
       puts(rot13.read)                      # -> This is a test
+    end
+  end
+
+  File.open('normal_file.txt') do |f|
+    ROT13Filter.open(f) do |rot13|
+      rot13.pos = 5
+      puts(rot13.read)                      # -> vf n grfg
+    end
+  end
+
+  File.open('rot13_file.txt') do |f|
+    ROT13Filter.open(f) do |rot13|
+      rot13.pos = 5
+      puts(rot13.read)                      # -> is a test
     end
   end
 
