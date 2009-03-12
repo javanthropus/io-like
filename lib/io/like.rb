@@ -100,9 +100,9 @@ class IO # :nodoc:
     # returns +true+ and then sets a flag so that #closed? will return +true+.
     def close
       raise IOError, 'closed stream' if closed?
-      @__io_like__closed_read = true
+      __io_like__close_read
       flush if writable?
-      @__io_like__closed_write = true
+      __io_like__close_write
       nil
     end
 
@@ -121,7 +121,7 @@ class IO # :nodoc:
         raise IOError, 'closing non-duplex IO for reading'
       end
       if duplexed? then
-        @__io_like__closed_read = true
+        __io_like__close_read
       else
         close
       end
@@ -144,7 +144,7 @@ class IO # :nodoc:
       end
       if duplexed? then
         flush
-        @__io_like__closed_write = true
+        __io_like__close_write
       else
         close
       end
@@ -1370,10 +1370,22 @@ class IO # :nodoc:
       @__io_like__closed_read ||= false
     end
 
+    # Arranges for #__io_like__closed_read? to return +true+.
+    def __io_like__close_read
+      @__io_like__closed_read = true
+      nil
+    end
+
     # Returns +true+ if this object has been closed for writing; otherwise,
     # returns +false+.
     def __io_like__closed_write?
       @__io_like__closed_write ||= false
+    end
+
+    # Arranges for #__io_like__closed_write? to return +true+.
+    def __io_like__close_write
+      @__io_like__closed_write = true
+      nil
     end
 
     # This method joins the elements of _array_ together with _separator_
