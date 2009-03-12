@@ -117,7 +117,7 @@ class IO # :nodoc:
     # if #writable? returns +true+.
     def close_read
       raise IOError, 'closed stream' if closed?
-      if @__io_like__closed_read || ! duplexed? && writable? then
+      if closed_read? || ! duplexed? && writable? then
         raise IOError, 'closing non-duplex IO for reading'
       end
       if duplexed? then
@@ -139,7 +139,7 @@ class IO # :nodoc:
     # if #readable? returns +true+.
     def close_write
       raise IOError, 'closed stream' if closed?
-      if @__io_like__closed_write || ! duplexed? && readable? then
+      if closed_write? || ! duplexed? && readable? then
         raise IOError, 'closing non-duplex IO for reading'
       end
       if duplexed? then
@@ -157,8 +157,8 @@ class IO # :nodoc:
     # Returns +true+ if this object is closed or otherwise unusable for read and
     # write operations.
     def closed?
-      (@__io_like__closed_read || ! readable?) &&
-      (@__io_like__closed_write || ! writable?)
+      (closed_read? || ! readable?) &&
+      (closed_write? || ! writable?)
     end
 
     # call-seq:
@@ -706,7 +706,7 @@ class IO # :nodoc:
     # provides the #unbuffered_read method but may not always be open in a
     # readable mode.
     def readable?
-      ! @__io_like__closed_read && respond_to?(:unbuffered_read, true)
+      ! closed_read? && respond_to?(:unbuffered_read, true)
     end
 
     # call-seq:
@@ -1142,7 +1142,7 @@ class IO # :nodoc:
     # provides the #unbuffered_write method but may not always be open in a
     # writable mode.
     def writable?
-      ! @__io_like__closed_write && respond_to?(:unbuffered_write, true)
+      ! closed_write? && respond_to?(:unbuffered_write, true)
     end
 
     # call-seq:
@@ -1354,6 +1354,18 @@ class IO # :nodoc:
     # Returns a reference to the internal write buffer.
     def internal_write_buffer
       @__io_like__write_buffer ||= ''
+    end
+
+    # Returns +true+ if this object has been closed for reading; otherwise,
+    # returns +false+.
+    def closed_read?
+      @__io_like__closed_read ||= false
+    end
+
+    # Returns +true+ if this object has been closed for writing; otherwise,
+    # returns +false+.
+    def closed_write?
+      @__io_like__closed_write ||= false
     end
 
     # This method joins the elements of _array_ together with _separator_
