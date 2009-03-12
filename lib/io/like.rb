@@ -1396,14 +1396,9 @@ class IO # :nodoc:
     # Things get progressively worse as the nesting and recursion become more
     # convoluted.
     def __io_like__array_join(array, separator, seen = [])
-      first = true
       seen.push(array.object_id)
       result = array.inject('') do |memo, item|
-        if first then
-          first = false
-        else
-          memo << separator
-        end
+        memo << separator unless memo.empty?
 
         memo << if item.kind_of?(Array) then
                   if seen.include?(item.object_id) then
