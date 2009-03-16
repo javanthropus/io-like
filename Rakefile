@@ -38,6 +38,8 @@ TEST_FILES  = FileList.new(
 
 # Spec files used with mspec and their support files.
 SPEC_FILES  = FileList.new(
+  'ruby.1.8.mspec',
+  'spec_helper.rb',
   'spec/**/*'
 )
 
