@@ -1349,9 +1349,6 @@ class IO # :nodoc:
           bytes_written = string.length
         end
       end
-    rescue SystemCallError
-      raise if bytes_written == 0
-    else
       return bytes_written
     end
 
