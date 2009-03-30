@@ -29,9 +29,10 @@ class IO # :nodoc:
   #     ...
   #   end
   #
-  # This method must return the number of bytes written to the stream and
-  # should raise SystemCallError on errors.  Errno::EAGAIN should be raised if
-  # no data can be written immediately and the write operation should not block.
+  # This method must either return the number of bytes written to the stream,
+  # which may be less than the length of _string_ in bytes, OR must raise an
+  # instance of SystemCallError.  Errno::EAGAIN should be raised if no data can
+  # be written immediately and the write operation should not block.
   # Errno::EINTR should be raised if the write operation is interrupted before
   # any data is written.
   #
