@@ -1038,7 +1038,7 @@ class IO # :nodoc:
     # raise the same errors and block at the same times as that function.
     def sysseek(offset, whence = IO::SEEK_SET)
       raise IOError, 'closed stream' if closed?
-      raise Errno::ESPIPE, 'Illegal seek' unless seekable?
+      raise Errno::ESPIPE unless seekable?
       unless __io_like__internal_read_buffer.empty? then
         raise IOError, 'sysseek on buffered IO'
       end
@@ -1269,7 +1269,7 @@ class IO # :nodoc:
     # raise the same errors and block at the same times as those functions.
     def __io_like__buffered_seek(offset, whence = IO::SEEK_SET)
       raise IOError, 'closed stream' if closed?
-      raise Errno::ESPIPE, 'Illegal seek' unless seekable?
+      raise Errno::ESPIPE unless seekable?
 
       if whence == IO::SEEK_CUR && offset == 0 then
         # The seek is only determining the current position, so return the
