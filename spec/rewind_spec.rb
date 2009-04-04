@@ -37,6 +37,19 @@ describe "IO::Like#rewind" do
     @iowrapper.lineno.should == 0
   end
 
+  it "works on write-only streams" do
+    file = tmp('IO_Like__rewind.test')
+    File.open(file, 'w') do |f|
+      WritableIOWrapper.open(f) do |io|
+        io.write('test1')
+        io.rewind.should == 0
+        io.write('test2')
+      end
+    end
+    File.read(file).should == 'test2'
+    File.delete(file)
+  end
+
   it "raises IOError on closed stream" do
     lambda { IOSpecs.closed_file.rewind }.should raise_error(IOError)
   end

@@ -910,7 +910,7 @@ class IO # :nodoc:
     #
     # Sets the position of the file pointer to the beginning of the stream and
     # returns 0 when complete.  The lineno attribute is reset to 0 if
-    # successful.
+    # successful and the stream is readable according to #readable?.
     #
     # As a side effect, the internal read and write buffers are flushed.
     #
@@ -922,7 +922,8 @@ class IO # :nodoc:
     # also raise the same errors and block at the same times as those functions.
     def rewind
       seek(0, IO::SEEK_SET)
-      self.lineno = 0
+      self.lineno = 0 if readable?
+      0
     end
 
     # call-seq:
