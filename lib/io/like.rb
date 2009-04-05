@@ -1408,8 +1408,10 @@ class IO # :nodoc:
     # convoluted.
     def __io_like__array_join(array, separator, seen = [])
       seen.push(array.object_id)
+      need_separator = false
       result = array.inject('') do |memo, item|
-        memo << separator unless memo.empty?
+        memo << separator if need_separator
+        need_separator = true
 
         memo << if item.kind_of?(Array) then
                   if seen.include?(item.object_id) then
