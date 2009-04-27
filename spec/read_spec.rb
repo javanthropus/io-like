@@ -117,11 +117,6 @@ describe "IO::Like#read" do
     @iowrapper.read(@contents.length + 1).should == @contents
   end
 
-  it "returns an empty string at end-of-file" do
-    @iowrapper.read
-    @iowrapper.read.should == ''
-  end
-
   it "returns an empty string when the current pos is bigger than the content size" do
     @iowrapper.pos = 1000
     @iowrapper.read.should == ''
