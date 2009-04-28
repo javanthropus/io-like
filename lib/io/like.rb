@@ -634,8 +634,10 @@ class IO # :nodoc:
     # left to fulfill the request.  If the read starts at the end of data, +nil+
     # is returned.
     #
-    # If _length_ is unspecified or +nil+, all remaining data is returned.  If
-    # no data would be returned at all, an empty String is returned.
+    # If _length_ is unspecified or +nil+, an attempt to return all remaining
+    # data is made.  Partial data will be returned if a low-level error is
+    # raised after some data is retrieved.  If no data would be returned at all,
+    # an empty String is returned.
     #
     # If _buffer_ is specified, it will be converted to a String using its
     # +to_str+ method if necessary and will be filled with the returned data if
@@ -662,6 +664,9 @@ class IO # :nodoc:
           end
         rescue EOFError
           # Ignore this.
+        rescue SystemCallError
+          # Reraise the error if there is nothing to return.
+          raise if buffer.empty?
         end
       else
         # Read and return up to length bytes.

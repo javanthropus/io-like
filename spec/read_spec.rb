@@ -117,6 +117,26 @@ describe "IO::Like#read" do
     @iowrapper.read(@contents.length + 1).should == @contents
   end
 
+  it "reads all data available before a SystemCallError is raised" do
+    # Overrride @file.sysread to raise SystemCallError every other time it's
+    # called.
+    class << @file
+      alias :sysread_orig :sysread
+      def sysread(length)
+        if @error_raised then
+          @error_raised = false
+          sysread_orig(length)
+        else
+          @error_raised = true
+          raise SystemCallError, 'Test Error'
+        end
+      end
+    end
+
+    lambda { @iowrapper.read }.should raise_error(SystemCallError)
+    @iowrapper.read.should == @contents
+  end
+
   it "returns an empty string when the current pos is bigger than the content size" do
     @iowrapper.pos = 1000
     @iowrapper.read.should == ''
