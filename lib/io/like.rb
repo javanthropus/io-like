@@ -766,14 +766,27 @@ class IO # :nodoc:
     #   ios.readline(sep_string = $/) -> string
     #
     # Returns the next line from the stream, where lines are separated by
-    # _sep_string_.  Increments #lineno.
+    # _sep_string_.  Increments #lineno by <tt>1</tt> for each call regardless
+    # of the value of _sep_string_.
+    #
+    # If _sep_string_ is not +nil+ and not a String, it is first converted to a
+    # String using its +to_str+ method and processing continues as follows.
     #
     # If _sep_string_ is +nil+, a line is defined as the remaining contents of
-    # the stream.  If _sep_string_ is not a String, it is converted to one using
-    # its +to_str+ method.  If _sep_string_ is empty, a paragraph is returned,
-    # where a paragraph is defined as data followed by 2 or more successive
-    # newline characters (only 2 newlines are returned at the end of the
-    # returned data).
+    # the stream.  Partial data will be returned if a low-level error of any
+    # kind is raised after some data is retrieved.  This is equivalent to
+    # calling #read without any arguments except that this method will raise an
+    # EOFError if called at the end of the stream.
+    #
+    # If _sep_string_ is an empty String, a paragraph is returned, where a
+    # paragraph is defined as data followed by 2 or more successive newline
+    # characters.  A maximum of 2 newlines are returned at the end of the
+    # returned data.  Fewer may be returned if the stream ends before at least 2
+    # successive newlines are seen.
+    #
+    # Any other value for _sep_string_ is used as a delimiter to mark the end of
+    # a line.  The returned data includes this delimiter unless the stream ends
+    # before the delimiter is seen.
     #
     # In any case, the end of the stream terminates the current line.
     #
@@ -783,8 +796,8 @@ class IO # :nodoc:
     #
     # <b>NOTE:</b> When _sep_string_ is not +nil+, this method ignores
     # Errno::EAGAIN and Errno::EINTR raised by #unbuffered_read.  Therefore,
-    # this method always blocks.  Aside from that exception, this method will
-    # also raise the same errors and block at the same times as
+    # this method will always block in that case.  Aside from that exception,
+    # this method will raise the same errors and block at the same times as
     # #unbuffered_read.
     def readline(sep_string = $/)
       # Ensure that sep_string is either nil or a String.
