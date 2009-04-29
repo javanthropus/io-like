@@ -4,6 +4,7 @@ require File.dirname(__FILE__) + '/fixtures/classes'
 describe "IO::Like#readline" do
   before :each do
     testfile = File.dirname(__FILE__) + '/fixtures/gets.txt'
+    @contents = File.read(testfile)
     @io = File.open(testfile, 'r')
     @iowrapper = IOWrapper.open(@io)
   end
@@ -27,6 +28,26 @@ describe "IO::Like#readline" do
   it "is modified by the cursor position" do
     @iowrapper.seek(1)
     @iowrapper.readline.should == "oici la ligne une.\n"
+  end
+
+  it "reads and returns all data available before a SystemCallError is raised when the separator is nil" do
+    # Overrride @io.sysread to raise SystemCallError every other time it's
+    # called.
+    class << @io
+      alias :sysread_orig :sysread
+      def sysread(length)
+        if @error_raised then
+          @error_raised = false
+          sysread_orig(length)
+        else
+          @error_raised = true
+          raise SystemCallError, 'Test Error'
+        end
+      end
+    end
+
+    lambda { @iowrapper.readline(nil) }.should raise_error(SystemCallError)
+    @iowrapper.readline(nil).should == @contents
   end
 
   it "raises EOFError on end of stream" do

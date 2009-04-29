@@ -830,7 +830,8 @@ class IO # :nodoc:
             retry if read_ready?
           end
         end
-      rescue EOFError
+      rescue EOFError, SystemCallError
+        # Reraise the error if there is nothing to return.
         raise if buffer.empty?
       end
       # Increment the number of times this method has returned a "line".
