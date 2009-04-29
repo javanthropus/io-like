@@ -371,8 +371,11 @@ class IO # :nodoc:
     #
     # Calls #readline with _sep_string_ as an argument and either returns the
     # result or +nil+ if #readline raises EOFError.  If #readline returns some
-    # data, the returned data is assigned to <tt>$_</tt> and <tt>$.</tt> is set
-    # to the value of #lineno.
+    # data, <tt>$.</tt> is set to the value of #lineno.
+    #
+    # <b>NOTE:</b> Due to limitations of MRI up to version 1.9.x when running
+    # managed (Ruby) code, this method fails to set <tt>$_</tt> to the returned
+    # data; however, other implementations may allow it.
     #
     # Raises IOError if #closed? returns +true+.  Raises IOError unless
     # #readable? returns +true+.  Raises all errors raised by #unbuffered_read
@@ -380,9 +383,9 @@ class IO # :nodoc:
     #
     # <b>NOTE:</b> When _sep_string_ is not +nil+, this method ignores
     # Errno::EAGAIN and Errno::EINTR raised by #unbuffered_read.  Therefore,
-    # this method always blocks.  Aside from that exception and the conversion
-    # of EOFError results into +nil+ results, this method will also raise the
-    # same errors and block at the same times as #unbuffered_read.
+    # this method will always block in that case.  Aside from that exception,
+    # this method will raise the same errors and block at the same times as
+    # #unbuffered_read.
     def gets(sep_string = $/)
       # Set the last read line in the global.
       $_ = readline(sep_string)
