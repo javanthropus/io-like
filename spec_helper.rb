@@ -32,8 +32,6 @@ unless ENV['MSPEC_RUNNER']
         exit 1
       end
     end
-
-    TOLERANCE = 0.00003 unless Object.const_defined?(:TOLERANCE)
   rescue LoadError
     puts "Please install the MSpec gem to run the specs."
     exit 1
@@ -47,3 +45,5 @@ unless MSpec::VERSION >= minimum_version
 end
 
 $VERBOSE = nil unless ENV['OUTPUT_WARNINGS']
+
+$: << File.join(File.dirname(__FILE__), 'lib')

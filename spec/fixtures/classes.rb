@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/../../lib/io/like'
+require 'io/like'
 
 class IOWrapper
   include IO::Like
