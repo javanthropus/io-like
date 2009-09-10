@@ -761,6 +761,17 @@ class IO # :nodoc:
             # mark this.
             sep_string = "\n\n" if paragraph_requested
 
+            if paragraph_requested then
+              # If the user requested paragraphs instead of lines, we need to
+              # consume and discard all newlines remaining at the front of the
+              # input.
+              while (char = __io_like__buffered_read(1)) && char == "\n" do
+                nil
+              end
+              # Put back the last character.
+              ungetc(char[0])
+            end
+
             # Add each character from the input to the buffer until either the
             # buffer has the right ending or the end of the input is reached.
             while buffer.index(sep_string, -sep_string.length).nil? &&
@@ -772,7 +783,7 @@ class IO # :nodoc:
               # If the user requested paragraphs instead of lines, we need to
               # consume and discard all newlines remaining at the front of the
               # input.
-              while char == "\n" && (char = __io_like__buffered_read(1)) do
+              while (char = __io_like__buffered_read(1)) && char == "\n" do
                 nil
               end
               # Put back the last character.
