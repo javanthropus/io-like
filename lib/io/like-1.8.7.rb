@@ -88,6 +88,9 @@ class IO # :nodoc:
     # Reads each line from the stream using #gets and calls the given block once
     # for each line, passing the line as an argument.
     #
+    # When called without a block, returns an instance of Enumerable::Enumerator
+    # which will iterate over each line in the same manner.
+    #
     # <b>NOTE:</b> When _sep_string_ is not +nil+, this method ignores
     # Errno::EAGAIN and Errno::EINTR raised by #unbuffered_read.  Therefore,
     # this method always blocks.  Aside from that exception and the conversion
