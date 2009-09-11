@@ -66,7 +66,7 @@ class IO # :nodoc:
         char = byte.chr
         # The first byte of the character was already read, so read 1 less than
         # the total number of bytes for the character to get the rest.
-        char_len(byte).downto(2) do
+        __io_like__char_len(byte).downto(2) do
           byte = getbyte
           break if byte.nil?
           char << byte.chr
@@ -199,7 +199,7 @@ class IO # :nodoc:
     # Given _byte_ which represents the first byte of a possibly multi-byte
     # character, returns the total number of bytes for the character based on
     # the setting of $KCODE.
-    def char_len(byte)
+    def __io_like__char_len(byte)
       # Get the first byte of $KCODE on all versions of Ruby up to 1.9.1.
       kcode = $KCODE.respond_to?(:getbyte) ? $KCODE.getbyte(0) : $KCODE[0]
 
