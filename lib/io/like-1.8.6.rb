@@ -629,7 +629,7 @@ class IO # :nodoc:
     # This default implementation of #read_ready? is a hack which should be able
     # to work for both real IO objects and IO-like objects; however, it is
     # inefficient since it merely sleeps for 1 second and then returns +true+ as
-    # long as #closed? returns +false+.  IO.select should be used for real IO
+    # long as #readable? returns +true+.  IO.select should be used for real IO
     # objects to wait for a readable condition on platforms with support for
     # IO.select.  Other solutions should be found as necessary to improve this
     # implementation on a case by case basis.
