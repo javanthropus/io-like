@@ -1,20 +1,21 @@
 class IO # :nodoc:
-  # This module provides most of the basic input and output functions of IO
-  # objects as implemented in Ruby version 1.8.6.  Its use is supported on all
-  # versions of Ruby.  See the general documentation of IO::Like for a
-  # description of how to create a class capable of using this module.
+  # This module provides most of the basic input and output functions of
+  # <code>IO</code> objects as implemented in Ruby version 1.8.6.  Its use is
+  # supported on all versions of Ruby.  See the general documentation of
+  # <code>IO::Like</code> for a description of how to create a class capable of
+  # using this module.
   #
-  # Include this module explicitely rather than IO::Like if the including class
-  # should always behave like Ruby 1.8.6 IO no matter what version of Ruby is
-  # running the class.
+  # Include this module explicitly rather than <code>IO::Like</code> if the
+  # including class should always behave like Ruby 1.8.6 <code>IO</code> no
+  # matter what version of Ruby is running the class.
   module Like_1_8_6
     include Enumerable
 
     # call-seq:
     #   ios << obj           -> ios
     #
-    # Writes _obj_ to the stream using #write and returns _ios_.  _obj_ is
-    # converted to a String using _to_s_.
+    # Writes <i>obj</i> to the stream using #write and returns <i>ios</i>.
+    # <i>obj</i> is converted to a <code>String</code> using <code>to_s</code>.
     def <<(obj)
       write(obj)
       self
@@ -23,7 +24,7 @@ class IO # :nodoc:
     # call-seq:
     #   ios.binmode          -> ios
     #
-    # Returns +self+.  Just for compatibility with IO.
+    # Returns <code>self</code>.  Just for compatibility with <code>IO</code>.
     def binmode
       self
     end
@@ -31,10 +32,11 @@ class IO # :nodoc:
     # call-seq:
     #   ios.close            -> nil
     #
-    # Arranges for #closed? to return +true+.  Raises IOError if #closed?
-    # already returns +true+.  For duplexed objects, calls #close_read and
-    # #close_write.  For non-duplexed objects, calls #flush if #writable?
-    # returns +true+ and then sets a flag so that #closed? will return +true+.
+    # Arranges for #closed? to return <code>true</code>.  Raises
+    # <code>IOError</code> if #closed? already returns <code>true</code>.  For
+    # duplexed objects, calls #close_read and #close_write.  For non-duplexed
+    # objects, calls #flush if #writable? returns <code>true</code> and then
+    # sets a flag so that #closed? will return <code>true</code>.
     def close
       raise IOError, 'closed stream' if closed?
       __io_like__close_read
@@ -49,9 +51,10 @@ class IO # :nodoc:
     # Closes the read end of a duplexed object or the whole object if the object
     # is read-only.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError for duplexed
-    # objects if called more than once.  Raises IOError for non-duplexed objects
-    # if #writable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> for duplexed objects if called more than once.
+    # Raises <code>IOError</code> for non-duplexed objects if #writable? returns
+    # <code>true</code>.
     def close_read
       raise IOError, 'closed stream' if closed?
       if __io_like__closed_read? || ! duplexed? && writable? then
@@ -71,9 +74,10 @@ class IO # :nodoc:
     # Closes the write end of a duplexed object or the whole object if the
     # object is write-only.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError for duplexed
-    # objects if called more than once.  Raises IOError for non-duplexed objects
-    # if #readable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> for duplexed objects if called more than once.
+    # Raises <code>IOError</code> for non-duplexed objects if #readable? returns
+    # <code>true</code>.
     def close_write
       raise IOError, 'closed stream' if closed?
       if __io_like__closed_write? || ! duplexed? && readable? then
@@ -91,8 +95,8 @@ class IO # :nodoc:
     # call-seq:
     #   ios.closed?          -> true or false
     #
-    # Returns +true+ if this object is closed or otherwise unusable for read and
-    # write operations.
+    # Returns <code>true</code> if this object is closed or otherwise unusable
+    # for read and write operations.
     def closed?
       (__io_like__closed_read? || ! readable?) &&
       (__io_like__closed_write? || ! writable?)
@@ -101,8 +105,8 @@ class IO # :nodoc:
     # call-seq:
     #   ios.duplexed?        -> true or false
     #
-    # Returns +false+.  Override this to return +true+ when creating duplexed
-    # IO objects.
+    # Returns <code>false</code>.  Override this to return <code>true</code>
+    # when creating duplexed <code>IO</code> objects.
     def duplexed?
       false
     end
@@ -113,10 +117,11 @@ class IO # :nodoc:
     # Reads each byte (0..255) from the stream using #getc and calls the given
     # block once for each byte, passing the byte as an argument.
     #
-    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
-    # #unbuffered_read.  Therefore, this method always blocks.  Aside from that
-    # exception and the conversion of EOFError results into +nil+ results, this
-    # method will also raise the same errors and block at the same times as
+    # <b>NOTE:</b> This method ignores <code>Errno::EAGAIN</code> and
+    # <code>Errno::EINTR</code> raised by #unbuffered_read.  Therefore, this
+    # method always blocks.  Aside from that exception and the conversion of
+    # <code>EOFError</code> results into <code>nil</code> results, this method
+    # will also raise the same errors and block at the same times as
     # #unbuffered_read.
     def each_byte
       while (byte = getc) do
@@ -132,11 +137,12 @@ class IO # :nodoc:
     # Reads each line from the stream using #gets and calls the given block once
     # for each line, passing the line as an argument.
     #
-    # <b>NOTE:</b> When _sep_string_ is not +nil+, this method ignores
-    # Errno::EAGAIN and Errno::EINTR raised by #unbuffered_read.  Therefore,
-    # this method always blocks.  Aside from that exception and the conversion
-    # of EOFError results into +nil+ results, this method will also raise the
-    # same errors and block at the same times as #unbuffered_read.
+    # <b>NOTE:</b> When <i>sep_string</i> is not <code>nil</code>, this method
+    # ignores <code>Errno::EAGAIN</code> and <code>Errno::EINTR</code> raised by
+    # #unbuffered_read.  Therefore, this method always blocks.  Aside from that
+    # exception and the conversion of <code>EOFError</code> results into
+    # <code>nil</code> results, this method will also raise the same errors and
+    # block at the same times as #unbuffered_read.
     def each_line(sep_string = $/)
       while (line = gets(sep_string)) do
         yield(line)
@@ -149,16 +155,17 @@ class IO # :nodoc:
     #   ios.eof?             -> true or false
     #   ios.eof              -> true or false
     #
-    # Returns +true+ if there is no more data to read.
+    # Returns <code>true</code> if there is no more data to read.
     #
     # This works by using #getc to fetch the next character and using #ungetc to
     # put the character back if one was fetched.  It may be a good idea to
     # replace this implementation in derivative classes.
     #
-    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
-    # #unbuffered_read.  Therefore, this method always blocks.  Aside from that
-    # exception and the conversion of EOFError results into +nil+ results, this
-    # method will also raise the same errors and block at the same times as
+    # <b>NOTE:</b> This method ignores <code>Errno::EAGAIN</code> and
+    # <code>Errno::EINTR</code> raised by #unbuffered_read.  Therefore, this
+    # method always blocks.  Aside from that exception and the conversion of
+    # <code>EOFError</code> results into <code>nil</code> results, this method
+    # will also raise the same errors and block at the same times as
     # #unbuffered_read.
     def eof?
       if (char = getc) then
@@ -172,7 +179,7 @@ class IO # :nodoc:
     # call-seq:
     #   ios.fcntl
     #
-    # Raises NotImplementedError.
+    # Raises <code>NotImplementedError</code>.
     def fcntl(*args)
       raise NotImplementedError, 'not implemented'
     end
@@ -180,7 +187,7 @@ class IO # :nodoc:
     # call-seq:
     #   ios.fileno           -> nil
     #
-    # Returns +nil+.  Just for compatibility with IO.
+    # Returns <code>nil</code>.  Just for compatibility with <code>IO</code>.
     def fileno
       nil
     end
@@ -190,10 +197,10 @@ class IO # :nodoc:
     #
     # Returns the number of bytes to read as a block whenever the internal
     # buffer needs to be refilled.  Unless set explicitly via #fill_size=, this
-    # defaults to 4096.
+    # defaults to <code>4096</code>.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError if the
-    # stream is not opened for reading.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> if the stream is not opened for reading.
     def fill_size
       raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
@@ -206,10 +213,11 @@ class IO # :nodoc:
     #
     # Sets the number of bytes to read as a block whenever the internal read
     # buffer needs to be refilled.  The new value must be a number greater than
-    # or equal to 0.  Setting this to 0 effectively disables buffering.
+    # or equal to <code>0</code>.  Setting this to <code>0</code> effectively
+    # disables buffering.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError if the
-    # stream is not opened for reading.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> if the stream is not opened for reading.
     def fill_size=(fill_size)
       raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
@@ -229,14 +237,14 @@ class IO # :nodoc:
     # during writing, this method will block until either all the data is
     # flushed or until an error is raised.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #writable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #writable? returns <code>true</code>.
     #
-    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
-    # #unbuffered_write.  Therefore, this method always blocks if unable to
-    # flush the internal write buffer.  Aside from that exception, this
-    # method will also raise the same errors and block at the same times as
-    # #unbuffered_write.
+    # <b>NOTE:</b> This method ignores <code>Errno::EAGAIN</code> and
+    # <code>Errno::EINTR</code> raised by #unbuffered_write.  Therefore, this
+    # method always blocks if unable to flush the internal write buffer.  Aside
+    # from that exception, this method will also raise the same errors and block
+    # at the same times as #unbuffered_write.
     def flush
       begin
         __io_like__buffered_flush
@@ -251,10 +259,10 @@ class IO # :nodoc:
     #
     # Returns the number of bytes at which the internal write buffer is flushed
     # automatically to the data stream.  Unless set explicitly via #flush_size=,
-    # this defaults to 4096.
+    # this defaults to <code>4096</code>.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #writable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #writable? returns <code>true</code>.
     def flush_size
       raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for writing' unless writable?
@@ -267,10 +275,11 @@ class IO # :nodoc:
     #
     # Sets the number of bytes at which the internal write buffer is flushed
     # automatically to the data stream.  The new value must be a number greater
-    # than or equal to 0.  Setting this to 0 effectively disables buffering.
+    # than or equal to <code>0</code>.  Setting this to <code>0</code>
+    # effectively disables buffering.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #writable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #writable? returns <code>true</code>.
     def flush_size=(flush_size)
       raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for writing' unless writable?
@@ -284,17 +293,18 @@ class IO # :nodoc:
     # call-seq:
     #   ios.getc             -> nil or integer
     #
-    # Calls #readchar and either returns the result or +nil+ if #readchar raises
-    # EOFError.
+    # Calls #readchar and either returns the result or <code>nil</code> if
+    # #readchar raises <code>EOFError</code>.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #readable? returns +true+.  Raises all errors raised by #unbuffered_read
-    # except for EOFError.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #readable? returns <code>true</code>.  Raises
+    # all errors raised by #unbuffered_read except for <code>EOFError</code>.
     #
-    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
-    # #unbuffered_read.  Therefore, this method always blocks.  Aside from that
-    # exception and the conversion of EOFError results into +nil+ results, this
-    # method will also raise the same errors and block at the same times as
+    # <b>NOTE:</b> This method ignores <code>Errno::EAGAIN</code> and
+    # <code>Errno::EINTR</code> raised by #unbuffered_read.  Therefore, this
+    # method always blocks.  Aside from that exception and the conversion of
+    # <code>EOFError</code> results into <code>nil</code> results, this method
+    # will also raise the same errors and block at the same times as
     # #unbuffered_read.
     def getc
       readchar
@@ -305,23 +315,24 @@ class IO # :nodoc:
     # call-seq:
     #   ios.gets(sep_string = $/) -> nil or string
     #
-    # Calls #readline with _sep_string_ as an argument and either returns the
-    # result or +nil+ if #readline raises EOFError.  If #readline returns some
-    # data, <tt>$.</tt> is set to the value of #lineno.
+    # Calls #readline with <i>sep_string</i> as an argument and either returns
+    # the result or <code>nil</code> if #readline raises <code>EOFError</code>.
+    # If #readline returns some data, <code>$.</code> is set to the value of
+    # #lineno.
     #
     # <b>NOTE:</b> Due to limitations of MRI up to version 1.9.x when running
-    # managed (Ruby) code, this method fails to set <tt>$_</tt> to the returned
-    # data; however, other implementations may allow it.
+    # managed (Ruby) code, this method fails to set <code>$_</code> to the
+    # returned data; however, other implementations may allow it.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #readable? returns +true+.  Raises all errors raised by #unbuffered_read
-    # except for EOFError.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #readable? returns <code>true</code>.  Raises
+    # all errors raised by #unbuffered_read except for <code>EOFError</code>.
     #
-    # <b>NOTE:</b> When _sep_string_ is not +nil+, this method ignores
-    # Errno::EAGAIN and Errno::EINTR raised by #unbuffered_read.  Therefore,
-    # this method will always block in that case.  Aside from that exception,
-    # this method will raise the same errors and block at the same times as
-    # #unbuffered_read.
+    # <b>NOTE:</b> When <i>sep_string</i> is not <code>nil</code>, this method
+    # ignores <code>Errno::EAGAIN</code> and <code>Errno::EINTR</code> raised by
+    # #unbuffered_read.  Therefore, this method will always block in that case.
+    # Aside from that exception, this method will raise the same errors and
+    # block at the same times as #unbuffered_read.
     def gets(sep_string = $/)
       # Set the last read line in the global.
       $_ = readline(sep_string)
@@ -336,9 +347,9 @@ class IO # :nodoc:
     # call-seq:
     #   ios.isatty           -> false
     #
-    # Returns +false+.  Just for compatibility with IO.
+    # Returns <code>false</code>.  Just for compatibility with <code>IO</code>.
     #
-    # Raises IOError if #closed? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.
     def isatty
       raise IOError, 'closed stream' if closed?
       false
@@ -348,13 +359,14 @@ class IO # :nodoc:
     # call-seq:
     #   ios.lineno           -> integer
     #
-    # Returns the number of times #gets was called and returned non-+nil+ data.
-    # By default this is the number of lines read, but calling #gets or any of
-    # the other line-based reading methods with a non-default value for
-    # _sep_string_ or after changing <tt>$/</tt> will affect this.
+    # Returns the number of times #gets was called and returned
+    # non-<code>nil</code> data.  By default this is the number of lines read,
+    # but calling #gets or any of the other line-based reading methods with a
+    # non-default value for <i>sep_string</i> or after changing <code>$/</code>
+    # will affect this.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #readable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #readable? returns <code>true</code>.
     def lineno
       raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
@@ -364,12 +376,13 @@ class IO # :nodoc:
     # call-seq:
     #   ios.lineno = lineno  -> lineno
     #
-    # Sets the current line number to the given value.  <tt>$.</tt> is updated
-    # by the _next_ call to #gets.  If the object given is not an integer, it is
-    # converted to one using its to_int method.
+    # Sets the current line number to the given value.  <code>$.</code> is
+    # updated by the <i>next</i> call to #gets.  If the object given is not an
+    # <code>Integer</code>, it is converted to one using its <code>to_int</code>
+    # method.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #readable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #readable? returns <code>true</code>.
     def lineno=(integer)
       raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
@@ -384,7 +397,7 @@ class IO # :nodoc:
     # call-seq:
     #   ios.path             -> nil
     #
-    # Returns +nil+.  Just for compatibility with IO.
+    # Returns <code>nil</code>.  Just for compatibility with <code>IO</code>.
     def path
       nil
     end
@@ -392,12 +405,12 @@ class IO # :nodoc:
     # call-seq:
     #   ios.pos = position   -> position
     #
-    # Sets the data position to _position_ by calling #seek.
+    # Sets the data position to <i>position</i> by calling #seek.
     #
     # As a side effect, the internal read and write buffers are flushed.
     #
-    # Raises IOError if #closed? returns +true+.  Raises Errno::ESPIPE unless
-    # #seekable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>Errno::ESPIPE</code> unless #seekable? returns <code>true</code>.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
     # #unbuffered_write (when the internal write buffer is not empty), it will
@@ -410,14 +423,14 @@ class IO # :nodoc:
     # call-seq:
     #   ios.pos              -> integer
     #
-    # Returns the current offest of ios.
+    # Returns the current offest of <i>ios</i>.
     #
-    # Raises IOError if #closed? returns +true+.  Raises Errno::ESPIPE unless
-    # #seekable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>Errno::ESPIPE</code> unless #seekable? returns <code>true</code>.
     #
     # As a side effect, the internal write buffer is flushed unless this is
     # a writable, non-duplexed object.  This is for compatibility with the
-    # behavior of IO#pos.
+    # behavior of <code>IO#pos</code>.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
     # #unbuffered_write (when the internal write buffer is not empty), it will
@@ -433,19 +446,20 @@ class IO # :nodoc:
     #   ios.print([obj, ...]) -> nil
     #
     # Writes the given object(s), if any, to the stream using #write after
-    # converting them to strings by calling their _to_s_ methods.  If no
-    # objects are given, <tt>$_</tt> is used.  The field separator (<tt>$,</tt>)
-    # is written between successive objects if it is not +nil+.  The output
-    # record separator (<tt>$\\</tt>) is written after all other data if it is
-    # not nil.
+    # converting them to strings by calling their <code>to_s</code> methods.  If
+    # no objects are given, <code>$_</code> is used.  The field separator
+    # (<code>$,</code>) is written between successive objects if it is not
+    # <code>nil</code>.  The output record separator (<code>$\\</code>) is
+    # written after all other data if it is not <code>nil</code>.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #writable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #writable? returns <code>true</code>.
     #
-    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
-    # #unbuffered_write.  Therefore, this method always blocks if unable to
-    # immediately write +[obj, ...]+ completely.  Aside from that exception,
-    # this method will also raise the same errors and block at the same times as
+    # <b>NOTE:</b> This method ignores <code>Errno::EAGAIN</code> and
+    # <code>Errno::EINTR</code> raised by #unbuffered_write.  Therefore, this
+    # method always blocks if unable to immediately write
+    # <code>[obj, ...]</code> completely.  Aside from that exception, this
+    # method will also raise the same errors and block at the same times as
     # #unbuffered_write.
     def print(*args)
       args << $_ if args.empty?
@@ -476,17 +490,17 @@ class IO # :nodoc:
     # call-seq:
     #   ios.printf(format_string [, obj, ...]) -> nil
     #
-    # Writes the String returned by calling Kernel.sprintf using the given
-    # arguments.
+    # Writes the <code>String</code> returned by calling
+    # <code>Kernel.sprintf</code> using the given arguments.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #writable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #writable? returns <code>true</code>.
     #
-    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
-    # #unbuffered_write.  Therefore, this method always blocks if unable to
-    # immediately write its arguments completely.  Aside from that exception,
-    # this method will also raise the same errors and block at the same times as
-    # #unbuffered_write.
+    # <b>NOTE:</b> This method ignores <code>Errno::EAGAIN</code> and
+    # <code>Errno::EINTR</code> raised by #unbuffered_write.  Therefore, this
+    # method always blocks if unable to immediately write its arguments
+    # completely.  Aside from that exception, this method will also raise the
+    # same errors and block at the same times as #unbuffered_write.
     def printf(*args)
       write(sprintf(*args))
       nil
@@ -495,17 +509,18 @@ class IO # :nodoc:
     # call-seq:
     #   ios.putc(obj)        -> obj
     #
-    # If _obj_ is a String, write the first byte; otherwise, convert _obj_ to a
-    # integer using its _to_int_ method and write the low order byte.
+    # If <i>obj</i> is a <code>String</code>, write the first byte; otherwise,
+    # convert <i>obj</i> to an <code>Integer</code> using its
+    # <code>to_int</code> method and write the low order byte.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #writable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #writable? returns <code>true</code>.
     #
-    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
-    # #unbuffered_write.  Therefore, this method always blocks if unable to
-    # immediately write _obj_ completely.  Aside from that exception, this
-    # method will also raise the same errors and block at the same times as
-    # #unbuffered_write.
+    # <b>NOTE:</b> This method ignores <code>Errno::EAGAIN</code> and
+    # <code>Errno::EINTR</code> raised by #unbuffered_write.  Therefore, this
+    # method always blocks if unable to immediately write <i>obj</i> completely.
+    # Aside from that exception, this method will also raise the same errors and
+    # block at the same times as #unbuffered_write.
     def putc(obj)
       char = case obj
              when String
@@ -521,24 +536,26 @@ class IO # :nodoc:
     #   ios.puts([obj, ...]) -> nil
     #
     # Writes the given object(s), if any, to the stream using #write after
-    # converting them to strings using their _to_s_ methods.  Unlike #print,
-    # Array instances are recursively processed.  A record separator character
-    # is written after each object which does not end with the record separator
-    # already.  If no objects are given, a single record separator is written.
+    # converting them to strings using their <code>to_s</code> methods.  Unlike
+    # #print, Array instances are recursively processed.  A record separator
+    # character is written after each object which does not end with the record
+    # separator already.  If no objects are given, a single record separator is
+    # written.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #writable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #writable? returns <code>true</code>.
     #
-    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
-    # #unbuffered_write.  Therefore, this method always blocks if unable to
-    # immediately write +[obj, ...]+ completely.  Aside from that exception,
-    # this method will also raise the same errors and block at the same times as
+    # <b>NOTE:</b> This method ignores <code>Errno::EAGAIN</code> and
+    # <code>Errno::EINTR</code> raised by #unbuffered_write.  Therefore, this
+    # method always blocks if unable to immediately write
+    # <code>[obj, ...]</code> completely.  Aside from that exception, this
+    # method will also raise the same errors and block at the same times as
     # #unbuffered_write.
     #
-    # <b>NOTE:</b> In order to be compatible with IO#puts, the record separator
-    # is currently hardcoded to be a single newline (<tt>"\n"</tt>) even though
-    # the documentation implies that the output record separator (<tt>$\\</tt>)
-    # should be used.
+    # <b>NOTE:</b> In order to be compatible with <code>IO#puts</code>, the
+    # record separator is currently hardcoded to be a single newline
+    # (<code>"\n"</code>) even though the documentation implies that the output
+    # record separator (<code>$\\</code>) should be used.
     def puts(*args)
       # Set the output record separator such that this method is compatible with
       # IO#puts.
@@ -568,22 +585,22 @@ class IO # :nodoc:
     # call-seq:
     #   ios.read([length[, buffer]]) -> nil, buffer, or string
     #
-    # If _length_ is specified and is a positive integer, at most length bytes
-    # are returned.  Truncated data will occur if there is insufficient data
-    # left to fulfill the request.  If the read starts at the end of data, +nil+
-    # is returned.
+    # If <i>length</i> is specified and is a positive integer, at most length
+    # bytes are returned.  Truncated data will occur if there is insufficient
+    # data left to fulfill the request.  If the read starts at the end of data,
+    # <code>nil</code> is returned.
     #
-    # If _length_ is unspecified or +nil+, an attempt to return all remaining
-    # data is made.  Partial data will be returned if a low-level error is
-    # raised after some data is retrieved.  If no data would be returned at all,
-    # an empty String is returned.
+    # If <i>length</i> is unspecified or <code>nil</code>, an attempt to return
+    # all remaining data is made.  Partial data will be returned if a low-level
+    # error is raised after some data is retrieved.  If no data would be
+    # returned at all, an empty <code>String</code> is returned.
     #
-    # If _buffer_ is specified, it will be converted to a String using its
-    # +to_str+ method if necessary and will be filled with the returned data if
-    # any.
+    # If <i>buffer</i> is specified, it will be converted to a
+    # <code>String</code> using its <code>to_str</code> method if necessary and
+    # will be filled with the returned data if any.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #readable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #readable? returns <code>true</code>.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_read, it will also
     # raise the same errors and block at the same times as that function.
@@ -623,16 +640,18 @@ class IO # :nodoc:
     # call-seq:
     #   ios.read_ready?      -> true or false
     #
-    # Returns +true+ when the stream may be read without error, +false+
-    # otherwise.  This method will block until one of the conditions is known.
+    # Returns <code>true</code> when the stream may be read without error,
+    # <code>false</code> otherwise.  This method will block until one of the
+    # conditions is known.
     #
     # This default implementation of #read_ready? is a hack which should be able
-    # to work for both real IO objects and IO-like objects; however, it is
-    # inefficient since it merely sleeps for 1 second and then returns +true+ as
-    # long as #readable? returns +true+.  IO.select should be used for real IO
-    # objects to wait for a readable condition on platforms with support for
-    # IO.select.  Other solutions should be found as necessary to improve this
-    # implementation on a case by case basis.
+    # to work for both real <code>IO</code> objects and <code>IO</code>-like
+    # objects; however, it is inefficient since it merely sleeps for 1 second
+    # and then returns <code>true</code> as long as #readable? returns
+    # <code>true</code>.  <code>IO.select</code> should be used for real
+    # <code>IO</code> objects to wait for a readable condition on platforms with
+    # support for <code>IO.select</code>.  Other solutions should be found as
+    # necessary to improve this implementation on a case by case basis.
     #
     # Basically, this method should be overridden in derivative classes.
     def read_ready?
@@ -644,7 +663,8 @@ class IO # :nodoc:
     # call-seq:
     #   ios.readable?        -> true or false
     #
-    # Returns +true+ if the stream is both open and readable, +false+ otherwise.
+    # Returns <code>true</code> if the stream is both open and readable,
+    # <code>false</code> otherwise.
     #
     # This implementation checks to see if #unbuffered_read is defined in order
     # to make its determination.  Override this if the implementing class always
@@ -657,17 +677,18 @@ class IO # :nodoc:
     # call-seq:
     #   ios.readbytes(length) -> string
     #
-    # Reads and returns _length_ bytes from the data stream.
+    # Reads and returns <i>length</i> bytes from the data stream.
     #
-    # Raises EOFError if reading begins at the end of the stream.  Raises
-    # IOError if #closed? returns +true+.  Raises IOError unless #readable?
-    # returns +true+.  Raises TruncatedDataError if insufficient data is
-    # immediately available to satisfy the request.
+    # Raises <code>EOFError</code> if reading begins at the end of the stream.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.
+    # Raises <code>IOError</code> unless #readable? returns <code>true</code>.
+    # Raises <code>TruncatedDataError</code> if insufficient data is immediately
+    # available to satisfy the request.
     #
-    # In the case of TruncatedDataError being raised, the retrieved data can be
-    # fetched from the _data_ attribute of the exception.
+    # In the case of <code>TruncatedDataError</code> being raised, the retrieved
+    # data can be fetched from the <code>data</code> attribute of the exception.
     #
-    # This method is basically copied from IO#readbytes.
+    # This method is basically copied from <code>IO#readbytes</code>.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_read, it will also
     # raise the same errors and block at the same times as that function.
@@ -687,14 +708,14 @@ class IO # :nodoc:
     #
     # Returns the next 8-bit byte (0..255) from the stream.
     #
-    # Raises EOFError when there is no more data in the stream.  Raises IOError
-    # if #closed? returns +true+.  Raises IOError unless #readable? returns
-    # +true+.
+    # Raises <code>EOFError</code> when there is no more data in the stream.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #readable? returns <code>true</code>.
     #
-    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
-    # #unbuffered_read.  Therefore, this method always blocks.  Aside from that
-    # exception, this method will also raise the same errors and block at the
-    # same times as #unbuffered_read.
+    # <b>NOTE:</b> This method ignores <code>Errno::EAGAIN</code> and
+    # <code>Errno::EINTR</code> raised by #unbuffered_read.  Therefore, this
+    # method always blocks.  Aside from that exception, this method will also
+    # raise the same errors and block at the same times as #unbuffered_read.
     def readchar
       __io_like__buffered_read(1)[0]
     rescue Errno::EAGAIN, Errno::EINTR
@@ -705,39 +726,41 @@ class IO # :nodoc:
     #   ios.readline(sep_string = $/) -> string
     #
     # Returns the next line from the stream, where lines are separated by
-    # _sep_string_.  Increments #lineno by <tt>1</tt> for each call regardless
-    # of the value of _sep_string_.
+    # <i>sep_string</i>.  Increments #lineno by <code>1</code> for each call
+    # regardless of the value of <i>sep_string</i>.
     #
-    # If _sep_string_ is not +nil+ and not a String, it is first converted to a
-    # String using its +to_str+ method and processing continues as follows.
+    # If <i>sep_string</i> is not <code>nil</code> and not a
+    # <code>String</code>, it is first converted to a <code>String</code> using
+    # its <code>to_str</code> method and processing continues as follows.
     #
-    # If _sep_string_ is +nil+, a line is defined as the remaining contents of
-    # the stream.  Partial data will be returned if a low-level error of any
-    # kind is raised after some data is retrieved.  This is equivalent to
-    # calling #read without any arguments except that this method will raise an
-    # EOFError if called at the end of the stream.
+    # If <i>sep_string</i> is <code>nil</code>, a line is defined as the
+    # remaining contents of the stream.  Partial data will be returned if a
+    # low-level error of any kind is raised after some data is retrieved.  This
+    # is equivalent to calling #read without any arguments except that this
+    # method will raise an <code>EOFError</code> if called at the end of the
+    # stream.
     #
-    # If _sep_string_ is an empty String, a paragraph is returned, where a
-    # paragraph is defined as data followed by 2 or more successive newline
-    # characters.  A maximum of 2 newlines are returned at the end of the
-    # returned data.  Fewer may be returned if the stream ends before at least 2
-    # successive newlines are seen.
+    # If <i>sep_string</i> is an empty <code>String</code>, a paragraph is
+    # returned, where a paragraph is defined as data followed by 2 or more
+    # successive newline characters.  A maximum of 2 newlines are returned at
+    # the end of the returned data.  Fewer may be returned if the stream ends
+    # before at least 2 successive newlines are seen.
     #
-    # Any other value for _sep_string_ is used as a delimiter to mark the end of
-    # a line.  The returned data includes this delimiter unless the stream ends
-    # before the delimiter is seen.
+    # Any other value for <i>sep_string</i> is used as a delimiter to mark the
+    # end of a line.  The returned data includes this delimiter unless the
+    # stream ends before the delimiter is seen.
     #
     # In any case, the end of the stream terminates the current line.
     #
-    # Raises EOFError when there is no more data in the stream.  Raises IOError
-    # if #closed? returns +true+.  Raises IOError unless #readable? returns
-    # +true+.
+    # Raises <code>EOFError</code> when there is no more data in the stream.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #readable? returns <code>true</code>.
     #
-    # <b>NOTE:</b> When _sep_string_ is not +nil+, this method ignores
-    # Errno::EAGAIN and Errno::EINTR raised by #unbuffered_read.  Therefore,
-    # this method will always block in that case.  Aside from that exception,
-    # this method will raise the same errors and block at the same times as
-    # #unbuffered_read.
+    # <b>NOTE:</b> When <i>sep_string</i> is not <code>nil</code>, this method
+    # ignores <code>Errno::EAGAIN</code> and <code>Errno::EINTR</code> raised by
+    # #unbuffered_read.  Therefore, this method will always block in that case.
+    # Aside from that exception, this method will raise the same errors and
+    # block at the same times as #unbuffered_read.
     def readline(sep_string = $/)
       # Ensure that sep_string is either nil or a String.
       unless sep_string.nil? || sep_string.kind_of?(String) then
@@ -802,26 +825,27 @@ class IO # :nodoc:
     # call-seq:
     #   ios.readlines(sep_string = $/) -> array
     #
-    # Returns an Array containing the lines in the stream using #each_line.
+    # Returns an <code>Array</code> containing the lines in the stream using
+    # #each_line.
     #
-    # If _sep_string_ is +nil+, a line is defined as the remaining contents of
-    # the stream.  If _sep_string_ is not a String, it is converted to one using
-    # its +to_str+ method.  If _sep_string_ is empty, a paragraph is returned,
-    # where a paragraph is defined as data followed by 2 or more successive
-    # newline characters (only 2 newlines are returned at the end of the
-    # returned data).
+    # If <i>sep_string</i> is <code>nil</code>, a line is defined as the
+    # remaining contents of the stream.  If <i>sep_string</i> is not a
+    # <code>String</code>, it is converted to one using its <code>to_str</code>
+    # method.  If <i>sep_string</i> is empty, a paragraph is returned, where a
+    # paragraph is defined as data followed by 2 or more successive newline
+    # characters (only 2 newlines are returned at the end of the returned data).
     #
     # In any case, the end of the stream terminates the current line.
     #
-    # Raises EOFError when there is no more data in the stream.  Raises IOError
-    # if #closed? returns +true+.  Raises IOError unless #readable? returns
-    # +true+.
+    # Raises <code>EOFError</code> when there is no more data in the stream.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #readable? returns <code>true</code>.
     #
-    # <b>NOTE:</b> When _sep_string_ is not +nil+, this method ignores
-    # Errno::EAGAIN and Errno::EINTR raised by #unbuffered_read.  Therefore,
-    # this method always blocks.  Aside from that exception, this method will
-    # also raise the same errors and block at the same times as
-    # #unbuffered_read.
+    # <b>NOTE:</b> When <i>sep_string</i> is not <code>nil</code>, this method
+    # ignores <code>Errno::EAGAIN</code> and <code>Errno::EINTR</code> raised by
+    # #unbuffered_read.  Therefore, this method always blocks.  Aside from that
+    # exception, this method will also raise the same errors and block at the
+    # same times as #unbuffered_read.
     def readlines(sep_string = $/)
       lines = []
       each_line(sep_string) { |line| lines << line }
@@ -831,21 +855,21 @@ class IO # :nodoc:
     # call-seq:
     #   ios.readpartial(length[, buffer]) -> string or buffer
     #
-    # Returns at most _length_ bytes from the data stream using only the
+    # Returns at most <i>length</i> bytes from the data stream using only the
     # internal read buffer if the buffer is not empty.  Falls back to reading
     # from the stream if the buffer is empty.  Blocks if no data is available
     # from either the internal read buffer or the data stream regardless of
     # whether or not the data stream would block.
     #
-    # Raises EOFError when there is no more data in the stream.  Raises IOError
-    # if #closed? returns +true+.  Raises IOError unless #readable? returns
-    # +true+.
+    # Raises <code>EOFError</code> when there is no more data in the stream.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #readable? returns <code>true</code>.
     #
-    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
-    # #unbuffered_read.  Therefore, this method always blocks if unable to
-    # immediately return _length_ bytes.  Aside from that exception, this method
-    # will also raise the same errors and block at the same times as
-    # #unbuffered_read.
+    # <b>NOTE:</b> This method ignores <code>Errno::EAGAIN</code> and
+    # <code>Errno::EINTR</code> raised by #unbuffered_read.  Therefore, this
+    # method always blocks if unable to immediately return <i>length</i> bytes.
+    # Aside from that exception, this method will also raise the same errors and
+    # block at the same times as #unbuffered_read.
     def readpartial(length, buffer = nil)
       # Check the validity of the method arguments.
       unless length >= 0 then
@@ -875,13 +899,14 @@ class IO # :nodoc:
     #   ios.rewind           -> 0
     #
     # Sets the position of the file pointer to the beginning of the stream and
-    # returns 0 when complete.  The lineno attribute is reset to 0 if
-    # successful and the stream is readable according to #readable?.
+    # returns <code>0</code> when complete.  The <code>lineno</code> attribute
+    # is reset to <code>0</code> if successful and the stream is readable
+    # according to #readable?.
     #
     # As a side effect, the internal read and write buffers are flushed.
     #
-    # Raises IOError if #closed? returns +true+.  Raises Errno::ESPIPE unless
-    # #seekable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>Errno::ESPIPE</code> unless #seekable? returns <code>true</code>.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
     # #unbuffered_write (when the internal write buffer is not empty), it will
@@ -895,18 +920,20 @@ class IO # :nodoc:
     # call-seq:
     #   seek(offset[, whence]) -> 0
     #
-    # Sets the current data position to _offset_ based on the setting of
-    # _whence_.  If _whence_ is unspecified or IO::SEEK_SET, _offset_ counts
-    # from the beginning of the data.  If _whence_ is IO::SEEK_END, _offset_
-    # counts from the end of the data (_offset_ should be negative here).  If
-    # _whence_ is IO::SEEK_CUR, _offset_ is relative to the current position.
+    # Sets the current data position to <i>offset</i> based on the setting of
+    # <i>whence</i>.  If <i>whence</i> is unspecified or
+    # <code>IO::SEEK_SET</code>, <i>offset</i> counts from the beginning of the
+    # data.  If <i>whence</i> is <code>IO::SEEK_END</code>, <i>offset</i> counts
+    # from the end of the data (<i>offset</i> should be negative here).  If
+    # <i>whence</i> is <code>IO::SEEK_CUR</code>, <i>offset</i> is relative to
+    # the current position.
     #
     # As a side effect, the internal read and write buffers are flushed except
-    # when seeking relative to the current position (whence is IO::SEEK_CUR) to
-    # a location within the internal read buffer.
+    # when seeking relative to the current position (whence is
+    # <code>IO::SEEK_CUR</code>) to a location within the internal read buffer.
     #
-    # Raises IOError if #closed? returns +true+.  Raises Errno::ESPIPE unless
-    # #seekable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>Errno::ESPIPE</code> unless #seekable? returns <code>true</code>.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
     # #unbuffered_write (when the internal write buffer is not empty), it will
@@ -919,10 +946,11 @@ class IO # :nodoc:
     # call-seq:
     #   ios.seekable?        -> true or false
     #
-    # Returns +true+ if the stream is seekable, +false+ otherwise.
+    # Returns <code>true</code> if the stream is seekable, <code>false</code>
+    # otherwise.
     #
-    # This implementation always returns +false+ for duplexed objects and
-    # checks to see if #unbuffered_seek is defined in order to make its
+    # This implementation always returns <code>false</code> for duplexed objects
+    # and checks to see if #unbuffered_seek is defined in order to make its
     # determination otherwise.  Override this if the implementing class always
     # provides the #unbuffered_seek method but may not always be seekable.
     def seekable?
@@ -932,10 +960,10 @@ class IO # :nodoc:
     # call-seq:
     #   ios.sync             -> true or false
     #
-    # Returns true if the internal write buffer is currently being bypassed,
-    # false otherwise.
+    # Returns <code>true</code> if the internal write buffer is currently being
+    # bypassed, <code>false</code> otherwise.
     #
-    # Raises IOError if #closed? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.
     def sync
       raise IOError, 'closed stream' if closed?
       @__io_like__sync ||= false
@@ -944,12 +972,12 @@ class IO # :nodoc:
     # call-seq:
     #   ios.sync = boolean   -> boolean
     #
-    # When set to +true+ the internal write buffer will be bypassed.  Any data
-    # currently in the buffer will be flushed prior to the next output
-    # operation.  When set to +false+, the internal write buffer will be
-    # enabled.
+    # When set to <code>true</code> the internal write buffer will be bypassed.
+    # Any data currently in the buffer will be flushed prior to the next output
+    # operation.  When set to <code>false</code>, the internal write buffer will
+    # be enabled.
     #
-    # Raises IOError if #closed? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.
     def sync=(sync)
       raise IOError, 'closed stream' if closed?
       @__io_like__sync = sync ? true : false
@@ -958,15 +986,16 @@ class IO # :nodoc:
     # call-seq:
     #   ios.sysread(length)  -> string
     #
-    # Reads and returns up to _length_ bytes directly from the data stream,
+    # Reads and returns up to <i>length</i> bytes directly from the data stream,
     # bypassing the internal read buffer.
     #
-    # Returns <tt>""</tt> if _length_ is 0 regardless of the status of the data
-    # stream.  This is for compatibility with IO#sysread.
+    # Returns <code>""</code> if <i>length</i> is <code>0</code> regardless of
+    # the status of the data stream.  This is for compatibility with
+    # <code>IO#sysread</code>.
     #
-    # Raises EOFError if reading begins at the end of the stream.  Raises
-    # IOError if the internal read buffer is not empty.  Raises IOError if
-    # #closed? returns +true+.
+    # Raises <code>EOFError</code> if reading begins at the end of the stream.
+    # Raises <code>IOError</code> if the internal read buffer is not empty.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_read, it will also
     # raise the same errors and block at the same times as that function.
@@ -990,15 +1019,17 @@ class IO # :nodoc:
     # call-seq:
     #   ios.sysseek(offset[, whence]) -> integer
     #
-    # Sets the current data position to _offset_ based on the setting of
-    # _whence_.  If _whence_ is unspecified or IO::SEEK_SET, _offset_ counts
-    # from the beginning of the data.  If _whence_ is IO::SEEK_END, _offset_
-    # counts from the end of the data (_offset_ should be negative here).  If
-    # _whence_ is IO::SEEK_CUR, _offset_ is relative to the current position.
+    # Sets the current data position to <i>offset</i> based on the setting of
+    # <i>whence</i>.  If <i>whence</i> is unspecified or
+    # <code>IO::SEEK_SET</code>, <i>offset</i> counts from the beginning of the
+    # data.  If <i>whence</i> is <code>IO::SEEK_END</code>, <i>offset</i> counts
+    # from the end of the data (<i>offset</i> should be negative here).  If
+    # <i>whence</i> is <code>IO::SEEK_CUR</code>, <i>offset</i> is relative to
+    # the current position.
     #
-    # Raises IOError if the internal read buffer is not empty.  Raises IOError
-    # if #closed? returns +true+.  Raises Errno::ESPIPE unless #seekable?
-    # returns +true+.
+    # Raises <code>IOError</code> if the internal read buffer is not empty.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>Errno::ESPIPE</code> unless #seekable? returns <code>true</code>.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_seek, it will also
     # raise the same errors and block at the same times as that function.
@@ -1018,14 +1049,14 @@ class IO # :nodoc:
     # call-seq:
     #   ios.syswrite(string) -> integer
     #
-    # Writes _string_ directly to the data stream, bypassing the internal write
-    # buffer and returns the number of bytes written.
+    # Writes <i>string</i> directly to the data stream, bypassing the internal
+    # write buffer and returns the number of bytes written.
     #
     # As a side effect for non-duplex objects, the internal read buffer is
     # flushed.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #writable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #writable? returns <code>true</code>.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_write, it will also
     # raise the same errors and block at the same times as that function.
@@ -1049,7 +1080,7 @@ class IO # :nodoc:
     # call-seq:
     #   ios.to_io            -> ios
     #
-    # Returns _ios_.
+    # Returns <i>ios</i>.
     def to_io
       self
     end
@@ -1057,10 +1088,10 @@ class IO # :nodoc:
     # call-seq:
     #   ios.ungetc(integer)  -> nil
     #
-    # Calls #unread with <tt>integer.chr</tt> as an argument.
+    # Calls #unread with <code>integer.chr</code> as an argument.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #readable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #readable? returns <code>true</code>.
     def ungetc(integer)
       unread(integer.chr)
     end
@@ -1069,11 +1100,11 @@ class IO # :nodoc:
     #   ios.unread(string)  -> nil
     #
     # Pushes the given string onto the front of the internal read buffer and
-    # returns +nil+.  If _string_ is not a String, it is converted to one using
-    # its +to_s+ method.
+    # returns <code>nil</code>.  If <i>string</i> is not a <code>String</code>,
+    # it is converted to one using its <code>to_s</code> method.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #readable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #readable? returns <code>true</code>.
     def unread(string)
       raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
@@ -1084,16 +1115,19 @@ class IO # :nodoc:
     # call-seq:
     #   ios.write_ready?        -> true or false
     #
-    # Returns +true+ when the stream may be written without error, +false+
-    # otherwise.  This method will block until one of the conditions is known.
+    # Returns <code>true</code> when the stream may be written without error,
+    # <code>false</code> otherwise.  This method will block until one of the
+    # conditions is known.
     #
     # This default implementation of #write_ready? is a hack which should be
-    # able to work for both real IO objects and IO-like objects; however, it is
-    # inefficient since it merely sleeps for 1 second and then returns +true+ as
-    # long as #closed? returns +false+.  IO.select should be used for real
-    # IO objects to wait for a writeable condition on platforms with support for
-    # IO.select.  Other solutions should be found as necessary to improve this
-    # implementation on a case by case basis.
+    # able to work for both real <code>IO</code> objects and
+    # <code>IO</code>-like objects; however, it is inefficient since it merely
+    # sleeps for 1 second and then returns <code>true</code> as long as #closed?
+    # returns <code>false</code>.  <code>IO.select</code> should be used for
+    # real <code>IO</code> objects to wait for a writeable condition on
+    # platforms with support for <code>IO.select</code>.  Other solutions should
+    # be found as necessary to improve this implementation on a case by case
+    # basis.
     #
     # Basically, this method should be overridden in derivative classes.
     def write_ready?
@@ -1105,7 +1139,8 @@ class IO # :nodoc:
     # call-seq:
     #   ios.writable?        -> true or false
     #
-    # Returns +true+ if the stream is both open and writable, +false+ otherwise.
+    # Returns <code>true</code> if the stream is both open and writable,
+    # <code>false</code> otherwise.
     #
     # This implementation checks to see if #unbuffered_write is defined in order
     # to make its determination.  Override this if the implementing class always
@@ -1119,18 +1154,19 @@ class IO # :nodoc:
     #   ios.write(string)    -> integer
     #
     # Writes the given string to the stream and returns the number of bytes
-    # written.  If _string_ is not a String, its +to_s+ method is used to
-    # convert it into one.  The entire contents of _string_ are written,
-    # blocking as necessary even if the data stream does not block.
+    # written.  If <i>string</i> is not a <code>String</code>, its
+    # <code>to_s</code> method is used to convert it into one.  The entire
+    # contents of <i>string</i> are written, blocking as necessary even if the
+    # data stream does not block.
     #
-    # Raises IOError if #closed? returns +true+.  Raises IOError unless
-    # #writable? returns +true+.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #writable? returns <code>true</code>.
     #
-    # <b>NOTE:</b> This method ignores Errno::EAGAIN and Errno::EINTR raised by
-    # #unbuffered_write.  Therefore, this method always blocks if unable to
-    # immediately write _string_ completely.  Aside from that exception, this
-    # method will also raise the same errors and block at the same times as
-    # #unbuffered_write.
+    # <b>NOTE:</b> This method ignores <code>Errno::EAGAIN</code> and
+    # <code>Errno::EINTR</code> raised by #unbuffered_write.  Therefore, this
+    # method always blocks if unable to immediately write <i>string</i>
+    # completely.  Aside from that exception, this method will also raise the
+    # same errors and block at the same times as #unbuffered_write.
     def write(string)
       string = string.to_s
       return 0 if string.empty?
@@ -1154,7 +1190,7 @@ class IO # :nodoc:
     #
     # Attempts to completely flush the internal write buffer to the data stream.
     #
-    # Raises IOError unless #writable? returns +true+.
+    # Raises <code>IOError</code> unless #writable? returns <code>true</code>.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_write, it raises
     # all errors raised by #unbuffered_write and blocks when #unbuffered_write
@@ -1174,11 +1210,13 @@ class IO # :nodoc:
     # call-seq:
     #   ios.__io_like__buffered_read(length) -> string
     #
-    # Reads at most _length_ bytes first from an internal read buffer followed
-    # by the underlying stream if necessary and returns the resulting buffer.
+    # Reads at most <i>length</i> bytes first from an internal read buffer
+    # followed by the underlying stream if necessary and returns the resulting
+    # buffer.
     #
-    # Raises EOFError if the internal read buffer is empty and reading begins at
-    # the end of the stream.  Raises IOError unless #readable? returns +true+.
+    # Raises <code>EOFError</code> if the internal read buffer is empty and
+    # reading begins at the end of the stream.  Raises <code>IOError</code>
+    # unless #readable? returns <code>true</code>.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_read, it raises all
     # errors raised by #unbuffered_read and blocks when #unbuffered_read blocks
@@ -1216,19 +1254,22 @@ class IO # :nodoc:
     # call-seq:
     #   ios.__io_like__buffered_seek(offset[, whence]) -> integer
     #
-    # Sets the current data position to _offset_ based on the setting of
-    # _whence_.  If _whence_ is unspecified or IO::SEEK_SET, _offset_ counts
-    # from the beginning of the data.  If _whence_ is IO::SEEK_END, _offset_
-    # counts from the end of the data (_offset_ should be negative here).  If
-    # _whence_ is IO::SEEK_CUR, _offset_ is relative to the current position.
+    # Sets the current data position to <i>offset</i> based on the setting of
+    # <i>whence</i>.  If <i>whence</i> is unspecified or
+    # <code>IO::SEEK_SET</code>, <i>offset</i> counts from the beginning of the
+    # data.  If <i>whence</i> is <code>IO::SEEK_END</code>, <i>offset</i> counts
+    # from the end of the data (<i>offset</i> should be negative here).  If
+    # <i>whence</i> is <code>IO::SEEK_CUR</code>, <i>offset</i> is relative to
+    # the current position.
     #
     # As a side effect, the internal read and write buffers are flushed except
-    # when seeking relative to the current position (whence is IO::SEEK_CUR) to
-    # a location within the internal read buffer.
+    # when seeking relative to the current position (whence is
+    # <code>IO::SEEK_CUR</code>) to a location within the internal read buffer.
     #
-    # Raises Errno::ESPIPE unless #seekable? returns +true+.
+    # Raises <code>Errno::ESPIPE</code> unless #seekable? returns
+    # <code>true</code>.
     #
-    # See #seek for the usage of _offset_ and _whence_.
+    # See #seek for the usage of <i>offset</i> and <i>whence</i>.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
     # #unbuffered_write (when the internal write buffer is not empty), it will
@@ -1276,12 +1317,13 @@ class IO # :nodoc:
     # call-seq:
     #   ios.__io_like__buffered_write(string) -> integer
     #
-    # Writes _string_ to the internal write buffer and returns the number of
-    # bytes written.  If the internal write buffer is overfilled by _string_, it
-    # is repeatedly flushed until that last of _string_ is consumed.  A partial
-    # write will occur if part of _string_ fills the internal write buffer but
-    # the internal write buffer cannot be immediately flushed due to the
-    # underlying stream not blocking when unable to accept more data.
+    # Writes <i>string</i> to the internal write buffer and returns the number
+    # of bytes written.  If the internal write buffer is overfilled by
+    # <i>string</i>, it is repeatedly flushed until that last of <i>string</i>
+    # is consumed.  A partial write will occur if part of <i>string</i> fills
+    # the internal write buffer but the internal write buffer cannot be
+    # immediately flushed due to the underlying stream not blocking when unable
+    # to accept more data.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_write, it raises
     # all errors raised by #unbuffered_write and blocks when #unbuffered_write
@@ -1329,33 +1371,33 @@ class IO # :nodoc:
       @__io_like__write_buffer ||= ''
     end
 
-    # Returns +true+ if this object has been closed for reading; otherwise,
-    # returns +false+.
+    # Returns <code>true</code> if this object has been closed for reading;
+    # otherwise, returns <code>false</code>.
     def __io_like__closed_read?
       @__io_like__closed_read ||= false
     end
 
-    # Arranges for #__io_like__closed_read? to return +true+.
+    # Arranges for #__io_like__closed_read? to return <code>true</code>.
     def __io_like__close_read
       @__io_like__closed_read = true
       nil
     end
 
-    # Returns +true+ if this object has been closed for writing; otherwise,
-    # returns +false+.
+    # Returns <code>true</code> if this object has been closed for writing;
+    # otherwise, returns <code>false</code>.
     def __io_like__closed_write?
       @__io_like__closed_write ||= false
     end
 
-    # Arranges for #__io_like__closed_write? to return +true+.
+    # Arranges for #__io_like__closed_write? to return <code>true</code>.
     def __io_like__close_write
       @__io_like__closed_write = true
       nil
     end
 
-    # This method joins the elements of _array_ together with _separator_
-    # between each element and returns the result.  _seen_ is a list of object
-    # IDs representing arrays which have already started processing.
+    # This method joins the elements of <i>array</i> together with _separator_
+    # between each element and returns the result.  <i>seen</i> is a list of
+    # object IDs representing arrays which have already started processing.
     #
     # This method exists only because Array#join apparently behaves in an
     # implementation dependent manner when joining recursive arrays and so does
