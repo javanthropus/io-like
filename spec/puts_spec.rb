@@ -22,6 +22,7 @@ describe "IO::Like#puts" do
     $, = @old_field_separator
     @iowrapper.close unless @iowrapper.closed?
     @file.close unless @file.closed?
+    File.unlink @filename
   end
 
   it "returns nil" do
