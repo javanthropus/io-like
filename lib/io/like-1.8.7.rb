@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require 'enumerator'         # in case used under Ruby < v1.8.7
 require 'io/like-1.8.6'
 

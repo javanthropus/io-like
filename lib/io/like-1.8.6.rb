@@ -1,3 +1,4 @@
+# encoding: UTF-8
 class IO # :nodoc:
   # This module provides most of the basic input and output functions of
   # <code>IO</code> objects as implemented in Ruby version 1.8.6.  Its use is

@@ -1,3 +1,4 @@
+# encoding: UTF-8
 unless ENV['MSPEC_RUNNER']
   begin
     require "pp"

@@ -1,3 +1,4 @@
+# encoding: UTF-8
 # Set the implementation of IO::Like based on the version of the Ruby
 # interpreter reading this file.
 ver_arr = RUBY_VERSION.split('.').collect { |n| n.to_i }
