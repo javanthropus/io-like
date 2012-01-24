@@ -1,14 +1,4 @@
 # encoding: UTF-8
-# Set the implementation of IO::Like based on the version of the Ruby
-# interpreter reading this file.
-ver_arr = RUBY_VERSION.split('.').collect { |n| n.to_i }
-if (ver_arr <=> [1, 8, 6]) <= 0 then
-  require 'io/like-1.8.6'
-  IO::Like = IO::Like_1_8_6
-else
-  require 'io/like-1.8.7'
-  IO::Like = IO::Like_1_8_7
-end
 
 # Redefine IO::Like here in order to get rdoc documentation generated for it.
 class IO # :nodoc:
@@ -94,6 +84,15 @@ class IO # :nodoc:
   # explicitly called when the object is no longer needed or risk losing
   # whatever data remains in the internal write buffer.
   module Like
+    # Set the implementation of IO::Like based on the version of the Ruby
+    # interpreter reading this file.
+    if (RUBY_VERSION.split('.').map { |n| n.to_i } <=> [1, 8, 6]) <= 0
+      require 'io/like-1.8.6'
+      include IO::Like_1_8_6
+    else
+      require 'io/like-1.8.7'
+      include IO::Like_1_8_7
+    end
   end
 end
 
