@@ -83,6 +83,25 @@ class IO # :nodoc:
   # automatically called when the object is garbage collected, so it must be
   # explicitly called when the object is no longer needed or risk losing
   # whatever data remains in the internal write buffer.
+  #
+  # == Non-blocking Streams
+  #
+  # As above #unbuffered_read and #unbuffered_write should raise
+  # <code>Errno::EAGAIN</code> if they should not block
+  #
+  # The #read_nonblock and #write_nonblock methods of IO::Like will attempt
+  # to call #nonblock=(true) on the underlying stream before calling
+  # #unbuffered_read or #unbuffered_write. 
+  # This is the equivalent of Ruby setting the O_NONBLOCK flag on traditional
+  # file descriptor based IO.
+  # 
+  # The default implementation of #nonblock= raises <code>Errno::EBADF</code>
+  # For streams that are always non blocking this can be overridden with a no-op
+  #
+  # Nonblocking streams should also provide a more optimal implementation
+  # of #read_ready? and #write_ready? which by default simply calls Kernel.sleep(1)
+  # and is called by the blocking read and write methods in response to Errno::EAGAIN
+  #
   module Like
     # Set the implementation of IO::Like based on the version of the Ruby
     # interpreter reading this file.

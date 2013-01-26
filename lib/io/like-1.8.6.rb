@@ -292,6 +292,15 @@ class IO # :nodoc:
     end
 
     # call-seq:
+    #   ios.fsync
+    #
+    # Flush data to disk, default is not supported
+    def fsync()
+      nil
+    end
+
+
+    # call-seq:
     #   ios.getc             -> nil or integer
     #
     # Calls #readchar and either returns the result or <code>nil</code> if
@@ -854,6 +863,53 @@ class IO # :nodoc:
     end
 
     # call-seq:
+    #   ios.read_nonblock(length[, buffer]) -> string or buffer
+    #
+    # Returns at most <i>length</i> bytes from the data stream using only the
+    # internal read buffer if the buffer is not empty. 
+    #
+    # If internal buffer is empty sets nonblocking mode via #nonblock=(true)
+    # and then reads from the underlying stream
+    #
+    # Raises <code>Errno::EBADF</code> if nonblocking mode is not supported
+    # Raises <code>EOFError</code> when there is no more data in the stream.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.
+    # Raises <code>IOError</code> unless #readable? returns <code>true</code>.
+    # 
+    # This method will raise errors directly from #buffered_read to be handled
+    # by the caller.
+    # 1.9
+    # If <code>Errno::EAGAIN</code>, <code>Errno::EWOULDBLOCK</code> are raised
+    # they are extended by IO::WaitReadable which should be caught by the caller before retrying
+    # via #read_ready? or some equivalent of IO.select
+    #
+    def read_nonblock(length, buffer = nil)
+      # Check the validity of the method arguments.
+      unless length >= 0 then
+        raise ArgumentError, "negative length #{length} given"
+      end
+      buffer = '' if buffer.nil?
+      # Flush the buffer.
+      buffer.slice!(0..-1)
+
+      # Read and return up to length bytes.
+      if __io_like__internal_read_buffer.empty? then
+        begin
+          buffer << __io_like__buffered_read(length,true)
+        rescue Errno::EWOULDBLOCK,Errno::EAGAIN => ex
+          #ex.extend(IO::WaitReadable) unless ex === IO::WaitReadable
+          raise ex
+        end
+      else
+        raise IOError, 'closed stream' if closed?
+        raise IOError, 'not opened for reading' unless readable?
+
+        buffer << __io_like__internal_read_buffer.slice!(0, length)
+      end
+      buffer
+    end
+
+    # call-seq:
     #   ios.readpartial(length[, buffer]) -> string or buffer
     #
     # Returns at most <i>length</i> bytes from the data stream using only the
@@ -868,7 +924,7 @@ class IO # :nodoc:
     #
     # <b>NOTE:</b> This method ignores <code>Errno::EAGAIN</code> and
     # <code>Errno::EINTR</code> raised by #unbuffered_read.  Therefore, this
-    # method always blocks if unable to immediately return <i>length</i> bytes.
+    # method always blocks (via #read_ready?) if unable to immediately return <i>length</i> bytes.
     # Aside from that exception, this method will also raise the same errors and
     # block at the same times as #unbuffered_read.
     def readpartial(length, buffer = nil)
@@ -883,80 +939,93 @@ class IO # :nodoc:
       # Read and return up to length bytes.
       if __io_like__internal_read_buffer.empty? then
         begin
-          buffer << __io_like__buffered_read(length)
-        rescue Errno::EAGAIN, Errno::EINTR
-          retry if read_ready?
-        end
-      else
-        raise IOError, 'closed stream' if closed?
-        raise IOError, 'not opened for reading' unless readable?
-
-        buffer << __io_like__internal_read_buffer.slice!(0, length)
+        buffer << __io_like__buffered_read(length,false)
+      rescue Errno::EINTR,Errno::EAGAIN
+        retry if read_ready?
       end
-      buffer
-    end
+    else
+      raise IOError, 'closed stream' if closed?
+      raise IOError, 'not opened for reading' unless readable?
 
-    # call-seq:
-    #   ios.rewind           -> 0
-    #
-    # Sets the position of the file pointer to the beginning of the stream and
-    # returns <code>0</code> when complete.  The <code>lineno</code> attribute
-    # is reset to <code>0</code> if successful and the stream is readable
-    # according to #readable?.
-    #
-    # As a side effect, the internal read and write buffers are flushed.
-    #
-    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
-    # <code>Errno::ESPIPE</code> unless #seekable? returns <code>true</code>.
-    #
-    # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
-    # #unbuffered_write (when the internal write buffer is not empty), it will
-    # also raise the same errors and block at the same times as those functions.
-    def rewind
-      seek(0, IO::SEEK_SET)
-      self.lineno = 0 if readable?
-      0
+      buffer << __io_like__internal_read_buffer.slice!(0, length)
     end
+    buffer
+  end
 
-    # call-seq:
-    #   seek(offset[, whence]) -> 0
-    #
-    # Sets the current data position to <i>offset</i> based on the setting of
-    # <i>whence</i>.  If <i>whence</i> is unspecified or
-    # <code>IO::SEEK_SET</code>, <i>offset</i> counts from the beginning of the
-    # data.  If <i>whence</i> is <code>IO::SEEK_END</code>, <i>offset</i> counts
-    # from the end of the data (<i>offset</i> should be negative here).  If
-    # <i>whence</i> is <code>IO::SEEK_CUR</code>, <i>offset</i> is relative to
-    # the current position.
-    #
-    # As a side effect, the internal read and write buffers are flushed except
-    # when seeking relative to the current position (whence is
-    # <code>IO::SEEK_CUR</code>) to a location within the internal read buffer.
-    #
-    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
-    # <code>Errno::ESPIPE</code> unless #seekable? returns <code>true</code>.
-    #
-    # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
-    # #unbuffered_write (when the internal write buffer is not empty), it will
-    # also raise the same errors and block at the same times as those functions.
-    def seek(offset, whence = IO::SEEK_SET)
-      __io_like__buffered_seek(offset, whence)
-      0
-    end
+  # call-seq:
+  #   ios.rewind           -> 0
+  #
+  # Sets the position of the file pointer to the beginning of the stream and
+  # returns <code>0</code> when complete.  The <code>lineno</code> attribute
+  # is reset to <code>0</code> if successful and the stream is readable
+  # according to #readable?.
+  #
+  # As a side effect, the internal read and write buffers are flushed.
+  #
+  # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+  # <code>Errno::ESPIPE</code> unless #seekable? returns <code>true</code>.
+  #
+  # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
+  # #unbuffered_write (when the internal write buffer is not empty), it will
+  # also raise the same errors and block at the same times as those functions.
+  def rewind
+    seek(0, IO::SEEK_SET)
+    self.lineno = 0 if readable?
+    0
+  end
 
-    # call-seq:
-    #   ios.seekable?        -> true or false
-    #
-    # Returns <code>true</code> if the stream is seekable, <code>false</code>
-    # otherwise.
-    #
-    # This implementation always returns <code>false</code> for duplexed objects
-    # and checks to see if #unbuffered_seek is defined in order to make its
-    # determination otherwise.  Override this if the implementing class always
-    # provides the #unbuffered_seek method but may not always be seekable.
-    def seekable?
-      ! duplexed? && respond_to?(:unbuffered_seek, true)
-    end
+  # call-seq:
+  #   seek(offset[, whence]) -> 0
+  #
+  # Sets the current data position to <i>offset</i> based on the setting of
+  # <i>whence</i>.  If <i>whence</i> is unspecified or
+  # <code>IO::SEEK_SET</code>, <i>offset</i> counts from the beginning of the
+  # data.  If <i>whence</i> is <code>IO::SEEK_END</code>, <i>offset</i> counts
+  # from the end of the data (<i>offset</i> should be negative here).  If
+  # <i>whence</i> is <code>IO::SEEK_CUR</code>, <i>offset</i> is relative to
+  # the current position.
+  #
+  # As a side effect, the internal read and write buffers are flushed except
+  # when seeking relative to the current position (whence is
+  # <code>IO::SEEK_CUR</code>) to a location within the internal read buffer.
+  #
+  # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+  # <code>Errno::ESPIPE</code> unless #seekable? returns <code>true</code>.
+  #
+  # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
+  # #unbuffered_write (when the internal write buffer is not empty), it will
+  # also raise the same errors and block at the same times as those functions.
+  def seek(offset, whence = IO::SEEK_SET)
+    __io_like__buffered_seek(offset, whence)
+    0
+  end
+
+  # call-seq:
+  #   ios.seekable?        -> true or false
+  #
+  # Returns <code>true</code> if the stream is seekable, <code>false</code>
+  # otherwise.
+  #
+  # This implementation always returns <code>false</code> for duplexed objects
+  # and checks to see if #unbuffered_seek is defined in order to make its
+  # determination otherwise.  Override this if the implementing class always
+  # provides the #unbuffered_seek method but may not always be seekable.
+  def seekable?
+    ! duplexed? && respond_to?(:unbuffered_seek, true)
+  end
+
+  # call-seq:
+  #   ios.nonblock=(blocking_mode)
+  #
+  # #read_nonblock, #write_nonblock will call nonblock=(true)
+  # prior to calling #unbuffered_read or #unbuffered_write
+  #
+  # The default implementation raises <code>Errno::EBADF</code> to indicate
+  # that nonblocking operations are not supported. IO implementations that
+  # are always nonblocking should override with a no-op
+  def nonblock=(blocking_mode)
+    raise Errno::EBADF
+  end
 
     # call-seq:
     #   ios.sync             -> true or false
@@ -1008,7 +1077,7 @@ class IO # :nodoc:
       raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
       unless __io_like__internal_read_buffer.empty? then
-        raise IOError, 'sysread on buffered IO'
+         raise IOError, 'sysread on buffered IO'
       end
 
       # Flush the internal write buffer for writable, non-duplexed objects.
@@ -1176,10 +1245,42 @@ class IO # :nodoc:
       while bytes_written < string.length do
         begin
           bytes_written +=
-            __io_like__buffered_write(string.to_s.slice(bytes_written..-1))
-        rescue Errno::EAGAIN, Errno::EINTR
+            __io_like__buffered_write(string.to_s.slice(bytes_written..-1),false)
+        rescue Errno::EAGAIN,Errno::EINTR
           retry if write_ready?
         end
+      end
+      bytes_written
+    end
+
+    # call-seq:
+    #   ios.write_nonblock(string)    -> integer
+    #
+    # Writes the given string to the stream and returns the number of bytes
+    # written.  If <i>string</i> is not a <code>String</code>, its
+    # <code>to_s</code> method is used to convert it into one.
+    #
+    # As many bytes as possible are written without blocking or
+    # SystemCallEerror from #unbuffered_write is passed directly through
+    # to be handled by the caller
+    #
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #writable? returns <code>true</code>.
+    # 
+    #
+    # 1.9 <code>Errno::EAGAIN</code> and <code>Errno::EWOULDBLOCK</code> are extended
+    # by <code>IO::WriteWaitable</code> which should be caught by the caller before retrying
+    # via #write_ready? or some equivalent of IO.select
+    #
+    def write_nonblock(string)
+      string = string.to_s
+      return 0 if string.empty?
+
+      begin
+         bytes_written = __io_like__buffered_write(string,true)
+      rescue Errno::EAGAIN, Errno::EWOULDBLOCK => ex
+         # ex.extend(IO::WriteWaitable) unless ex === IO::WriteWaitable
+          raise ex
       end
       bytes_written
     end
@@ -1222,7 +1323,7 @@ class IO # :nodoc:
     # <b>NOTE:</b> Because this method relies on #unbuffered_read, it raises all
     # errors raised by #unbuffered_read and blocks when #unbuffered_read blocks
     # whenever the internal read buffer is unable to fulfill the request.
-    def __io_like__buffered_read(length)
+    def __io_like__buffered_read(length,nonblock=false)
       # Check the validity of the method arguments.
       raise ArgumentError, "non-positive length #{length} given" if length < 0
 
@@ -1235,10 +1336,13 @@ class IO # :nodoc:
       # Ensure that the internal read buffer has at least enough data to satisfy
       # the request.
       if __io_like__internal_read_buffer.length < length then
+
         unbuffered_length = length - __io_like__internal_read_buffer.length
         unbuffered_length = fill_size if unbuffered_length < fill_size
 
         begin
+          # set nonblocking if necessary
+          __io_like__nonblock() if nonblock
           __io_like__internal_read_buffer << unbuffered_read(unbuffered_length)
         rescue EOFError, SystemCallError
           # Reraise the error if there is no data to return.
@@ -1250,6 +1354,16 @@ class IO # :nodoc:
       buffer = __io_like__internal_read_buffer.slice!(0, length)
 
       buffer
+    end
+
+    # call-seq:
+    #   ios.__io_like__nonblock()
+    #
+    # Puts the underlying stream into blocking mode
+    #
+    # See #read_nonblock, #write_nonblock #nonblock=
+    def __io_like__nonblock
+      self.nonblock=(true) 
     end
 
     # call-seq:
@@ -1330,7 +1444,7 @@ class IO # :nodoc:
     # all errors raised by #unbuffered_write and blocks when #unbuffered_write
     # blocks whenever the internal write buffer is unable to fulfill the
     # request.
-    def __io_like__buffered_write(string)
+    def __io_like__buffered_write(string,nonblock=false)
       raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for writing' unless writable?
 
@@ -1342,22 +1456,20 @@ class IO # :nodoc:
       end
 
       bytes_written = 0
-      if sync then
+
+      if sync || nonblock || __io_like__internal_write_buffer.length + string.length >= flush_size then
         # Flush the internal write buffer and then bypass it when in synchronous
-        # mode.
+        # mode or the tipping point for the write buffer would be surpassed by this
+        # request.
+          
+        __io_like__nonblock() if nonblock
+         
         __io_like__buffered_flush
         bytes_written = unbuffered_write(string)
       else
-        if __io_like__internal_write_buffer.length + string.length >= flush_size then
-          # The tipping point for the write buffer would be surpassed by this
-          # request, so flush everything.
-          __io_like__buffered_flush
-          bytes_written = unbuffered_write(string)
-        else
-          # The buffer can absorb the entire request.
-          __io_like__internal_write_buffer << string
-          bytes_written = string.length
-        end
+        # The buffer can absorb the entire request.
+        __io_like__internal_write_buffer << string
+        bytes_written = string.length
       end
       return bytes_written
     end
