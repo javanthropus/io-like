@@ -1,5 +1,6 @@
 # encoding: UTF-8
 require 'io/like'
+require 'fcntl'
 
 class IOWrapper
   include IO::Like
@@ -7,7 +8,6 @@ class IOWrapper
   def self.open(io)
     iow = new(io)
     return iow unless block_given?
-
     begin
       yield(iow)
     ensure
@@ -17,6 +17,12 @@ class IOWrapper
 
   def initialize(io)
     @io = io
+  end
+
+  def nonblock=(nb)
+    flags = @io.fcntl(Fcntl::F_GETFL)
+    new_flags = nb ? flags | Fcntl::O_NONBLOCK : flags & ~Fcntl::O_NONBLOCK
+    @io.fcntl(Fcntl::F_SETFL,new_flags)
   end
 
   private
