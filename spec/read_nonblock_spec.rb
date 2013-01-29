@@ -34,12 +34,12 @@ describe "IO#read_nonblock" do
     @write << "hello"
     @read.read_nonblock(10).should == "hello"
   end
-  
+
   # IO-Like: The first call to read_nonblock puts the fd in nonblocking mode
   # and leaves it that way
   #
-  # In MRI prior to 1.9 the read method was not necessarily a blocking method 
-  # but IO::Like has always had #read retry on #EAGAIN 
+  # In MRI prior to 1.9 the read method was not necessarily a blocking method
+  # but IO::Like has always had #read retry on #EAGAIN
   # http://blade.nagaokaut.ac.jp/cgi-bin/scat.rb/ruby/ruby-dev/25101
   quarantine! do
   not_compliant_on :rubinius, :jruby do
