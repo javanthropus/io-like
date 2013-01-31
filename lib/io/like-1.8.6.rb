@@ -1263,7 +1263,7 @@ class IO # :nodoc:
     # <b>NOTE:</b> Because this method relies on #unbuffered_read, it raises all
     # errors raised by #unbuffered_read and blocks when #unbuffered_read blocks
     # whenever the internal read buffer is unable to fulfill the request.
-    def __io_like__buffered_read(length,nonblock=false)
+    def __io_like__buffered_read(length)
       # Check the validity of the method arguments.
       raise ArgumentError, "non-positive length #{length} given" if length < 0
 
@@ -1280,8 +1280,6 @@ class IO # :nodoc:
         unbuffered_length = fill_size if unbuffered_length < fill_size
 
         begin
-          # set nonblocking if necessary
-          __io_like__nonblock() if nonblock
           __io_like__internal_read_buffer << unbuffered_read(unbuffered_length)
         rescue EOFError, SystemCallError
           # Reraise the error if there is no data to return.
@@ -1309,10 +1307,13 @@ class IO # :nodoc:
       # Flush the buffer.
       buffer.slice!(0..-1)
 
+      # set nonblocking if necessary
+      __io_like__nonblock if nonblock
+
       # Read and return up to length bytes.
       if __io_like__internal_read_buffer.empty? then
         begin
-          buffer << __io_like__buffered_read(length,nonblock)
+          buffer << __io_like__buffered_read(length)
         rescue Errno::EINTR, Errno::EAGAIN
           if !nonblock && read_ready? then retry else raise end
         end
