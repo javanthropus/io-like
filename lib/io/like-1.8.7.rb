@@ -14,6 +14,15 @@ class IO # :nodoc:
   # matter what version of Ruby is running the class.
   module Like_1_8_7
     include IO::Like_1_8_6
+    
+    # call-seq:
+    #   ios.binmode          -> ios
+    #
+    # Returns <code>self</code>.  Just for compatibility with <code>IO</code>.
+    def binmode
+      raise IOError, 'closed stream' if closed?
+      self
+    end
 
     # call-seq:
     #   ios.bytes            -> anEnumerator

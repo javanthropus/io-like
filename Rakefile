@@ -168,7 +168,7 @@ end
 # Create the test task.
 desc 'Run tests'
 task :test do
-  sh "mspec"
+  sh "mspec -B io-like.mspec"
 end
 
 # Version string management tasks.

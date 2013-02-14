@@ -548,6 +548,7 @@ class IO # :nodoc:
              when String
                obj[0].chr
              else
+               raise TypeError unless obj.respond_to?(:to_int)
                [obj.to_int].pack('V')[0].chr
              end
       write(char)
@@ -591,16 +592,10 @@ class IO # :nodoc:
 
       # Write each argument followed by the record separator.  Recursively
       # process arguments which are Array instances.
-      args.each do |arg|
-        line = arg.nil? ?
-                 'nil' :
-                 arg.kind_of?(Array) ?
-                   __io_like__array_join(arg, ors) :
-                   arg.to_s
-        line += ors if line.index(ors, -ors.length).nil?
-        write(line)
+      __io_like__array_flatten(args) do |string|
+          write(string || 'nil')
+          write(ors) if string.nil? || string.index(ors, -ors.length).nil?
       end
-
       nil
     end
 
@@ -1219,10 +1214,7 @@ class IO # :nodoc:
     # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
     # <code>IOError</code> unless #writable? returns <code>true</code>.
     def write_nonblock(string)
-      string = string.to_s
-      return 0 if string.empty?
-
-      return __io_like__buffered_write(string,true)
+      return __io_like__buffered_write(string.to_s,true)
     end
 
     private
@@ -1476,9 +1468,9 @@ class IO # :nodoc:
       nil
     end
 
-    # This method joins the elements of <i>array</i> together with _separator_
-    # between each element and returns the result.  <i>seen</i> is a list of
-    # object IDs representing arrays which have already started processing.
+    # This method yields the flattened elements of <i>array</i> as a string suitable for
+    # #puts.  <i>seen</i> is a list of # object IDs to detect recursive
+    # array nesting
     #
     # This method exists only because Array#join apparently behaves in an
     # implementation dependent manner when joining recursive arrays and so does
@@ -1495,26 +1487,23 @@ class IO # :nodoc:
     #
     # Things get progressively worse as the nesting and recursion become more
     # convoluted.
-    def __io_like__array_join(array, separator, seen = [])
+    def __io_like__array_flatten(array,seen = [],&block)
       seen.push(array.object_id)
-      need_separator = false
-      result = array.inject('') do |memo, item|
-        memo << separator if need_separator
-        need_separator = true
+      array.each do |item|
 
-        memo << if item.kind_of?(Array) then
-                  if seen.include?(item.object_id) then
-                    '[...]'
-                  else
-                    __io_like__array_join(item, separator, seen)
-                  end
-                else
-                  item.to_s
-                end
+        if item.nil? 
+          yield nil
+        elsif item.kind_of?(Array)
+          if seen.include?(item.object_id)
+            yield '[...]'
+          else
+            __io_like__array_flatten(item,seen,&block)
+          end
+        else
+          yield item.to_s
+        end
       end
       seen.pop
-
-      result
     end
   end
 end

@@ -19,8 +19,10 @@ describe "IO::Like#binmode" do
     @iowrapper.binmode.should == @iowrapper
   end
 
-  it "does not raise any errors on closed stream" do
-    lambda { IOSpecs.closed_file.binmode }.should_not raise_error()
+  ruby_version_is ''...'1.8.7' do
+    it "does not raise any errors on closed stream" do
+      lambda { IOSpecs.closed_file.binmode }.should_not raise_error()
+    end
   end
 
   # Even if it does nothing in Unix it should not raise any errors.
