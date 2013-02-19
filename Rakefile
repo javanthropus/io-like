@@ -1,9 +1,9 @@
 # encoding: UTF-8
-require 'rake/clean'
-require 'rake/gempackagetask'
-require 'rake/rdoctask'
-require 'rake/testtask'
 require 'rubygems'
+require 'rake/clean'
+require 'rubygems/package_task'
+require 'rdoc/task'
+require 'rake/testtask'
 
 # The Unix name of this project.
 PKG_NAME    = 'io-like'
@@ -111,12 +111,12 @@ task :gem => :check_manifest
 task :package => :check_manifest
 
 # Create the gem and package tasks.
-Rake::GemPackageTask.new(spec) do |t|
+Gem::PackageTask.new(spec) do |t|
   t.need_tar_gz = true
 end
 
 # Create the rdoc task.
-Rake::RDocTask.new do |rdoc|
+RDoc::Task.new do |rdoc|
   rdoc.rdoc_dir   = LOCAL_DOCS
   rdoc.title      = 'IO::Like Documentation'
   rdoc.rdoc_files = RDOC_FILES
