@@ -19,7 +19,7 @@ class MSpecScript
   # Also instance methods related to file descriptor IO
   irrelevant_instance_methods = [
     "IO#dup", "IO#ioctl", "IO#fcntl", "IO#fsync", "IO#pid", "IO#stat",
-    "IO#fileno", "IO#to_i", "IO#reopen", "IO#isatty", "IO#tty?"
+    "IO#fileno", "IO#to_i", "IO#reopen", "terminal device (TTY)"
   ]
 
   # and some intentionally not compliant

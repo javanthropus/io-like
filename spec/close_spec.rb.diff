@@ -1,0 +1,20 @@
+<<< spec/close_spec.rb
+>>> rubyspec/core/io/close_spec.rb
+1c1
+< describe "IO::Like#close" do
+---
+> describe "IO#close" do
+6,7c6,12
+#lwoggardner: covered by reading|writing from|to a closed IO below
+<   it "makes the stream unavailable for any further data operations" do
+#lwoggardner: covered below
+<   it "raises an IOError on subsequent invocations" do
+#lwoggardner: all specs covered, spec deleted
+---
+>   it "raises an IOError reading from a closed IO" do
+>   it "raises an IOError writing to a closed IO" do
+>   it "raises an IOError if closed" do
+> describe "IO#close on an IO.popen stream" do
+>   it "clears #pid" do
+>   it "sets $?" do
+>   it "waits for the child to exit" do

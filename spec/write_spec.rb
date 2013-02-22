@@ -18,32 +18,6 @@ describe "IO::Like#write" do
     File.delete(@filename)
   end
 
-  # TODO: impl detail? discuss this with matz. This spec is useless. - rdavis
-  it "writes all of the string's bytes but buffers them" do
-    written = @iowrapper.write("abcde")
-    written.should == 5
-    File.open(@filename) do |file|
-      file.read.should == "012345678901234567890123456789"
-      @iowrapper.flush
-      file.rewind
-      file.read.should == "abcde5678901234567890123456789"
-    end
-  end
-
-  it "returns the number of bytes written" do
-    @iowrapper.write('').should == 0
-    @iowrapper.write('abcde').should == 5
-  end
-
-  it "writes all of the string's bytes without buffering if mode is sync" do
-    @iowrapper.sync = true
-    written = @iowrapper.write("abcde")
-    written.should == 5
-    File.open(@filename) do |file|
-      file.read(10).should == "abcde56789"
-    end
-  end
-
   it "does not raise IOError on read-only stream if writing zero bytes" do
     lambda do
       IOSpecs.readable_iowrapper do |iowrapper|

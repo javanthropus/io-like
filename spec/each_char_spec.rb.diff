@@ -1,0 +1,12 @@
+<<< spec/each_char_spec.rb
+>>> rubyspec/core/io/each_char_spec.rb
+7,8d6
+#lwoggardner: covered by "does not yield any characters on an empty stream"
+<     it "works on empty streams" do
+<           lambda do
+#lwoggardner: all specs covered, spec deleted
+9a8,11
+>   describe "IO#each_char" do
+>     before :each do
+>     after :each do
+>     it "does not yield any characters on an empty stream" do

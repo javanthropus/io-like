@@ -1,0 +1,33 @@
+<<< spec/eof_spec.rb spec/shared/eof.rb
+>>> rubyspec/core/io/eof_spec.rb
+1,5c1,7
+#lwoggardner: rubyspec does not have shared eof specs
+# below compares rubyspec with our shared spec
+< describe "IO::Like#eof" do
+<   it_behaves_like :io_like__eof, :eof
+< describe "IO::Like#eof?" do
+<   it_behaves_like :io_like__eof, :eof?
+< describe :io_like__eof, :shared => true do
+---
+> describe "IO#eof?" do
+>   before :each do
+>   after :each do
+>   it "returns true on an empty stream that has just been opened" do
+>   it "raises IOError on stream not opened for reading" do
+>     lambda do
+> describe "IO#eof?" do
+13d14
+#lwoggardner: covered above
+<   it "returns true on just opened empty stream" do
+15c16,19
+#lwoggardner: covered below
+<   it "should not consume the data from the stream" do
+---
+>   ruby_version_is ""..."1.9" do
+>     it "does not consume the data from the stream" do
+>   ruby_version_is "1.9" do
+>     it "does not consume the data from the stream" do
+17d20
+#lwoggardner: covered above
+<   it "raises IOError on stream not opened for reading" do
+#lwoggardner: all tests covered, specs deleted

@@ -1,0 +1,13 @@
+<<< spec/each_line_spec.rb
+>>> rubyspec/core/io/each_line_spec.rb
+#lwoggardner: see shared/each.rb.diff
+1,4c1,4
+< describe "IO::Like#each_line" do
+<   it_behaves_like :io_like__each, :each_line
+< describe "IO::Like#each_line when passed a separator" do
+<   it_behaves_like :io_like__each_separator, :each_line
+---
+> describe "IO#each_line" do
+>   it_behaves_like :io_each, :each_line
+> describe "IO#each_line" do
+>   it_behaves_like :io_each_default_separator, :each_line

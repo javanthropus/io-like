@@ -1,0 +1,23 @@
+<<< spec/getc_spec.rb
+>>> rubyspec/core/io/getc_spec.rb
+1c1
+< describe "IO::Like#getc" do
+---
+> describe "IO#getc" do
+4c4,7
+#lwoggardner: covered below
+<   it "returns the next byte from the stream" do
+---
+>   ruby_version_is ''...'1.9' do
+>     it "returns the next byte from the stream" do
+>   ruby_version_is '1.9' do
+>     it "returns the next character from the stream" do
+6d8
+#lwoggardner: covered below:
+<   it "returns nil on empty stream" do
+7a10,13
+> describe "IO#getc" do
+>   before :each do
+>   after :each do
+>   it "returns nil on empty stream" do
+#lwoggardner: all tests covered, spec deleted

@@ -1,0 +1,9 @@
+<<< spec/closed_spec.rb
+>>> rubyspec/core/io/closed_spec.rb
+1c1,3
+< describe "IO::Like#closed?" do
+#lwoggardner: All tests covered, spec deleted
+---
+> describe "IO#closed?" do
+>   before :each do
+>   after :each do

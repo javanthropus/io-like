@@ -1,0 +1,18 @@
+<<< spec/each_byte_spec.rb
+>>> rubyspec/core/io/each_byte_spec.rb
+1c1,3
+< describe "IO::Like#each_byte" do
+---
+> describe "IO#each_byte" do
+>   before :each do
+>   after :each do
+4,5d5
+#lwoggardner: covered by returns self on an empty stream
+<   it "works on empty streams" do
+<         lambda do
+#lwoggardner: all specs covered, spec deleted
+9a10,13
+> describe "IO#each_byte" do
+>   before :each do
+>   after :each do
+>   it "returns self on an empty stream" do

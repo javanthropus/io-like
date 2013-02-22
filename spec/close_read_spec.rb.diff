@@ -1,0 +1,7 @@
+<<< spec/close_read_spec.rb
+>>> rubyspec/core/io/close_read_spec.rb
+1c1
+< describe "IO::Like#close_read" do
+#lwoggardner: all specs covered, spec deleted
+---
+> describe "IO#close_read" do

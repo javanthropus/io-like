@@ -1,0 +1,40 @@
+<<< spec/putc_spec.rb
+>>> rubyspec/core/io/putc_spec.rb rubyspec/shared/io/putc.rb
+1c1
+< describe "IO::Like#putc" do
+---
+> describe "IO#putc" do
+2a3,4
+>   it_behaves_like :io_putc, :putc
+> describe :io_putc, :shared => true do
+4,10c6,16
+#lwoggardner: covered by all of the shared/io/putc.rb tests which each
+# check the result of the call to #putc
+<   it "returns a reference to the object" do
+#lwoggardner: covered under "with a String argument"
+<   it "writes the first byte of a String" do
+#lwoggardner: covered under "with a String argument"
+<   it "writes the first byte of an object's string representation" do
+#lwoggardner: covered by "with a Fixnum argument writes one character as a String"
+<   it "writes Numerics that fit in a C char" do
+#lwoggardner: covered by "with a Fixnum argument writes the low byte as a String"
+<   it "write the first byte of Numerics that don't fit in a C char" do
+#lwoggardner: implicitly covered by our retained shared/write spec on
+# the reasonable assumption that putc simply reformats its args to pass on
+# to #write
+<   it "checks if the stream is writable" do
+#lwoggardner: covered below
+<   it "raises IOError on closed stream" do
+#lwoggardner: all tests covered, spec deleted
+---
+>   describe "with a Fixnum argument" do
+>     it "writes one character as a String" do
+>     it "writes the low byte as a String" do
+>   describe "with a String argument" do
+>     it "writes one character" do
+>     it "writes the first character" do
+>   it "calls #to_int to convert an object to a Integer" do
+>   it "raises IOError on a closed stream" do
+>   it "raises an TypeError when passed nil" do
+>   it "raises an TypeError when passed false" do
+>   it "raises an TypeError when passed true" do

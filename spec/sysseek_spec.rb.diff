@@ -1,0 +1,16 @@
+<<< spec/sysseek_spec.rb
+>>> rubyspec/core/io/sysseek_spec.rb
+1c1,3
+< describe "IO::Like#sysseek on a file" do
+---
+> describe "IO#sysseek" do
+>   it_behaves_like :io_set_pos, :seek
+> describe "IO#sysseek" do
+6d7
+#lwoggardner: retained
+<   it "warns if called immediately after a buffered IO#write" do
+9,10d9
+#lwoggardner: covered by tests in rubyspec/core/io/shared/pos.rb
+<   it "can handle any numerical argument without breaking and can seek past EOF" do
+#lwoggardner: covered by tests in rubyspec/core/io/shared/pos.rb
+<   it "raises IOError on closed stream" do

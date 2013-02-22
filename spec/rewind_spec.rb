@@ -17,27 +17,6 @@ describe "IO::Like#rewind" do
     @iowrapper.rewind.should == 0
   end
 
-  it "positions the instance to the beginning of input" do
-    @iowrapper.readline.should == "Voici la ligne une.\n"
-    @iowrapper.readline.should == "Qui è la linea due.\n"
-    @iowrapper.rewind
-    @iowrapper.readline.should == "Voici la ligne une.\n"
-  end
-
-  it "positions the instance to the beginning of input and clears EOF" do
-    value = @iowrapper.read
-    @iowrapper.rewind
-    @iowrapper.eof?.should == false
-    value.should == @iowrapper.read
-  end
-
-  it "sets lineno to 0" do
-    @iowrapper.readline.should == "Voici la ligne une.\n"
-    @iowrapper.lineno.should == 1
-    @iowrapper.rewind
-    @iowrapper.lineno.should == 0
-  end
-
   it "works on write-only streams" do
     file = tmp('IO_Like__rewind.test')
     File.open(file, 'w') do |f|
@@ -51,7 +30,4 @@ describe "IO::Like#rewind" do
     File.delete(file)
   end
 
-  it "raises IOError on closed stream" do
-    lambda { IOSpecs.closed_file.rewind }.should raise_error(IOError)
-  end
 end

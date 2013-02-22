@@ -1,0 +1,78 @@
+<<< spec/gets_spec.rb
+>>> rubyspec/core/io/gets_spec.rb
+1,6c1,6
+< describe "IO::Like#gets" do
+#lwoggardner: covered under "with no separator" below
+<   it "returns the next line of string that were separated by $/" do
+#lwoggardner: covered by multiple specs for different separators
+<   it "returns tainted strings" do
+#lwoggardner: covered under multiple specs for different separators
+<   it "updates lineno with each invocation" do
+#lwoggardner: covered under multiple specs for different separators
+<   it "updates $. with each invocation" do
+#lwoggardner: commented out - we can't affect $_ under MRI
+<   #it "assigns the returned line to $_" do
+---
+> describe "IO#gets" do
+>   it_behaves_like :io_gets_ascii, :gets
+> describe "IO#gets" do
+>   before :each do
+>   after :each do
+>   it "assigns the returned line to $_" do
+8,14d7
+#lwoggardner: covered by "returns the entire contents" below
+<   it "returns the entire content if the separator is nil" do
+#lwoggardner: retained
+<   it "reads and returns all data available before a SystemCallError is raised when the separator is nil" do
+#lwoggardner: covered under "with an empty String separator"
+<   it "returns the next paragraph if the separator's length is 0" do
+#lwoggardner: covered under "with an empty String separator"
+<   it "reads until the beginning of the next paragraph when the separator's length is 0" do
+#lwoggardner: although only referenced in comments this test is covered by
+# the various "with an empty String separator" tests in rubyspec
+<   it "discards leading newlines from the beginning of the paragraph" do
+#lwoggardner: covered by "raise an IOError if the stream is opened for writing only"
+<   it "raises an IOError if the stream is not opened for reading" do
+<     lambda do
+16c9,46
+#lwoggardner: covered by "with an arbitrary String separator"
+<   it "accepts a separator" do
+---
+>   describe "with no separator" do
+>     it "returns the next line of string that is separated by $/" do
+>     it "returns tainted strings" do
+>     it "updates lineno with each invocation" do
+>     it "updates $. with each invocation" do
+>   describe "with nil separator" do
+>     it "returns the entire contents" do
+>     it "returns tainted strings" do
+>     it "updates lineno with each invocation" do
+>     it "updates $. with each invocation" do
+>   describe "with an empty String separator" do
+>     it "returns the next paragraph" do
+>     it "reads until the beginning of the next paragraph" do
+>     it "returns tainted strings" do
+>     it "updates lineno with each invocation" do
+>     it "updates $. with each invocation" do
+>   describe "with an arbitrary String separator" do
+>     it "reads up to and including the separator" do
+>     it "returns tainted strings" do
+>     it "updates lineno with each invocation" do
+>     it "updates $. with each invocation" do
+> describe "IO#gets" do
+>   before :each do
+>   after :each do
+>   it "raises an IOError if the stream is opened for append only" do
+>   it "raises an IOError if the stream is opened for writing only" do
+> ruby_version_is "1.9" do
+>   describe "IO#gets" do
+>     before :each do
+>     after :each do
+>     it "calls #to_int to convert a single object argument to an Integer limit" do
+>     it "calls #to_int to convert the second object argument to an Integer limit" do
+>     it "calls #to_str to convert the first argument to a String when passed a limit" do
+>     it "reads to the default seperator when passed a single argument greater than the number of bytes to the separator" do
+>     it "reads limit bytes when passed a single argument less than the number of bytes to the default separator" do
+>     it "reads limit bytes when passed nil and a limit" do
+>     it "reads until the next paragraph when passed '' and a limit greater than the next paragraph" do
+>     it "reads limit bytes when passed '' and a limit less than the next paragraph" do

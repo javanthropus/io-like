@@ -1,0 +1,5 @@
+<<< spec/read_nonblock_spec.rb
+>>> rubyspec/core/io/read_nonblock_spec.rb
+9d8
+<   quarantine! do
+#lwoggardner: I implemented this as a direct copy of the rubyspec. Spec deleted

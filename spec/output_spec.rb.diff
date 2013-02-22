@@ -1,0 +1,28 @@
+<<< spec/output_spec.rb
+>>> rubyspec/core/io/output_spec.rb
+1,10c1,5
+< describe "IO::Like#<<" do
+<   before :each do
+<   after :each do
+#lwoggardner: covered by "returns self" below
+<   it "returns a reference to the stream" do
+#lwoggardner: implicitly covered by shared/write. Rubyspec does not run its shared write
+# specs for the output operator (the return values are different) but the
+# implementation is so simple  - write(obj); return self - that there is no real value
+# in this separate test
+<   it "writes all of the string's bytes without buffering if mode is sync" do
+#lwoggardner: as above implicitly covered by write_spec
+<   it "does not raise IOError on read-only stream if writing zero bytes" do
+<     lambda do
+#lwoggardner: as above implicitly covered by our retained write_spec
+<   it "does not raise IOError on closed stream if writing zero bytes" do
+< describe "IO::Like#<<" do
+#lwoggardner: as above
+<   it_behaves_like :io_like__write, :<<
+---
+> describe "IO#<<" do
+>   it "writes an object to the IO stream" do
+>   it "calls #to_s on the object to print it" do
+>   it "raises an error if the stream is closed" do
+>   it "returns self" do
+#lwoggardner: all tests covered, spec deleted

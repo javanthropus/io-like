@@ -1,0 +1,9 @@
+<<< spec/to_io_spec.rb
+>>> rubyspec/core/io/to_io_spec.rb
+1c1,3
+< describe "IO::Like#to_io" do
+---
+> describe "IO#to_io" do
+>   before :each do
+>   after :each do
+#lwoggardner: all tests covered, spec deleted

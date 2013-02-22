@@ -1,0 +1,20 @@
+<<< spec/pos_spec.rb
+>>> rubyspec/core/io/pos_spec.rb
+1,8c1,4
+< describe "IO::Like#pos" do
+<   it_behaves_like(:io_like__pos, :pos)
+< describe "IO::Like#pos=" do
+<   before :each do
+<   after :each do
+#lwoggardner: covered in rubyspec/core/io/shared/pos.rb
+<   it "sets the offset" do
+#lwoggardner: cover by "to_int" test in rubyspec/shared/pos.rb
+<   it "can handle any numerical argument without breaking" do
+#lwoggardner: covered in rubyspec/core/io/shared/pos.rb
+<   it "raises IOError on closed stream" do
+---
+> describe "IO#pos" do
+>   it_behaves_like :io_pos, :pos
+> describe "IO#pos=" do
+>   it_behaves_like :io_set_pos, :pos=
+#lwoggardner: all tests covered, spec deleted

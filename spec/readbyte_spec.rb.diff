@@ -1,0 +1,20 @@
+<<< spec/readbyte_spec.rb
+>>> rubyspec/core/io/readbyte_spec.rb
+1,2c1,2
+#lwoggardner:  Seems there were no rubyspecs prior to 1.9, and the ones
+# that exist are incomplete. Retained in full 
+< ruby_version_is '1.8.7' do
+<   describe "IO::Like#readbyte" do
+---
+> ruby_version_is "1.9" do
+>   describe "IO#readbyte" do
+5,9c5,7
+<     it "returns the next byte from the stream" do
+<     it "raises EOFError when invoked at the end of the stream" do
+<     it "raises EOFError when reaches the end of the stream" do
+<     it "raises EOFError on empty stream" do
+<     it "raises IOError on closed stream" do
+---
+>     it "reads one byte from the stream" do
+>     it "raises EOFError on EOF" do
+>       lambda do

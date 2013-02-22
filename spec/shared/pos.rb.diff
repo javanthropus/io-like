@@ -1,0 +1,19 @@
+<<< spec/shared/pos.rb
+>>> rubyspec/core/io/shared/pos.rb
+1c1
+< describe :io_like__pos, :shared => true do
+---
+> describe :io_pos, :shared => true do
+6c6,13
+#lwoggardner: covered below
+<   #it "resets #eof?" do
+---
+>   it "resets #eof?" do
+> describe :io_set_pos, :shared => true do
+>   before :each do
+>   after :each do
+>   it "sets the offset" do
+>   it "converts arguments to Integers" do
+>   it "does not accept Bignums that don't fit in a C long" do
+>   it "raises IOError on closed stream" do
+#lwoggardner: all tests covered, spec deleted

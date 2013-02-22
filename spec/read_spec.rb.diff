@@ -1,0 +1,73 @@
+<<< spec/read_spec.rb
+>>> rubyspec/core/io/read_spec.rb
+1c1,33
+< describe "IO::Like#read" do
+---
+> describe "IO.read" do
+>   before :each do
+>   after :each do
+>   it "reads the contents of a file" do
+>   ruby_version_is "1.9" do
+>     it "calls #to_path on non-String arguments" do
+>     it "accepts an empty options Hash" do
+>     it "accepts a length, offset, and empty options Hash" do
+>     it "raises an IOError if the options Hash specifies write mode" do
+>     it "raises an IOError if the options Hash specifies append only mode" do
+>     it "reads the file if the options Hash includes read mode" do
+>     it "reads the file if the options Hash includes read/write mode" do
+>     it "reads the file if the options Hash includes read/write append mode" do
+>   it "treats second nil argument as no length limit" do
+>   it "treats third nil argument as 0" do
+>   it "reads the contents of a file up to a certain size when specified" do
+>   it "reads the contents of a file from an offset of a specific size when specified" do
+>   it "returns nil at end-of-file when length is passed" do
+>   it "raises an Errno::ENOENT when the requested file does not exist" do
+>   it "raises a TypeError when not passed a String type" do
+>   it "raises an ArgumentError when not passed a valid length" do
+>   it "raises an Errno::EINVAL when not passed a valid offset" do
+> describe "IO.read from a pipe" do
+>   it "runs the rest as a subprocess and returns the standard output" do
+>   it "opens a pipe to a fork if the rest is -" do
+>   it "reads only the specified number of bytes requested" do
+>   it "raises Errno::ESPIPE if passed an offset" do
+> describe "IO.read on an empty file" do
+>   before :each do
+>   after :each do
+>   it "returns nil when length is passed" do
+>   it "returns an empty string when no length is passed" do
+> describe "IO#read" do
+5,6c37
+#lwoggardner: both below covered by "IO#read with large data" below
+<   it "can read lots of data" do
+<   it "can read lots of data with length" do
+---
+>   it "clears the output buffer if there is nothing to read" do
+18c49
+#lwoggardner: retained
+<   it "reads all data available before a SystemCallError is raised" do
+---
+>   it "returns an empty string at end-of-file" do
+22d52
+#lwoggardner: retained
+<   it "raises IOError on write-only stream" do
+23a54,73
+> platform_is :windows do
+>   describe "IO#read on Windows" do
+>     before :each do
+>     after :each do
+>     it "normalizes line endings in text mode" do
+>     it "does not normalize line endings in binary mode" do
+> describe "IO#read with encodings" do
+>   before :each do
+>   after :each do
+>   it "ignores unicode encoding" do
+> ruby_version_is "1.9" do
+>   describe "IO#read with 1.9 encodings" do
+>     before :each do
+>     after :each do
+>     it "strips the BOM when given 'rb:utf-7-bom' as the mode" do
+> describe "IO#read with large data" do
+>   before :each do
+>   after :each do
+>   it "reads all the data at once" do
+>   it "reads only the requested number of bytes" do

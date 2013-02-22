@@ -1,0 +1,12 @@
+<<< spec/shared/tty.rb
+>>> rubyspec/core/io/shared/tty.rb
+1,2c1,4
+< describe :io_like__tty, :shared => true do
+#lwoggardner: retained, io like is never a tty
+<   it "returns false if this stream is open" do
+---
+> describe :io_tty, :shared => true do
+>   with_tty do
+>     it "returns true if this stream is a terminal device (TTY)" do
+>   it "returns false if this stream is not a terminal device (TTY)" do
+

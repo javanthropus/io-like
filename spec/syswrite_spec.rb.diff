@@ -1,0 +1,16 @@
+<<< spec/syswrite_spec.rb
+>>> rubyspec/core/io/syswrite_spec.rb
+1c1
+< describe "IO::Like#syswrite" do
+---
+> describe "IO#syswrite on a file" do
+4d3
+#lwoggardner: covered by rubyspec's shared/write
+<   it "returns the number of bytes written" do
+10,11c9,10
+< describe "IO::Like#syswrite" do
+#lwoggardner: retained since shared/write is retained
+<   it_behaves_like :io_like__write, :syswrite
+---
+> describe "IO#syswrite" do
+>   it_behaves_like :io_write, :syswrite

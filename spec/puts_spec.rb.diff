@@ -1,0 +1,35 @@
+<<< spec/puts_spec.rb
+>>> rubyspec/core/io/puts_spec.rb
+1c1
+< describe "IO::Like#puts" do
+---
+> describe "IO#puts" do
+4d3
+#lwoggardner: covered by various rubyspecs that confirm the result of #puts
+<   it "returns nil" do
+7,8c6,11
+#lwoggardner: covered as below (with differences for 1.9)
+<   it "writes nil with a newline when given nil as an arg" do
+#lwoggardner: covered by "calls to_s" below
+<   it "coerces arguments to strings using to_s" do
+---
+>   ruby_version_is "" ... "1.9" do
+>     it "writes nil with a newline when given nil as an arg" do
+>   ruby_version_is "1.9" do
+>     it "writes empty string with a newline when given nil as an arg" do
+>     it "writes empty string with a newline when when given nil as multiple args" do
+>   it "calls to_s before writing non-string objects" do
+10a14
+>   it "writes nothing for an empty array" do
+14,15c18
+#lwoggardner: covered below - typo on the name of the separator global
+<   it "ignores the $\ separator global" do
+#lwoggardner: implicitly covered by our retained shared/write spec and the fact
+# that the rubyspecs for #puts explicitly expect #write to be called in a certain
+# way. Even if that is cleaned up (as per comments in rubyspec/core/io/puts_spec.rb)
+# it is still reasonable to assume that puts simply reformts is arguments in some
+# fashion to pass on to #write
+<   it "raises IOError on read-only stream" do
+---
+>   it "ignores the $/ separator global" do
+#lwoggardner: all tests covered, spec deleted

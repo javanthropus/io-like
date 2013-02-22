@@ -1,0 +1,7 @@
+<<< spec/close_write_spec.rb
+>>> rubyspec/core/io/close_write_spec.rb
+1c1
+< describe "IO::Like#close_write" do
+#lwoggardner: all specs covered, spec deleted
+---
+> describe "IO#close_write" do

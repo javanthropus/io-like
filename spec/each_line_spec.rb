@@ -7,6 +7,3 @@ describe "IO::Like#each_line" do
   it_behaves_like :io_like__each, :each_line
 end
 
-describe "IO::Like#each_line when passed a separator" do
-  it_behaves_like :io_like__each_separator, :each_line
-end

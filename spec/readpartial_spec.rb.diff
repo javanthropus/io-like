@@ -1,0 +1,9 @@
+<<< spec/readpartial_spec.rb
+>>> rubyspec/core/io/readpartial_spec.rb
+1c1
+< describe "IO::Like#readpartial" do
+---
+> describe "IO#readpartial" do
+6a7
+>   it "reads after ungetc with multibyte characters in the buffer" do
+#lwoggardner: all tests same, spec deleted

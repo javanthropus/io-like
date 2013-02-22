@@ -7,7 +7,4 @@ describe :io_like__tty, :shared => true do
     IOSpecs.writable_iowrapper { |io| io.send(@method) }.should == false
   end
 
-  it "raises IOError on closed stream" do
-    lambda { IOSpecs.closed_file.send(@method) }.should raise_error(IOError)
-  end
 end
