@@ -1,7 +1,0 @@
-<<< spec/flush_spec.rb
->>> rubyspec/core/io/flush_spec.rb
-1c1
-< describe "IO::Like#flush" do
----
-> describe "IO#flush" do
-#lwoggardner: all tests covered, spec deleted

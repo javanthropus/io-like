@@ -1,9 +1,0 @@
-<<< spec/isatty_spec.rb
->>> rubyspec/core/io/isatty_spec.rb
-#lwoggardner: see shared/tty.rb.diff
-1,2c1,2
-< describe "IO::Like#isatty" do
-<   it_behaves_like :io_like__tty, :isatty
----
-> describe "IO#isatty" do
->   it_behaves_like :io_tty, :isatty

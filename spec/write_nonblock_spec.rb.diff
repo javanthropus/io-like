@@ -1,7 +1,0 @@
-<<< spec/write_nonblock_spec.rb
->>> rubyspec/core/io/write_nonblock_spec.rb
-7c7
-<   it_behaves_like :io_like__write, :write_nonblock
----
->   it_behaves_like :io_write, :write_nonblock
-#lwoggardner: I created this spec as a copy of rubyspec. spec deleted

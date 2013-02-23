@@ -1,9 +1,0 @@
-<<< spec/tty_spec.rb
->>> rubyspec/core/io/tty_spec.rb
-#lwoggardner: retained see shared/tty.rb.diff
-1,2c1,2
-< describe "IO::Like#tty?" do
-<   it_behaves_like :io_like__tty, :tty?
----
-> describe "IO#tty?" do
->   it_behaves_like :io_tty, :tty?

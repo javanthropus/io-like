@@ -1,9 +1,0 @@
-<<< spec/tell_spec.rb
->>> rubyspec/core/io/tell_spec.rb
-1,2c1,2
-< describe "IO::Like#tell" do
-<   it_behaves_like(:io_like__pos, :tell)
----
-> describe "IO#tell" do
->   it_behaves_like(:io_pos, :tell)
-#lwoggardner: shared pos tests all covered, spec deleted
