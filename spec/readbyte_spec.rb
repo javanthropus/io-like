@@ -7,14 +7,11 @@ ruby_version_is '1.8.7' do
     before :each do
       @original = $KCODE
       $KCODE = "UTF-8"
-      @file_name = File.dirname(__FILE__) + '/fixtures/readlines.txt'
-      @io = File.open(@file_name, 'r')
-      @iowrapper = IOWrapper.open(@io)
+      @iowrapper = IOSpecs.io_fixture("lines.txt")
     end
 
     after :each do
       @iowrapper.close unless @iowrapper.closed?
-      @io.close unless @io.closed?
       $KCODE = @original
     end
 
@@ -29,25 +26,23 @@ ruby_version_is '1.8.7' do
 
     it "raises EOFError when invoked at the end of the stream" do
       # read entire content
-      @io.read
-      lambda { @io.readbyte }.should raise_error(EOFError)
+      @iowrapper.read
+      lambda { @iowrapper.readbyte }.should raise_error(EOFError)
     end
 
     it "raises EOFError when reaches the end of the stream" do
-      lambda { loop { @io.readbyte } }.should raise_error(EOFError)
+      lambda { loop { @iowrapper.readbyte } }.should raise_error(EOFError)
     end
 
     it "raises EOFError on empty stream" do
       File.open(tmp('empty.txt'), "w+") do |empty|
-        IOWrapper.open(empty) do |iowrapper|
-          lambda { iowrapper.readbyte }.should raise_error(EOFError)
-        end
+        lambda { empty.readbyte }.should raise_error(EOFError)
       end
       File.unlink(tmp("empty.txt"))
     end
 
     it "raises IOError on closed stream" do
-      lambda { IOSpecs.closed_file.readbyte }.should raise_error(IOError)
+      lambda { IOSpecs.closed_io.readbyte }.should raise_error(IOError)
     end
   end
 end

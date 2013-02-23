@@ -7,18 +7,15 @@ describe "IO::Like#print" do
     @old_record_separator = $\
     @old_field_separator = $,
     @filename = tmp('IO_Like__print_test')
-    @file = File.open(@filename, 'w')
-    @file.sync = true
-    @iowrapper = WritableIOWrapper.open(@file)
-    @iowrapper.sync = true
+    @iowrapper = File.open(@filename, 'w')
+    @iowrapper.sync=true
   end
 
   after :each do
     $\ = @old_record_separator
     $, = @old_field_separator
     @iowrapper.close unless @iowrapper.closed?
-    @file.close unless @file.closed?
-    File.unlink @filename
+    rm_r @filename
   end
 
   it "returns nil" do

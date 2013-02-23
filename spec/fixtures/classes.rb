@@ -1,103 +1,46 @@
-# encoding: UTF-8
-require 'io/like'
-require 'fcntl'
-
-class IOWrapper
-  include IO::Like
-
-  def self.open(io)
-    iow = new(io)
-    return iow unless block_given?
-    begin
-      yield(iow)
-    ensure
-      iow.close unless iow.closed?
-    end
-  end
-
-  def initialize(io)
-    @io = io
-  end
-
-  def nonblock=(nb)
-    flags = @io.fcntl(Fcntl::F_GETFL)
-    new_flags = nb ? flags | Fcntl::O_NONBLOCK : flags & ~Fcntl::O_NONBLOCK
-    @io.fcntl(Fcntl::F_SETFL,new_flags)
-  end
-
-  private
-
-  def unbuffered_read(length)
-    @io.sysread(length)
-  end
-
-  def unbuffered_seek(offset, whence = IO::SEEK_SET)
-    @io.sysseek(offset, whence)
-  end
-
-  def unbuffered_write(string)
-    @io.syswrite(string)
-  end
-end
-
-class DuplexedIOWrapper < IOWrapper
-  def duplexed?
-    true
-  end
-end
-
-class ReadableIOWrapper < IOWrapper
-  def writable?
-    false
-  end
-end
-
-class WritableIOWrapper < IOWrapper
-  def readable?
-    false
-  end
-end
+require File.expand_path("../../../rubyspec/core/io/fixtures/classes",__FILE__)
 
 module IOSpecs
-  def self.lines
-    [
-      "Voici la ligne une.\n",
-      "Qui \303\250 la linea due.\n",
-      "\n",
-      "\n",
-      "Aqu\303\255 est\303\241 la l\303\255nea tres.\n",
-      "Ist hier Linie vier.\n",
-      "\n",
-      "Est\303\241 aqui a linha cinco.\n",
-      "Here is line six.\n"
-    ]
+
+  def self.io_like_fixture(*data)
+
+    io = mock_io_like("io-like-fixture")
+
+    unless data.empty?
+      io.instance_variable_set("@data",data)
+      def io.unbuffered_read(length)
+        raise EOFError if @data.empty?
+        result = @data.shift
+        raise result, "test error" if result.respond_to?(:exception)
+        result 
+      end
+    end
+    io
   end
 
-  def self.gets_fixtures
-    File.dirname(__FILE__) + '/gets.txt'
-  end
-
-  def self.gets_output
-    File.dirname(__FILE__) + '/gets_output.txt'
-  end
-
-  def self.closed_file
-    File.open(gets_fixtures, 'r') do |f|
-      ReadableIOWrapper.open(f) { |iowrapper| iowrapper }
+  def self.readonly_io
+    io = self.io_fixture("lines.txt","r")
+    return io unless block_given?
+    begin
+      yield io
+    ensure
+      io.close unless io.closed?
     end
   end
 
-  def self.readable_iowrapper(&b)
-    File.open(gets_fixtures, 'r') do |f|
-      ReadableIOWrapper.open(f, &b)
+  def self.writeonly_io(name = "writeonly_file")
+    filename = tmp(name)
+    if block_given?
+       File.open(filename,"w") do |f|
+         begin
+          result = yield f
+         ensure
+          rm_r filename
+         end
+         result
+       end
+    else
+       File.open(filename,"w") 
     end
-  end
-
-  def self.writable_iowrapper(&b)
-    File.open(gets_output, 'w') do |f|
-      WritableIOWrapper.open(f, &b)
-    end
-  ensure
-    File.delete(gets_output)
   end
 end

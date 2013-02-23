@@ -4,13 +4,11 @@ require File.dirname(__FILE__) + '/fixtures/classes'
 
 describe "IO::Like#rewind" do
   before :each do
-    @file = File.open(File.dirname(__FILE__) + '/fixtures/readlines.txt', 'r')
-    @iowrapper = ReadableIOWrapper.open(@file)
+    @iowrapper = File.open(File.dirname(__FILE__) + '/fixtures/readlines.txt', 'r')
   end
 
   after :each do
     @iowrapper.close unless @iowrapper.closed?
-    @file.close unless @file.closed?
   end
 
   it "should return 0" do
@@ -19,12 +17,10 @@ describe "IO::Like#rewind" do
 
   it "works on write-only streams" do
     file = tmp('IO_Like__rewind.test')
-    File.open(file, 'w') do |f|
-      WritableIOWrapper.open(f) do |io|
-        io.write('test1')
-        io.rewind.should == 0
-        io.write('test2')
-      end
+    File.open(file, 'w') do |io|
+      io.write('test1')
+      io.rewind.should == 0
+      io.write('test2')
     end
     File.read(file).should == 'test2'
     File.delete(file)

@@ -8,9 +8,7 @@ describe :io_like__each, :shared => true do
     # MRI 1.8.7 returns enumerator if block is not provided.
     # See [ruby-core:16557].
     lambda do
-      IOSpecs.writable_iowrapper do |iowrapper|
-        iowrapper.send(@method) {}
-      end
+      IOSpecs.writeonly_io { |f| f.send(@method) {} }
     end.should raise_error(IOError)
   end
 

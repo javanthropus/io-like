@@ -103,6 +103,12 @@ end
 
 class Object
 
+    def mock_io_like(name="io-like")
+      io = mock(name)
+      io.extend(IO::Like)
+      io
+    end
+
     # Replace mspec's new_io helper method
     alias :__mspec_new_io :new_io
     def new_io(name, mode="w:utf-8")
