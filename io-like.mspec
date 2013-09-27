@@ -9,20 +9,24 @@ class MSpecScript
   # The default implementation to run the specs.
   set :target, 'ruby'
 
+  # Ignore tests for constants.
+  constant_checks = ["IO::SEEK_SET", "IO::SEEK_CUR", "IO::SEEK_END"]
+
+  # Ignore IO class methods.
   irrelevant_class_methods = [
-    "IO.for_fd", "IO.foreach", "IO.pipe", "IO.popen",
-    "IO.read", "IO.new", "IO#initialize", "IO.open", "IO::SEEK", "IO.select",
+    "IO.for_fd", "IO.foreach", "IO.pipe", "IO.popen", "IO.read", "IO.new",
+    "IO#initialize", "IO.open", "IO.select",
     # rubyspec bug - this is actually IO.readlines, not IO#readines
     "IO#readlines when passed a string that starts with a |"
   ]
 
-  # Also instance methods related to file descriptor IO
+  # Ignore instance methods related to file descriptor IO.
   irrelevant_instance_methods = [
     "IO#dup", "IO#ioctl", "IO#fcntl", "IO#fsync", "IO#pid", "IO#stat",
     "IO#fileno", "IO#to_i", "IO#reopen", "terminal device (TTY)"
   ]
 
-  # and some intentionally not compliant
+  # Ignore some intentionally non-compliant methods.
   non_compliant = [
     "IO#read_nonblock changes the behavior of #read to nonblocking",
     "IO#ungetc raises IOError when invoked on stream that was not yet read",
@@ -34,5 +38,9 @@ class MSpecScript
   ]
 
   # Exclude IO specs not relevant to IO::Like.
-  set :excludes, irrelevant_class_methods + irrelevant_instance_methods + non_compliant
+  set :excludes,
+    constant_checks +
+    irrelevant_class_methods +
+    irrelevant_instance_methods +
+    non_compliant
 end
