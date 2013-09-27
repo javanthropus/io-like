@@ -18,12 +18,17 @@ class IOWrapper
 
   def initialize(io)
     @io = io
+    @nonblock = false
   end
 
   def dup
     duped = super
     duped.reopen(@io.dup)
     duped
+  end
+
+  def nonblock=(nb)
+    @nonblock = nb
   end
 
   def reopen(io)
@@ -33,7 +38,11 @@ class IOWrapper
   private
 
   def unbuffered_read(length)
-    @io.sysread(length)
+    if @nonblock
+      @io.read_nonblock(length)
+    else
+      @io.sysread(length)
+    end
   end
 
   def unbuffered_seek(offset, whence = IO::SEEK_SET)
@@ -41,7 +50,11 @@ class IOWrapper
   end
 
   def unbuffered_write(string)
-    @io.syswrite(string)
+    if @nonblock
+      @io.write_nonblock(string)
+    else
+      @io.syswrite(string)
+    end
   end
 end
 
@@ -78,12 +91,6 @@ class FileIOWrapper < IOWrapper
   def fsync()
     flush()
     @io.fsync
-  end
-
-  def nonblock=(nb)
-    flags = @io.fcntl(Fcntl::F_GETFL)
-    new_flags = nb ? flags | Fcntl::O_NONBLOCK : flags & ~Fcntl::O_NONBLOCK
-    @io.fcntl(Fcntl::F_SETFL, new_flags)
   end
 
   def readable?; @readable; end
