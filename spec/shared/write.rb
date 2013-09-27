@@ -3,8 +3,6 @@
 require File.dirname(__FILE__) + '/../fixtures/classes'
 
 describe :io_like__write, :shared => true do
-  it "raises IOError unless #writable?"
-
   it "raises IOError on read-only stream if writing more than zero bytes" do
     lambda do
       IOSpecs.readonly_io.send(@method, "abcde")
