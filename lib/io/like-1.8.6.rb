@@ -1,4 +1,5 @@
 # encoding: UTF-8
+
 class IO # :nodoc:
   # This module provides most of the basic input and output functions of
   # <code>IO</code> objects as implemented in Ruby version 1.8.6.  Its use is
@@ -404,15 +405,19 @@ class IO # :nodoc:
     end
 
     # call-seq:
-    #   ios.nonblock=(blocking_mode)
+    #   ios.nonblock=(mode)  -> mode
     #
-    # #read_nonblock, #write_nonblock will call nonblock=(true)
-    # prior to calling #unbuffered_read or #unbuffered_write
+    # When changing the blocking state is supported, disables blocking reads and
+    # writes when <i>mode</i> is <code>true</code> and enables blocking
+    # otherwise.  When changing the blocking state is not supported,
+    # <code>Errno::EBADF</code> should be raised.
     #
     # The default implementation raises <code>Errno::EBADF</code> to indicate
-    # that nonblocking operations are not supported. IO implementations that
-    # are always nonblocking should override with a no-op
-    def nonblock=(blocking_mode)
+    # that nonblocking operations are not supported.
+    #
+    # <b>NOTE:</b> This method is called by #read_nonblock, #write_nonblock with
+    # <code>true</code> prior to attempting their namesake operations.
+    def nonblock=(mode)
       raise Errno::EBADF
     end
 
@@ -872,22 +877,22 @@ class IO # :nodoc:
     # call-seq:
     #   ios.read_nonblock(length[, buffer]) -> string or buffer
     #
-    # Returns at most <i>length</i> bytes from the data stream using only the
-    # internal read buffer if the buffer is not empty.
+    # Returns at most <i>length</i> bytes from the data stream.
     #
-    # If internal buffer is empty sets nonblocking mode via #nonblock=(true)
-    # and then reads from the underlying stream
+    # If the internal read buffer is <b>not</b> empty, only the buffer is used,
+    # even if less than <i>length</i> bytes are available.  If the internal
+    # buffer <b>is</b> empty, sets non-blocking mode via #nonblock=(true) and
+    # then reads from the underlying stream.
     #
-    # Raises <code>Errno::EBADF</code> if nonblocking mode is not supported
+    # Raises <code>Errno::EBADF</code> if non-blocking mode is not supported
     # Raises <code>EOFError</code> when there is no more data in the stream.
-    # Raises <code>IOError</code> if #closed? returns <code>true</code>.
-    # Raises <code>IOError</code> unless #readable? returns <code>true</code>.
+    # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
+    # <code>IOError</code> unless #readable? returns <code>true</code>.
     #
-    # This method will raise errors directly from #buffered_read to be handled
-    # by the caller.
-    #
+    # <b>NOTE:</b> Because this method relies on #unbuffered_read, it will also
+    # raise the same errors and block at the same times as that function.
     def read_nonblock(length, buffer = nil)
-      __io_like__readpartial(length,buffer,true)
+      __io_like__readpartial(length, buffer, true)
     end
 
     # call-seq:
@@ -905,11 +910,11 @@ class IO # :nodoc:
     #
     # <b>NOTE:</b> This method ignores <code>Errno::EAGAIN</code> and
     # <code>Errno::EINTR</code> raised by #unbuffered_read.  Therefore, this
-    # method always blocks (via #read_ready?) if unable to immediately return <i>length</i> bytes.
-    # Aside from that exception, this method will also raise the same errors and
-    # block at the same times as #unbuffered_read.
+    # method always blocks (via #read_ready?) if unable to immediately return
+    # <i>length</i> bytes.  Aside from that exception, this method will also
+    # raise the same errors and block at the same times as #unbuffered_read.
     def readpartial(length, buffer = nil)
-        __io_like__readpartial(length,buffer,false)
+      __io_like__readpartial(length, buffer, false)
     end
 
     # call-seq:
@@ -1192,7 +1197,9 @@ class IO # :nodoc:
       while bytes_written < string.length do
         begin
           bytes_written +=
-            __io_like__buffered_write(string.to_s.slice(bytes_written..-1),false)
+            __io_like__buffered_write(
+              string.to_s.slice(bytes_written..-1), false
+            )
         rescue Errno::EAGAIN, Errno::EINTR
           retry if write_ready?
         end
@@ -1203,18 +1210,25 @@ class IO # :nodoc:
     # call-seq:
     #   ios.write_nonblock(string)    -> integer
     #
-    # Writes the given string to the stream and returns the number of bytes
-    # written.  If <i>string</i> is not a <code>String</code>, its
-    # <code>to_s</code> method is used to convert it into one.
+    # Enables blocking mode on the stream (via #nonblock=), flushes any buffered
+    # data, and then directly writes <i>string</i>, bypassing the internal
+    # buffer.
     #
-    # As many bytes as possible are written without blocking or
-    # SystemCallEerror from #unbuffered_write is passed directly through
-    # to be handled by the caller
+    # If <i>string</i> is not a <code>String</code>, its <code>to_s</code>
+    # method is used to convert it into one.  If any of <i>string</i> is
+    # written, this method returns the number of bytes written, which may be
+    # less than all requested bytes (partial write).  Otherwise, an error is
+    # raised.
     #
     # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
     # <code>IOError</code> unless #writable? returns <code>true</code>.
+    #
+    # <b>NOTE:</b> Because this method relies on #unbuffered_write, it raises
+    # all errors raised by #unbuffered_write.  This means that
+    # <code>Errno::EAGAIN</code> or similar should be raised if <i>string</i>
+    # cannot be written at all.
     def write_nonblock(string)
-      return __io_like__buffered_write(string.to_s,true)
+      return __io_like__buffered_write(string.to_s, true)
     end
 
     private
@@ -1286,11 +1300,11 @@ class IO # :nodoc:
     end
 
     # call-seq:
-    #   ios.__io_like__readpartial(length,buffer,nonblock) -> string
+    #   ios.__io_like__readpartial(length, buffer, nonblock) -> string
     #
-    # #read_nonblock and #read_partial are identical except for
-    # the way they handle exceptions from #unbuffered_read.
-    def __io_like__readpartial(length,buffer,nonblock)
+    # #read_nonblock and #read_partial are identical except for the way they
+    # handle exceptions from #unbuffered_read.
+    def __io_like__readpartial(length, buffer, nonblock)
       # Check the validity of the method arguments.
       unless length >= 0 then
         raise ArgumentError, "negative length #{length} given"
@@ -1299,7 +1313,7 @@ class IO # :nodoc:
       # Flush the buffer.
       buffer.slice!(0..-1)
 
-      # set nonblocking if necessary
+      # Set non-blocking if necessary.
       __io_like__nonblock if nonblock
 
       # Read and return up to length bytes.
@@ -1307,7 +1321,8 @@ class IO # :nodoc:
         begin
           buffer << __io_like__buffered_read(length)
         rescue Errno::EINTR, Errno::EAGAIN
-          if !nonblock && read_ready? then retry else raise end
+          retry if ! nonblock && read_ready?
+          raise
         end
       else
         raise IOError, 'closed stream' if closed?
@@ -1323,9 +1338,9 @@ class IO # :nodoc:
     #
     # Puts the underlying stream into blocking mode
     #
-    # See #read_nonblock, #write_nonblock #nonblock=
+    # See #read_nonblock, #write_nonblock, and #nonblock=.
     def __io_like__nonblock
-      self.nonblock=(true)
+      self.nonblock = true
     end
 
     # call-seq:
@@ -1406,7 +1421,7 @@ class IO # :nodoc:
     # all errors raised by #unbuffered_write and blocks when #unbuffered_write
     # blocks whenever the internal write buffer is unable to fulfill the
     # request.
-    def __io_like__buffered_write(string,nonblock=false)
+    def __io_like__buffered_write(string, nonblock = false)
       raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for writing' unless writable?
 
@@ -1421,8 +1436,8 @@ class IO # :nodoc:
 
       if sync || nonblock || __io_like__internal_write_buffer.length + string.length >= flush_size then
         # Flush the internal write buffer and then bypass it when in synchronous
-        # mode or the tipping point for the write buffer would be surpassed by this
-        # request.
+        # mode or the tipping point for the write buffer would be surpassed by
+        # this request.
         __io_like__nonblock() if nonblock
         __io_like__buffered_flush
         bytes_written = unbuffered_write(string)
@@ -1468,9 +1483,9 @@ class IO # :nodoc:
       nil
     end
 
-    # This method yields the flattened elements of <i>array</i> as a string suitable for
-    # #puts.  <i>seen</i> is a list of # object IDs to detect recursive
-    # array nesting
+    # This method yields the flattened elements of <i>array</i> as a string
+    # suitable for #puts.  <i>seen</i> is a list of # object IDs to detect
+    # recursive array nesting
     #
     # This method exists only because Array#join apparently behaves in an
     # implementation dependent manner when joining recursive arrays and so does
@@ -1487,17 +1502,16 @@ class IO # :nodoc:
     #
     # Things get progressively worse as the nesting and recursion become more
     # convoluted.
-    def __io_like__array_flatten(array,seen = [],&block)
+    def __io_like__array_flatten(array, seen = [], &block)
       seen.push(array.object_id)
       array.each do |item|
-
-        if item.nil? 
+        if item.nil?
           yield nil
         elsif item.kind_of?(Array)
           if seen.include?(item.object_id)
             yield '[...]'
           else
-            __io_like__array_flatten(item,seen,&block)
+            __io_like__array_flatten(item, seen, &block)
           end
         else
           yield item.to_s

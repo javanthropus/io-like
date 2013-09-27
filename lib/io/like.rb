@@ -1,5 +1,16 @@
 # encoding: UTF-8
 
+# Set the implementation of IO::Like based on the version of the Ruby
+# interpreter reading this file.
+ver_arr = RUBY_VERSION.split('.').collect { |n| n.to_i }
+if (ver_arr <=> [1, 8, 6]) <= 0 then
+  require 'io/like-1.8.6'
+  IO::Like = IO::Like_1_8_6
+else
+  require 'io/like-1.8.7'
+  IO::Like = IO::Like_1_8_7
+end
+
 # Redefine IO::Like here in order to get rdoc documentation generated for it.
 class IO # :nodoc:
   # IO::Like is a module which provides most of the basic input and output
@@ -78,33 +89,32 @@ class IO # :nodoc:
   # +true+ and then provide the _unbuffered_read_ and _unbuffered_write_
   # methods.  Do *NOT* provide an _unbuffered_seek_ method or the contents of
   # the internal read and write buffers may be lost unexpectedly.
+  #
+  # == Blocking/Non-blocking Toggle
+  #
+  # In order to use this module to provide a stream that can be toggled between
+  # blocking and non-blocking modes, a class which includes it must override the
+  # #nonblock= method which takes a single boolean argument as follows:
+  #
+  #   def nonblock=(mode)
+  #     ...
+  #   end
+  #
+  # The default implementation of this method returns <code>Errno::EBADF</code>
+  # indicating that changing the state is unsupported.  When the mode is
+  # <code>true</code>, the _unbuffered_read_ and _unbuffered_write_ methods must
+  # raise <code>Errno::EBADF</code> when they are unable to operate without
+  # blocking.  When the mode is <code>false</code>, those methods should block.
+  #
+  # Non-blocking streams should also provide more optimal implementations of
+  # #read_ready? and #write_ready? which by default simply sleep for 1 second
+  # and are called by the blocking read and write methods in response to
+  # <code>Errno::EAGAIN</code>.
   # ---
   # <b>NOTE:</b> Due to limitations of Ruby's finalizer, IO::Like#close is not
   # automatically called when the object is garbage collected, so it must be
   # explicitly called when the object is no longer needed or risk losing
   # whatever data remains in the internal write buffer.
-  #
-  # == Non-blocking Streams
-  #
-  # As above #unbuffered_read and #unbuffered_write should raise
-  # <code>Errno::EAGAIN</code> if they should not block.
-  #
-  # The #read_nonblock and #write_nonblock methods of IO::Like will attempt
-  # to call #nonblock=(true) on the underlying stream before calling
-  # #unbuffered_read or #unbuffered_write.
-  # This is the equivalent of Ruby setting the O_NONBLOCK flag on traditional
-  # file descriptor based IO.
-  #
-  # The default implementation of #nonblock= raises <code>Errno::EBADF</code>.
-  # For streams where #unbuffered_read is always non blocking this can be overridden
-  # with a no-op.
-  #
-  # Nonblocking streams should also provide a more optimal implementation
-  # of #read_ready? and #write_ready? which by default simply calls
-  # <code>Kernel.sleep(1)</code>
-  # and is called by the blocking read and write methods in response to
-  # <code>Errno::EAGAIN</code>.
-  #
   module Like
     # Set the implementation of IO::Like based on the version of the Ruby
     # interpreter reading this file.

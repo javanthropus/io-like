@@ -1,23 +1,21 @@
 require 'mspec/helpers/tmp'
 require 'fileutils'
 
-# Lower-level output speccing mechanism for a single
-# output stream. Unlike OutputMatcher which provides
-# methods to capture the output, we actually replace
-# the FD itself so that there is no reliance on a
-# certain method being used.
+# Lower-level output speccing mechanism for a single output stream.  Unlike
+# OutputMatcher which provides methods to capture the output, we actually
+# replace the FD itself so that there is no reliance on a certain method being
+# used.
 #
-# This is the IO::Like version which understands
-# that stdout,stderr are actually FileIOWrappers
-#
+# This is the IO::Like version which understands that stdout and stderr are
+# actually FileIOWrappers
 class IOLikeOutputToFDMatcher
   def initialize(expected, to)
     @to, @expected = to, expected
 
     case @to
-    when $stdout,STDOUT
+    when $stdout, STDOUT
       @to_name = "STDOUT"
-    when $stderr,STDERR
+    when $stderr, STDERR
       @to_name = "STDERR"
     when FileIOWrapper
       @to_name = @to.object_id.to_s
@@ -36,7 +34,7 @@ class IOLikeOutputToFDMatcher
     @to.reopen out
 
     block.call
-    
+
     @to.flush
   ensure
     begin
@@ -46,10 +44,10 @@ class IOLikeOutputToFDMatcher
       @actual = out.read
 
       case @expected
-        when Regexp
-          return !(@actual =~ @expected).nil?
-        else
-          return @actual == @expected
+      when Regexp
+        return !(@actual =~ @expected).nil?
+      else
+        return @actual == @expected
       end
 
     # Clean up
@@ -72,7 +70,6 @@ class IOLikeOutputToFDMatcher
 end
 
 class Object
-  
   alias :__mspec_output_to_fd :output_to_fd
 
   def output_to_fd(what, where = STDOUT)

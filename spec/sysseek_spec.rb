@@ -1,4 +1,5 @@
 # encoding: UTF-8
+
 require File.dirname(__FILE__) + '/../spec_helper'
 require File.dirname(__FILE__) + '/fixtures/classes'
 
@@ -16,7 +17,7 @@ describe "IO::Like#sysseek on a file" do
     begin
       # copy contents to a separate file
       tmpfile = tmp("tmp_IO_sysseek")
-      wrapper = File.open(tmpfile,"w")
+      wrapper = File.open(tmpfile, "w")
       wrapper.write(@iowrapper.read)
       wrapper.seek(0, File::SEEK_SET)
       wrapper.write("abcde")
@@ -26,5 +27,4 @@ describe "IO::Like#sysseek on a file" do
       rm_r tmpfile
     end
   end
-
 end

@@ -1,10 +1,13 @@
 # encoding: UTF-8
+
 require File.dirname(__FILE__) + '/../spec_helper'
 require File.dirname(__FILE__) + '/fixtures/classes'
 
 describe "IO::Like#rewind" do
   before :each do
-    @iowrapper = File.open(File.dirname(__FILE__) + '/fixtures/readlines.txt', 'r')
+    @iowrapper = File.open(
+      File.dirname(__FILE__) + '/fixtures/readlines.txt', 'r'
+    )
   end
 
   after :each do
@@ -25,5 +28,4 @@ describe "IO::Like#rewind" do
     File.read(file).should == 'test2'
     File.delete(file)
   end
-
 end

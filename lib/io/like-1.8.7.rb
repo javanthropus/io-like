@@ -1,4 +1,5 @@
 # encoding: UTF-8
+
 require 'enumerator'         # in case used under Ruby < v1.8.7
 require 'io/like-1.8.6'
 
@@ -14,7 +15,7 @@ class IO # :nodoc:
   # matter what version of Ruby is running the class.
   module Like_1_8_7
     include IO::Like_1_8_6
-    
+
     # call-seq:
     #   ios.binmode          -> ios
     #

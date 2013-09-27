@@ -1,4 +1,5 @@
 # encoding: UTF-8
+
 require File.dirname(__FILE__) + '/../spec_helper'
 require File.dirname(__FILE__) + '/fixtures/classes'
 
@@ -49,5 +50,4 @@ describe "IO::Like#print" do
     @iowrapper.print(data1, data2)
     File.read(@filename).should == "#{data1}#{data2}"
   end
-
 end
