@@ -14,6 +14,14 @@ describe "IO::Like rubyspecs" do
     rm_r @fname
   end
 
+  it "should provide IOWrapper for $stdout" do
+    $stdout.should be_kind_of(IOWrapper)
+  end
+
+  it "should provide IOWrapper for $stderr" do
+    $stderr.should be_kind_of(IOWrapper)
+  end
+
   it "should provide IOWrapper for File.open" do
     f = File.open(@fname, "r+").should be_kind_of(IOWrapper)
   end
@@ -38,7 +46,7 @@ describe "IO::Like rubyspecs" do
     new_io(@fname,"r+").should be_kind_of(IOWrapper)
   end
 
-  it "should provide IOWrapper for io.pipe" do
+  it "should provide IOWrapper for IO.pipe" do
     r, w = IO.pipe
     r.should be_kind_of(IOWrapper)
     w.should be_kind_of(IOWrapper)
@@ -47,7 +55,7 @@ describe "IO::Like rubyspecs" do
   end
 
   ruby_version_is "1.9" do
-    it "should provide IOWrapper for io.pipe with block" do
+    it "should provide IOWrapper for IO.pipe with block" do
       IO.pipe do |r, w|
         r.should be_kind_of(IOWrapper)
         w.should be_kind_of(IOWrapper)
