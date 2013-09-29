@@ -10,7 +10,7 @@ require 'fileutils'
 # actually FileIOWrappers
 class IOLikeOutputToFDMatcher
   def initialize(expected, to)
-    @to, @expected = to, expected
+    @expected, @to = expected, to
 
     case @to
     when $stdout, STDOUT
@@ -66,13 +66,5 @@ class IOLikeOutputToFDMatcher
 
   def negative_failure_message()
     ["Expected output (#{@to_name}) to NOT be:\n", @actual.inspect]
-  end
-end
-
-class Object
-  alias :__mspec_output_to_fd :output_to_fd
-
-  def output_to_fd(what, where = STDOUT)
-    IOLikeOutputToFDMatcher.new what, where
   end
 end
