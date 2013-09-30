@@ -10,8 +10,31 @@ class IO # :nodoc:
   # Include this module explicitly rather than <code>IO::Like</code> if the
   # including class should always behave like Ruby 1.8.6 <code>IO</code> no
   # matter what version of Ruby is running the class.
-  module Like_1_8_6
+  class Like_1_8_6
     include Enumerable
+
+    # call-seq:
+    #   IO::Like.open { |like| block } -> value
+    #   IO::Like.open        -> ios
+    #
+    # Equivalent to calling #new with the given arguments when called without a
+    # block.  Otherwise, calls new with the given arguments and yields the
+    # result to the block, ensuring that #close is called on the yielded object
+    # before returning the result of the block.
+    def self.open(*args, &b)
+      like = new(*args, &b)
+      return like unless block_given?
+
+      begin
+        yield like
+      ensure
+        like.close unless like.closed?
+      end
+    end
+
+    def initialize
+      raise NotImplementedError, 'abstract implementation must be replaced'
+    end
 
     # call-seq:
     #   ios << obj           -> ios

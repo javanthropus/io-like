@@ -5,19 +5,7 @@ $: << File.expand_path('../../../lib', __FILE__)
 require 'io/like'
 require 'fcntl'
 
-class IOWrapper
-  include IO::Like
-
-  def self.open(*args)
-    iow = new(*args)
-    return iow unless block_given?
-    begin
-      yield(iow)
-    ensure
-      iow.close unless iow.closed?
-    end
-  end
-
+class IOWrapper < IO::Like
   def initialize(io, *args)
     @io = io
     @readable = false
@@ -136,9 +124,7 @@ end
 
 class Object
   def mock_io_like(name = "io-like")
-    io = mock(name)
-    io.extend(IO::Like)
-    io
+    IOWrapper.new(mock(name), 'r+')
   end
 
   # Replace mspec's new_io helper method to return an IO::Like wrapped IO.

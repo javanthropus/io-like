@@ -6,6 +6,14 @@ detailed information is available in the rest of the documentation.
 <b>NOTE:</b> Date stamps in the following entries are in YYYY/MM/DD format.
 
 
+## v?.?.? (????/??/??)
+* Reimplemented all modules as classes
+** !!WARNING!! Breaks API compatibility with prior versions
+* Added #read_nonblock and #write_nonblock (Grant Gardner)
+* Reworked spec handling to make it easier to import rubyspec snapshots almost
+  trivially (Grant Gardner, Jeremy Bopp)
+
+
 ## v0.3.1 (2020/02/09)
 
 * Removed the rubyforge reference from the gemspec (Jordan Pickwell)

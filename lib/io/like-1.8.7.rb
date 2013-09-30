@@ -13,9 +13,7 @@ class IO # :nodoc:
   # Include this module explicitly rather than <code>IO::Like</code> if the
   # including class should always behave like Ruby 1.8.7 <code>IO</code> no
   # matter what version of Ruby is running the class.
-  module Like_1_8_7
-    include IO::Like_1_8_6
-
+  class Like_1_8_7 < IO::Like_1_8_6
     # call-seq:
     #   ios.binmode          -> ios
     #

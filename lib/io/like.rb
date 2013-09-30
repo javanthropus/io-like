@@ -1,36 +1,36 @@
 # encoding: UTF-8
 
-# Set the implementation of IO::Like based on the version of the Ruby
-# interpreter reading this file.
-ver_arr = RUBY_VERSION.split('.').collect { |n| n.to_i }
-if (ver_arr <=> [1, 8, 6]) <= 0 then
-  require 'io/like-1.8.6'
-  IO::Like = IO::Like_1_8_6
-else
-  require 'io/like-1.8.7'
-  IO::Like = IO::Like_1_8_7
-end
-
-# Redefine IO::Like here in order to get rdoc documentation generated for it.
 class IO # :nodoc:
-  # IO::Like is a module which provides most of the basic input and output
-  # functions of IO objects using methods named _unbuffered_read_,
+  # Set the implementation of IO::Like based on the version of the Ruby
+  # interpreter reading this file.
+  version_class =
+    case RUBY_VERSION.split('.').map { |n| n.to_i }
+    when [1, 8, 6]
+      require 'io/like-1.8.6'
+      IO::Like_1_8_6
+    else
+      require 'io/like-1.8.7'
+      IO::Like_1_8_7
+    end
+
+  # IO::Like is an abstract class which provides most of the basic input and
+  # output functions of IO objects using methods named _unbuffered_read_,
   # _unbuffered_write_, and _unbuffered_seek_.
   #
-  # The definition of this particular module is equivalent to whatever
-  # version-specific module provides the closest interface to the IO
+  # The definition of this particular class is equivalent to whatever
+  # version-specific class provides the closest interface to the IO
   # implementation of the Ruby interpreter running this library.  For example,
   # IO::Like will be equivalent to IO::Like_1_8_6 under Ruby version 1.8.6 while
   # it will be equivalent to IO::Like_1_8_7 under Ruby version 1.8.7.
   #
-  # When considering any of the IO::Like modules for use in a class, the
-  # following documentation holds true.
+  # When considering any of the IO::Like classes for use as a class ancestor,
+  # the following documentation holds true.
   #
   # == Readers
   #
-  # In order to use this module to provide input methods, a class which
-  # includes it must provide the _unbuffered_read_ method which takes one
-  # argument, a length, as follows:
+  # In order to use this class to provide input methods, a class which descends
+  # from it must provide the _unbuffered_read_ method which takes one argument,
+  # a length, as follows:
   #
   #   def unbuffered_read(length)
   #     ...
@@ -44,8 +44,8 @@ class IO # :nodoc:
   #
   # == Writers
   #
-  # In order to use this module to provide output methods, a class which
-  # includes it must provide the _unbuffered_write_ method which takes a single
+  # In order to use this class to provide output methods, a class which descends
+  # from it must provide the _unbuffered_write_ method which takes a single
   # string argument as follows:
   #
   #   def unbuffered_write(string)
@@ -61,8 +61,8 @@ class IO # :nodoc:
   #
   # == Seekers
   #
-  # In order to use this module to provide seeking methods, a class which
-  # includes it must provide the _unbuffered_seek_ method which takes two
+  # In order to use this class to provide seeking methods, a class which
+  # descends from it must provide the _unbuffered_seek_ method which takes two
   # required arguments, an offset and a start position, as follows:
   #
   #   def unbuffered_seek(offset, whence)
@@ -92,9 +92,10 @@ class IO # :nodoc:
   #
   # == Blocking/Non-blocking Toggle
   #
-  # In order to use this module to provide a stream that can be toggled between
-  # blocking and non-blocking modes, a class which includes it must override the
-  # #nonblock= method which takes a single boolean argument as follows:
+  # In order to use this class to provide a stream that can be toggled between
+  # blocking and non-blocking modes, a class which descends from it must
+  # override the #nonblock= method which takes a single boolean argument as
+  # follows:
   #
   #   def nonblock=(mode)
   #     ...
@@ -115,17 +116,7 @@ class IO # :nodoc:
   # automatically called when the object is garbage collected, so it must be
   # explicitly called when the object is no longer needed or risk losing
   # whatever data remains in the internal write buffer.
-  module Like
-    # Set the implementation of IO::Like based on the version of the Ruby
-    # interpreter reading this file.
-    if (RUBY_VERSION.split('.').map { |n| n.to_i } <=> [1, 8, 6]) <= 0
-      require 'io/like-1.8.6'
-      include IO::Like_1_8_6
-    else
-      require 'io/like-1.8.7'
-      include IO::Like_1_8_7
-    end
-  end
+  class Like < version_class; end
 end
 
 # vim: ts=2 sw=2 et
