@@ -46,5 +46,3 @@ unless MSpec::VERSION >= minimum_version
   exit 1
 end
 $VERBOSE = nil unless ENV['OUTPUT_WARNINGS']
-
-$: << File.join(File.dirname(__FILE__), '../lib')

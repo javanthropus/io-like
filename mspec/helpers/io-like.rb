@@ -1,5 +1,7 @@
 # encoding: UTF-8
 
+$: << File.expand_path('../../../lib', __FILE__)
+
 require 'io/like'
 require 'fcntl'
 
