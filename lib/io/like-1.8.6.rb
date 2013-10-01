@@ -22,7 +22,7 @@ class IO # :nodoc:
     # result to the block, ensuring that #close is called on the yielded object
     # before returning the result of the block.
     def self.open(*args, &b)
-      like = new(*args, &b)
+      like = new(*args)
       return like unless block_given?
 
       begin
