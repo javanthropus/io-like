@@ -14,8 +14,8 @@ class IO # :nodoc:
     include Enumerable
 
     # call-seq:
-    #   IO::Like.open { |like| block } -> value
-    #   IO::Like.open        -> ios
+    #   IO::Like.open(*args) { |like| block } -> value
+    #   IO::Like.open(*args) -> ios
     #
     # Equivalent to calling #new with the given arguments when called without a
     # block.  Otherwise, calls new with the given arguments and yields the
