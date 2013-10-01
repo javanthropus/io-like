@@ -56,6 +56,22 @@ class IOWrapper < IO::Like
   def writable?; @writable; end
   def duplexed?; @duplexed; end
 
+  attr_writer :duplexed
+
+  def close_read
+    super
+    @readable = false
+    @io.close_read unless @io.closed?
+    nil
+  end
+
+  def close_write
+    super
+    @writable = false
+    @io.close_write unless @io.closed?
+    nil
+  end
+
   def close
     super
     @io.close
@@ -158,7 +174,6 @@ class File
   # Replace File.open to use/provide an IO::Like wrapped File.
   class << self
     alias :__file_open :open
-
     def open(*args, &block)
       io = IOWrapper.open(__file_open(*args), *args[1..-1])
 
@@ -177,7 +192,6 @@ class IO
   # Replace IO.pipe to use/provide IO::Like wrapped endpoints.
   class << self
     alias :__pipe :pipe
-
     def pipe(*args, &block)
       r, w = __pipe(*args)
       r, w = IOWrapper.new(r, 'r'), IOWrapper.new(w, 'w')
@@ -190,6 +204,20 @@ class IO
       ensure
         r.close unless r.closed?
         w.close unless w.closed?
+      end
+    end
+
+    alias :__popen :popen
+    def popen(*args, &block)
+      io = IOWrapper.open(__popen(*args), *args[1..-1])
+      io.duplexed = true
+
+      return io unless block_given?
+
+      begin
+        yield(io)
+      ensure
+        io.close unless io.closed?
       end
     end
   end

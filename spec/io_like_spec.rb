@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-require File.dirname(__FILE__) + '/../rubyspec/spec_helper'
+require File.expand_path('../../spec_helper', __FILE__)
 
 # These specs just make sure we are using wrapped objects.  Otherwise rubyspec
 # will pass using normal IO and not really be testing IO::Like.
@@ -54,11 +54,23 @@ describe "IO::Like rubyspecs" do
     w.close
   end
 
+  it "should provide IOWrapper for IO.popen" do
+    io = IO.popen('cat', 'r+')
+    io.should be_kind_of(IOWrapper)
+    io.close
+  end
+
   ruby_version_is "1.9" do
     it "should provide IOWrapper for IO.pipe with block" do
       IO.pipe do |r, w|
         r.should be_kind_of(IOWrapper)
         w.should be_kind_of(IOWrapper)
+      end
+    end
+
+    it "should provide IOWrapper for IO.popen with block" do
+      IO.popen('cat', 'r+') do |io|
+        io.should be_kind_of(IOWrapper)
       end
     end
   end
