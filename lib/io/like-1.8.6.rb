@@ -326,8 +326,8 @@ class IO # :nodoc:
     # call-seq:
     #   ios.getc             -> nil or integer
     #
-    # Calls #readchar and either returns the result or <code>nil</code> if
-    # #readchar raises <code>EOFError</code>.
+    # Returns the next byte from the stream or <code>nil</code> if the end of
+    # the stream has been reached.
     #
     # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
     # <code>IOError</code> unless #readable? returns <code>true</code>.  Raises
@@ -340,18 +340,41 @@ class IO # :nodoc:
     # will also raise the same errors and block at the same times as
     # #unbuffered_read.
     def getc
-      readchar
-    rescue EOFError
-      nil
+      char = read(1)
+      return nil if char.nil?
+      char[0]
+    rescue Errno::EAGAIN, Errno::EINTR
+      retry if read_ready?
     end
 
     # call-seq:
     #   ios.gets(sep_string = $/) -> nil or string
     #
-    # Calls #readline with <i>sep_string</i> as an argument and either returns
-    # the result or <code>nil</code> if #readline raises <code>EOFError</code>.
-    # If #readline returns some data, <code>$.</code> is set to the value of
-    # #lineno.
+    # Returns the next line from the stream or <code>nil</code> if called at the
+    # end of the stream, where lines are separated by <i>sep_string</i>.
+    # Increments #lineno by <code>1</code> for each call regardless of the value
+    # of <i>sep_string</i>.
+    #
+    # If <i>sep_string</i> is not <code>nil</code>, it is first converted to a
+    # <code>String</code> using its <code>to_str</code> method and processing
+    # continues as follows.
+    #
+    # If <i>sep_string</i> is <code>nil</code>, a line is defined as the
+    # remaining contents of the stream.  Partial data will be returned if a
+    # low-level error of any kind is raised after some data is retrieved.  This
+    # is equivalent to calling #read without any arguments.
+    #
+    # If <i>sep_string</i> is an empty <code>String</code>, a paragraph is
+    # returned, where a paragraph is defined as data followed by 2 or more
+    # successive newline characters.  A maximum of 2 newlines are returned at
+    # the end of the returned data.  Fewer may be returned if the stream ends
+    # before at least 2 successive newlines are seen.
+    #
+    # Any other value for <i>sep_string</i> is used as a delimiter to mark the
+    # end of a line.  The returned data includes this delimiter unless the
+    # stream ends before the delimiter is seen.
+    #
+    # In any case, the end of the stream terminates the current line.
     #
     # <b>NOTE:</b> Due to limitations of MRI up to version 1.9.x when running
     # managed (Ruby) code, this method fails to set <code>$_</code> to the
@@ -367,14 +390,55 @@ class IO # :nodoc:
     # Aside from that exception, this method will raise the same errors and
     # block at the same times as #unbuffered_read.
     def gets(sep_string = $/)
-      # Set the last read line in the global.
-      $_ = readline(sep_string)
-      # Set the last line number in the global.
-      $. = lineno
-      # Return the last read line.
-      $_
-    rescue EOFError
-      nil
+      # Ensure that sep_string is either nil or a String.
+      unless sep_string.nil?
+        sep_string = sep_string.to_str
+      end
+
+      if sep_string.nil?
+        # A nil line separator means that the user wants to capture all the
+        # remaining input.
+        buffer = read
+      else
+        buffer = ''
+
+        # Record if the user requested paragraphs rather than lines.
+        paragraph_requested = sep_string.empty?
+        # An empty line separator string indicates that the user wants to
+        # return paragraphs.  A pair of newlines in the stream is used to
+        # mark this.
+        sep_string = "\n\n" if paragraph_requested
+
+        catch(:eof) do
+          # If the user requested paragraphs instead of lines, we need to
+          # consume and discard all newlines remaining at the front of the
+          # input.
+          swallow_newlines if paragraph_requested
+
+          # Add each character from the input to the buffer until either the
+          # buffer has the right ending or the end of the input is reached.
+          while buffer.index(sep_string, -sep_string.length).nil? do
+            char = read(1)
+            throw :eof if char.nil?
+            buffer << char
+          end
+
+          # If the user requested paragraphs instead of lines, we need to
+          # consume and discard all newlines remaining at the front of the
+          # input.
+          swallow_newlines if paragraph_requested
+        end
+      end
+
+      buffer = nil if buffer.empty?
+      unless buffer.nil?
+        # Increment the number of times this method has returned a "line".
+        self.lineno += 1
+        # Set the last line number in the global.
+        $. = lineno
+      end
+      # Set the last read line in the global and return it.
+      $_ = buffer
     end
 
     # call-seq:
@@ -762,40 +826,16 @@ class IO # :nodoc:
     # method always blocks.  Aside from that exception, this method will also
     # raise the same errors and block at the same times as #unbuffered_read.
     def readchar
-      __io_like__buffered_read(1)[0]
-    rescue Errno::EAGAIN, Errno::EINTR
-      retry if read_ready?
+      char = getc
+      raise EOFError, "end of file reached" if char.nil?
+      char
     end
 
     # call-seq:
     #   ios.readline(sep_string = $/) -> string
     #
-    # Returns the next line from the stream, where lines are separated by
-    # <i>sep_string</i>.  Increments #lineno by <code>1</code> for each call
-    # regardless of the value of <i>sep_string</i>.
-    #
-    # If <i>sep_string</i> is not <code>nil</code> and not a
-    # <code>String</code>, it is first converted to a <code>String</code> using
-    # its <code>to_str</code> method and processing continues as follows.
-    #
-    # If <i>sep_string</i> is <code>nil</code>, a line is defined as the
-    # remaining contents of the stream.  Partial data will be returned if a
-    # low-level error of any kind is raised after some data is retrieved.  This
-    # is equivalent to calling #read without any arguments except that this
-    # method will raise an <code>EOFError</code> if called at the end of the
-    # stream.
-    #
-    # If <i>sep_string</i> is an empty <code>String</code>, a paragraph is
-    # returned, where a paragraph is defined as data followed by 2 or more
-    # successive newline characters.  A maximum of 2 newlines are returned at
-    # the end of the returned data.  Fewer may be returned if the stream ends
-    # before at least 2 successive newlines are seen.
-    #
-    # Any other value for <i>sep_string</i> is used as a delimiter to mark the
-    # end of a line.  The returned data includes this delimiter unless the
-    # stream ends before the delimiter is seen.
-    #
-    # In any case, the end of the stream terminates the current line.
+    # Calls #gets with <i>sep_string</i> and raises <code>EOFError</code> when
+    # <code>nil</code> is returned and returns the result value otherwise.
     #
     # Raises <code>EOFError</code> when there is no more data in the stream.
     # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
@@ -807,64 +847,9 @@ class IO # :nodoc:
     # Aside from that exception, this method will raise the same errors and
     # block at the same times as #unbuffered_read.
     def readline(sep_string = $/)
-      # Ensure that sep_string is either nil or a String.
-      unless sep_string.nil? || sep_string.kind_of?(String) then
-        sep_string = sep_string.to_str
-      end
-
-      buffer = ''
-      begin
-        if sep_string.nil? then
-          # A nil line separator means that the user wants to capture all the
-          # remaining input.
-          loop do
-            buffer << __io_like__buffered_read(4096)
-          end
-        else
-          begin
-            # Record if the user requested paragraphs rather than lines.
-            paragraph_requested = sep_string.empty?
-            # An empty line separator string indicates that the user wants to
-            # return paragraphs.  A pair of newlines in the stream is used to
-            # mark this.
-            sep_string = "\n\n" if paragraph_requested
-
-            if paragraph_requested then
-              # If the user requested paragraphs instead of lines, we need to
-              # consume and discard all newlines remaining at the front of the
-              # input.
-              char = __io_like__buffered_read(1)
-              char = __io_like__buffered_read(1) while char == "\n"
-              # Put back the last character.
-              ungetc(char[0])
-            end
-
-            # Add each character from the input to the buffer until either the
-            # buffer has the right ending or the end of the input is reached.
-            while buffer.index(sep_string, -sep_string.length).nil? do
-              buffer << __io_like__buffered_read(1)
-            end
-
-            if paragraph_requested then
-              # If the user requested paragraphs instead of lines, we need to
-              # consume and discard all newlines remaining at the front of the
-              # input.
-              char = __io_like__buffered_read(1)
-              char = __io_like__buffered_read(1) while char == "\n"
-              # Put back the last character.
-              ungetc(char[0])
-            end
-          rescue Errno::EAGAIN, Errno::EINTR
-            retry if read_ready?
-          end
-        end
-      rescue EOFError, SystemCallError
-        # Reraise the error if there is nothing to return.
-        raise if buffer.empty?
-      end
-      # Increment the number of times this method has returned a "line".
-      self.lineno += 1
-      buffer
+      line = gets(sep_string)
+      raise EOFError, "end of file reached" if line.nil?
+      line
     end
 
     # call-seq:
@@ -1255,6 +1240,23 @@ class IO # :nodoc:
     end
 
     private
+
+    # call-seq:
+    #   ios.swallow_newlines  -> ios
+    #
+    # Discards all newlines currently at the beginning of the stream.
+    def swallow_newlines
+      char = nil
+      loop do
+        char = read(1)
+        throw :eof if char.nil?
+        break if char != "\n"
+      end
+      # Put back the last character.
+      ungetc(char[0])
+
+      self
+    end
 
     # call-seq:
     #   ios.__io_like__buffered_flush   -> 0
