@@ -29,7 +29,9 @@ class IO # :nodoc:
     end
 
     def initialize
-      raise NotImplementedError, 'abstract implementation must be replaced'
+      @readable = false
+      @writable = false
+      @seekable = true
     end
 
     # call-seq:
@@ -54,63 +56,40 @@ class IO # :nodoc:
     #   ios.close            -> nil
     #
     # Arranges for #closed? to return <code>true</code>.  Raises
-    # <code>IOError</code> if #closed? already returns <code>true</code>.  For
-    # duplexed objects, calls #close_read and #close_write.  For non-duplexed
-    # objects, calls #flush if #writable? returns <code>true</code> and then
-    # sets a flag so that #closed? will return <code>true</code>.
+    # <code>IOError</code> if #closed? already returns <code>true</code>.  Also
+    # also calls #flush for writable objects.
     def close
       raise IOError, 'closed stream' if closed?
-      __io_like__close_read
+      @readable = false
       flush if writable?
-      __io_like__close_write
+      @writable = false
       nil
     end
 
     # call-seq:
     #   ios.close_read       -> nil
     #
-    # Closes the read end of a duplexed object or the whole object if the object
-    # is read-only.
+    # Basically an alias for #close for read-only objects.
     #
     # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
-    # <code>IOError</code> for duplexed objects if called more than once.
-    # Raises <code>IOError</code> for non-duplexed objects if #writable? returns
-    # <code>true</code>.
+    # <code>IOError</code> if #writable? returns <code>true</code>.
     def close_read
       raise IOError, 'closed stream' if closed?
-      if __io_like__closed_read? || ! duplexed? && writable? then
-        raise IOError, 'closing non-duplex IO for reading'
-      end
-      if duplexed? then
-        __io_like__close_read
-      else
-        close
-      end
-      nil
+      raise IOError, 'closing non-duplex IO for reading' if writable?
+      close
     end
 
     # call-seq:
     #   ios.close_write      -> nil
     #
-    # Closes the write end of a duplexed object or the whole object if the
-    # object is write-only.
+    # Basically and alias for #close for write-only objects.
     #
     # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
-    # <code>IOError</code> for duplexed objects if called more than once.
-    # Raises <code>IOError</code> for non-duplexed objects if #readable? returns
-    # <code>true</code>.
+    # <code>IOError</code> if #readable? returns <code>true</code>.
     def close_write
       raise IOError, 'closed stream' if closed?
-      if __io_like__closed_write? || ! duplexed? && readable? then
-        raise IOError, 'closing non-duplex IO for reading'
-      end
-      if duplexed? then
-        flush
-        __io_like__close_write
-      else
-        close
-      end
-      nil
+      raise IOError, 'closing non-duplex IO for writing' if readable?
+      close
     end
 
     # call-seq:
@@ -119,17 +98,7 @@ class IO # :nodoc:
     # Returns <code>true</code> if this object is closed or otherwise unusable
     # for read and write operations.
     def closed?
-      (__io_like__closed_read? || ! readable?) &&
-      (__io_like__closed_write? || ! writable?)
-    end
-
-    # call-seq:
-    #   ios.duplexed?        -> true or false
-    #
-    # Returns <code>false</code>.  Override this to return <code>true</code>
-    # when creating duplexed <code>IO</code> objects.
-    def duplexed?
-      false
+      ! (readable? || writable?)
     end
 
     # call-seq:
@@ -538,16 +507,15 @@ class IO # :nodoc:
     # Raises <code>IOError</code> if #closed? returns <code>true</code>.  Raises
     # <code>Errno::ESPIPE</code> unless #seekable? returns <code>true</code>.
     #
-    # As a side effect, the internal write buffer is flushed unless this is
-    # a writable, non-duplexed object.  This is for compatibility with the
-    # behavior of <code>IO#pos</code>.
+    # As a side effect, the internal write buffer is flushed.  This is for
+    # compatibility with the behavior of <code>IO#pos</code>.
     #
     # <b>NOTE:</b> Because this method relies on #unbuffered_seek and
     # #unbuffered_write (when the internal write buffer is not empty), it will
     # also raise the same errors and block at the same times as those functions.
     def pos
-      # Flush the internal write buffer for writable, non-duplexed objects.
-      __io_like__buffered_flush if writable? && ! duplexed?
+      # Flush the internal write buffer for writable.
+      __io_like__buffered_flush if writable?
       __io_like__buffered_seek(0, IO::SEEK_CUR)
     end
     alias :tell :pos
@@ -770,13 +738,8 @@ class IO # :nodoc:
     #
     # Returns <code>true</code> if the stream is both open and readable,
     # <code>false</code> otherwise.
-    #
-    # This implementation checks to see if #unbuffered_read is defined in order
-    # to make its determination.  Override this if the implementing class always
-    # provides the #unbuffered_read method but may not always be open in a
-    # readable mode.
     def readable?
-      ! __io_like__closed_read? && respond_to?(:unbuffered_read, true)
+      @readable
     end
 
     # call-seq:
@@ -974,13 +937,8 @@ class IO # :nodoc:
     #
     # Returns <code>true</code> if the stream is seekable, <code>false</code>
     # otherwise.
-    #
-    # This implementation always returns <code>false</code> for duplexed objects
-    # and checks to see if #unbuffered_seek is defined in order to make its
-    # determination otherwise.  Override this if the implementing class always
-    # provides the #unbuffered_seek method but may not always be seekable.
     def seekable?
-      ! duplexed? && respond_to?(:unbuffered_seek, true)
+      @seekable
     end
 
     # call-seq:
@@ -1036,8 +994,8 @@ class IO # :nodoc:
         raise IOError, 'sysread on buffered IO'
       end
 
-      # Flush the internal write buffer for writable, non-duplexed objects.
-      __io_like__buffered_flush if writable? && ! duplexed?
+      # Flush the internal write buffer for writable objects.
+      __io_like__buffered_flush if writable?
 
       buffer << unbuffered_read(length)
     end
@@ -1094,8 +1052,8 @@ class IO # :nodoc:
       end
 
       # Flush the internal read buffer and set the unbuffered position to the
-      # buffered position when dealing with non-duplexed objects.
-      unless duplexed? || __io_like__internal_read_buffer.empty? then
+      # buffered position.
+      unless __io_like__internal_read_buffer.empty? then
         unbuffered_seek(-__io_like__internal_read_buffer.length, IO::SEEK_CUR)
         __io_like__internal_read_buffer.slice!(0..-1)
       end
@@ -1167,13 +1125,8 @@ class IO # :nodoc:
     #
     # Returns <code>true</code> if the stream is both open and writable,
     # <code>false</code> otherwise.
-    #
-    # This implementation checks to see if #unbuffered_write is defined in order
-    # to make its determination.  Override this if the implementing class always
-    # provides the #unbuffered_write method but may not always be open in a
-    # writable mode.
     def writable?
-      ! __io_like__closed_write? && respond_to?(:unbuffered_write, true)
+      @writable
     end
 
     # call-seq:
@@ -1297,8 +1250,8 @@ class IO # :nodoc:
       raise IOError, 'closed stream' if closed?
       raise IOError, 'not opened for reading' unless readable?
 
-      # Flush the internal write buffer for writable, non-duplexed objects.
-      __io_like__buffered_flush if writable? && ! duplexed?
+      # Flush the internal write buffer for writable objects.
+      __io_like__buffered_flush if writable?
 
       # Ensure that the internal read buffer has at least enough data to satisfy
       # the request.
@@ -1447,8 +1400,8 @@ class IO # :nodoc:
       raise IOError, 'not opened for writing' unless writable?
 
       # Flush the internal read buffer and set the unbuffered position to the
-      # buffered position when dealing with non-duplexed objects.
-      unless duplexed? || __io_like__internal_read_buffer.empty? then
+      # buffered position.
+      unless __io_like__internal_read_buffer.empty? then
         unbuffered_seek(-__io_like__internal_read_buffer.length, IO::SEEK_CUR)
         __io_like__internal_read_buffer.slice!(0..-1)
       end

@@ -32,6 +32,16 @@ class MSpecScript
     "IO#ungetc raises IOError when invoked on stream that was not yet read",
     # The very definition says to expect unpredictable results for the below.
     "IO#sysread on a file reads normally even when called immediately after a buffered IO#read",
+    # These #close_read and #close_write specs all rely on a duplexed IO object.
+    "IO#close_read closes the read end of a duplex I/O stream",
+    "IO#close_read raises an IOError on subsequent invocations",
+    "IO#close_read allows subsequent invocation of close",
+    "IO#close_read raises IOError on closed stream",
+    "IO#close_write closes the write end of a duplex I/O stream",
+    "IO#close_write raises an IOError on subsequent invocations",
+    "IO#close_write allows subsequent invocation of close",
+    "IO#close_write flushes and closes the write stream",
+    "IO#close_write raises IOError on closed stream",
     # Cannot set $_ from Ruby code, so we cannot comply with anything mentioning
     # $_.
     "$_"

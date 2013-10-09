@@ -82,14 +82,6 @@ class IO # :nodoc:
   #   -------------+------------------------------------------------------------
   #   IO::SEEK_END | Add offset to the position of the end of the stream.
   #
-  # == Duplexed Streams
-  #
-  # In order to create a duplexed stream where writing and reading happen
-  # independently of each other, override the #duplexed? method to return
-  # +true+ and then provide the _unbuffered_read_ and _unbuffered_write_
-  # methods.  Do *NOT* provide an _unbuffered_seek_ method or the contents of
-  # the internal read and write buffers may be lost unexpectedly.
-  #
   # == Blocking/Non-blocking Toggle
   #
   # In order to use this class to provide a stream that can be toggled between

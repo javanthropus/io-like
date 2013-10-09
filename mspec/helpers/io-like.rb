@@ -7,10 +7,8 @@ require 'fcntl'
 
 class IOWrapper < IO::Like
   def initialize(io, *args)
+    super()
     @io = io
-    @readable = false
-    @writable = false
-    @duplexed = false
     @nonblock = false
 
     args.pop if args.last.kind_of?(Hash)
@@ -50,26 +48,6 @@ class IOWrapper < IO::Like
 
   def reopen(io)
     @io = io
-  end
-
-  def readable?; @readable; end
-  def writable?; @writable; end
-  def duplexed?; @duplexed; end
-
-  attr_writer :duplexed
-
-  def close_read
-    super
-    @readable = false
-    @io.close_read unless @io.closed?
-    nil
-  end
-
-  def close_write
-    super
-    @writable = false
-    @io.close_write unless @io.closed?
-    nil
   end
 
   def close
@@ -204,20 +182,6 @@ class IO
       ensure
         r.close unless r.closed?
         w.close unless w.closed?
-      end
-    end
-
-    alias :__popen :popen
-    def popen(*args, &block)
-      io = IOWrapper.open(__popen(*args), *args[1..-1])
-      io.duplexed = true
-
-      return io unless block_given?
-
-      begin
-        yield(io)
-      ensure
-        io.close unless io.closed?
       end
     end
   end
