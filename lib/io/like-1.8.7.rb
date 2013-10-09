@@ -4,15 +4,11 @@ require 'enumerator'         # in case used under Ruby < v1.8.7
 require 'io/like-1.8.6'
 
 class IO # :nodoc:
-  # This module provides most of the basic input and output functions of
+  # This class provides most of the basic input and output functions of
   # <code>IO</code> objects as implemented in Ruby version 1.8.7.  Its use is
   # supported on all versions of Ruby.  See the general documentation of
-  # <code>IO::Like</code> for a description of how to create a class capable of
-  # using this module.
-  #
-  # Include this module explicitly rather than <code>IO::Like</code> if the
-  # including class should always behave like Ruby 1.8.7 <code>IO</code> no
-  # matter what version of Ruby is running the class.
+  # <code>IO::Like</code> for a description of how to create a class derived
+  # from this one.
   class Like_1_8_7 < IO::Like_1_8_6
     # call-seq:
     #   ios.binmode          -> ios
