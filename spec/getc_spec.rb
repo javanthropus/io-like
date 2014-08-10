@@ -29,12 +29,13 @@ describe "IO::Like#getc" do
   end
 
   it "returns nil on empty stream" do
-    File.open(tmp('empty.txt'), "w+") do |empty|
+    path = tmp('empty.txt')
+    File.open(path, "w+") do |empty|
       IOWrapper.open(empty) do |iowrapper|
         iowrapper.getc.should == nil
       end
     end
-    File.unlink(tmp("empty.txt"))
+    File.unlink(path)
   end
 
   it "raises IOError on closed stream" do

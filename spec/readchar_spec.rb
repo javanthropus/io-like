@@ -33,13 +33,14 @@ describe "IO::Like#readchar" do
   end
 
   it "raises EOFError on empty stream" do
-    File.open(tmp('empty.txt'), "w+") do |empty|
+    path = tmp('empty.txt')
+    File.open(path, "w+") do |empty|
       IOWrapper.open(empty) do |iowrapper|
         lambda { iowrapper.readchar }.should raise_error(EOFError)
       end
     end
 
-    File.unlink(tmp("empty.txt"))
+    File.unlink(path)
   end
 
   it "raises IOError on closed stream" do
