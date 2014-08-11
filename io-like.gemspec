@@ -37,7 +37,7 @@ are absent.
   s.add_development_dependency('yard', '~> 0.8')
   s.add_development_dependency('yard-redcarpet-ext', '~> 0.0')
   s.add_development_dependency('github-markup', '~> 1.2')
-  if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new('1.9.2')
+  if Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new('1.9.2')
     s.add_development_dependency('redcarpet', '~> 3.1')
   end
 
