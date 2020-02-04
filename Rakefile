@@ -93,7 +93,6 @@ Additionally, read and write operations which are buffered in IO are buffered
 with independently configurable buffer sizes.  Duplexed objects (those with
 separate read and write streams) are also supported.
   EOF
-  s.rubyforge_project = PKG_NAME
   s.homepage      = "http://#{PKG_NAME}.rubyforge.org"
   s.files         = PKG_FILES
   s.required_ruby_version = '>= 1.8.1'
