@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require File.dirname(__FILE__) + '/../fixtures/classes'
 
 describe :io_like__each, :shared => true do
@@ -83,7 +84,7 @@ describe :io_like__each, :shared => true do
 
   ruby_version_is "1.8.7" do
     it "returns an Enumerator when passed no block" do
-      enum = @iowrapper.send(@method, " ")
+      enum = @iowrapper.send(@method)
       enum.instance_of?(Enumerable::Enumerator).should be_true
 
       enum.to_a.should == [

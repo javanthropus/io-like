@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require File.dirname(__FILE__) + '/../spec_helper'
 require File.dirname(__FILE__) + '/fixtures/classes'
 
@@ -166,8 +167,6 @@ describe "IO::Like#gets" do
     end
   end
 
-  # This could probably be added to the previous test using pos, but right now
-  # this doesn't pass and the previous test does.
   it "reads until the beginning of the next paragraph when the separator's length is 0" do
     # Leverage the fact that there are three newlines between the first and
     # second paragraph.
@@ -177,6 +176,15 @@ describe "IO::Like#gets" do
       # This should return 'A', the first character of the next paragraph, not
       # $/.
       f.read(1).should == 'A'
+    end
+  end
+
+  it "discards leading newlines from the beginning of the paragraph" do
+    IOSpecs.readable_iowrapper do |f|
+      f.gets()
+      f.gets()
+
+      f.gets('').should == "Aqu\303\255 est\303\241 la l\303\255nea tres.\nIst hier Linie vier.\n\n"
     end
   end
 

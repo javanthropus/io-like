@@ -1,4 +1,5 @@
-require File.dirname(__FILE__) + '/../../lib/io/like'
+# encoding: UTF-8
+require 'io/like'
 
 class IOWrapper
   include IO::Like
