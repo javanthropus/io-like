@@ -1,4 +1,3 @@
-# encoding: UTF-8
 describe :io_like__pos, :shared => true do
   before :each do
     @fname = tmp('IO_Like__pos_test')

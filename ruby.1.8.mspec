@@ -1,4 +1,3 @@
-# encoding: UTF-8
 class MSpecScript
   # An ordered list of the directories containing specs to run
   set :files, ['spec']

@@ -1,4 +1,3 @@
-# encoding: UTF-8
 require File.dirname(__FILE__) + '/../fixtures/classes'
 
 describe :io_like__write, :shared => true do

@@ -1,4 +1,3 @@
-# encoding: UTF-8
 require File.dirname(__FILE__) + '/../spec_helper'
 require File.dirname(__FILE__) + '/fixtures/classes'
 
@@ -18,7 +17,6 @@ describe "IO::Like#print" do
     $, = @old_field_separator
     @iowrapper.close unless @iowrapper.closed?
     @file.close unless @file.closed?
-    File.unlink @filename
   end
 
   it "returns nil" do

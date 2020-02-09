@@ -134,8 +134,8 @@ A simple ROT13 codec:
 
 == Known Bugs/Limitations
 
-1. Only versions 1.8.6 and 1.8.7 of Ruby's IO interface are implemented.
-   Version 1.9.1 support is planned.
+1. Only up to version 1.8.6 of Ruby's IO interface is implemented.  Version
+   1.8.7 and eventually 1.9.0/2.0.0 support are coming soon.
 2. Ruby's finalization capabilities fall a bit short in a few respects, and as a
    result, it is impossible to cause the close, close_read, or close_write
    methods to be called automatically when an including class is garbage

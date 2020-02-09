@@ -1,4 +1,3 @@
-# encoding: UTF-8
 require 'io/like'
 
 class ROT13Filter
