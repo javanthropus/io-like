@@ -40,13 +40,14 @@ describe :io_like__eof, :shared => true do
   end
 
   it "returns true on just opened empty stream" do
-    File.open(tmp('empty.txt'), "w") { |empty| } # ensure it exists
-    File.open(tmp('empty.txt')) do |empty|
+    path = tmp('empty.txt')
+    File.open(path, "w") { |empty| } # ensure it exists
+    File.open(path) do |empty|
       ReadableIOWrapper.open(empty) do |iowrapper|
         iowrapper.send(@method).should == true
       end
     end
-    File.delete(tmp("empty.txt"))
+    File.delete(path)
   end
 
   it "returns false on just opened non-empty stream" do

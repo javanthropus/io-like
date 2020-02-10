@@ -203,10 +203,11 @@ describe "IO::Like#gets" do
   end
 
   it "accepts a separator" do
-    f = File.open(tmp("gets_specs"), "w")
+    path = tmp("gets_specs")
+    f = File.open(path, "w")
     f.print("A\n\n\nB\n")
     f.close
-    f = File.open(tmp("gets_specs"), "r")
+    f = File.open(path, "r")
     iowrapper = ReadableIOWrapper.open(f)
     iowrapper.gets("\n\n")
     b = iowrapper.gets("\n\n")
@@ -214,6 +215,6 @@ describe "IO::Like#gets" do
     iowrapper.close
     f.close
     b.should == "\nB\n"
-    File.unlink(tmp("gets_specs"))
+    File.unlink(path)
   end
 end

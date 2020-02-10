@@ -45,18 +45,20 @@ describe "IO::Like#ungetc" do
   end
 
   it "pushes back one character when invoked on empty stream" do
-    File.open(tmp('empty.txt'), "w+") do |empty|
+    path = tmp('empty.txt')
+    File.open(path, "w+") do |empty|
       IOWrapper.open(empty) do |iowrapper|
         iowrapper.getc().should == nil
         iowrapper.ungetc(10)
         iowrapper.getc.should == 10
       end
     end
-    File.unlink(tmp("empty.txt"))
+    File.unlink(path)
   end
 
   it "affects EOF state" do
-    File.open(tmp('empty.txt'), "w+") do |empty|
+    path = tmp('empty.txt')
+    File.open(path, "w+") do |empty|
       IOWrapper.open(empty) do |iowrapper|
         iowrapper.eof?.should == true
         iowrapper.getc.should == nil
@@ -64,7 +66,7 @@ describe "IO::Like#ungetc" do
         iowrapper.eof?.should == false
       end
     end
-    File.unlink(tmp("empty.txt"))
+    File.unlink(path)
   end
 
   it "adjusts the stream position" do
