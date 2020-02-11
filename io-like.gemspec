@@ -18,13 +18,16 @@ Gem::Specification.new do |s|
     jpickwell@users.noreply.github.com
   )
   s.homepage    = 'http://github.com/javanthropus/io-like'
-  s.summary     = 'A module which provides the functionality of an IO object to any including class which provides a couple of simple methods.'
+  s.summary     = 'An abstract class which provides the functionality of an IO object to any descendent class which provides a couple of simple methods.'
   s.description = <<-EOD
-The IO::Like module provides all of the methods of typical IO implementations
-such as File; most importantly the read, write, and seek series of methods.  A
-class which includes IO::Like needs to provide only a few methods in order to
-enable the higher level methods.  Buffering is automatically provided by default
-for the methods which normally provide it in IO.
+The IO::Like class provides the methods of an IO object based upon on a few
+simple methods provided by the descendent class: unbuffered_read,
+unbuffered_write, and unbuffered_seek.  These methods provide the underlying
+read, write, and seek support respectively, and only the method or methods
+necessary to the correct operation of the IO aspects of the descendent class need
+to be provided.  Missing functionality will cause the resulting object to appear
+read-only, write-only, and/or unseekable depending on which underlying methods
+are absent.
   EOD
 
   s.required_ruby_version = '>= 1.8.1'
@@ -57,7 +60,11 @@ for the methods which normally provide it in IO.
     NEWS.md
     README.md
     Rakefile
+    lib/io/like-1.8.6.rb
+    lib/io/like-1.8.7.rb
     lib/io/like.rb
+    lib/io/like/buffer.rb
+    lib/io/like/version.rb
   )
 
   s.test_files = %w(

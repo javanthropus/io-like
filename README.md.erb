@@ -20,19 +20,21 @@
 
 ## FEATURES
 
-* All standard Ruby 1.8.6 IO operations.
+* All standard Ruby 1.8.6 and 1.8.7 IO operations.
+* Obeys `$KCODE` settings.
 * Buffered operations.
 * Configurable buffer size.
 
 ## KNOWN BUGS/LIMITATIONS
 
-* Only up to version 1.8.6 of Ruby's IO interface is implemented.
+* Only versions 1.8.6 and 1.8.7 of Ruby's IO interface are implemented.
+  Version 1.9.1 support is planned.
 * Ruby's finalization capabilities fall a bit short in a few respects, and as a
   result, it is impossible to cause the close, close_read, or close_write
-  methods to be called automatically when an including class is garbage
-  collected.  Define a class open method in the manner of File.open which
-  guarantees that an appropriate close method will be called after executing a
-  block.  Other than that, be diligent about calling the close methods.
+  methods to be called automatically when a descendent class is garbage
+  collected.  Use the class open method which guarantees that an appropriate
+  close method will be called after executing a block.  Other than that, be
+  diligent about calling the close methods.
 
 ## SYNOPSIS
 
@@ -44,20 +46,7 @@ A simple ROT13 codec:
 ```ruby
 require 'io/like'
 
-class ROT13Filter
-  include IO::Like
-
-  def self.open(delegate_io)
-    filter = new(delegate_io)
-    return filter unless block_given?
-
-    begin
-      yield(filter)
-    ensure
-      filter.close unless filter.closed?
-    end
-  end
-
+class ROT13Filter < IO::Like
   def initialize(delegate_io)
     @delegate_io = delegate_io
   end

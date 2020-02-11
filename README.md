@@ -1,7 +1,7 @@
 # IO::Like - in the Likeness of IO
 
-A module which provides the functionality of an IO object to any including class
-which provides a couple of simple methods.
+An abstract class which provides the functionality of an IO object to any
+descendent class which provides a couple of simple methods.
 
 ## LINKS
 
@@ -11,27 +11,32 @@ which provides a couple of simple methods.
 
 ## DESCRIPTION
 
-The IO::Like module provides all of the methods of typical IO implementations
-such as File; most importantly the read, write, and seek series of methods.  A
-class which includes IO::Like needs to provide only a few methods in order to
-enable the higher level methods.  Buffering is automatically provided by default
-for the methods which normally provide it in IO.
+The IO::Like class provides the methods of an IO object based upon on a few
+simple methods provided by the descendent class: unbuffered_read,
+unbuffered_write, and unbuffered_seek.  These methods provide the underlying
+read, write, and seek support respectively, and only the method or methods
+necessary to the correct operation of the IO aspects of the descendent class need
+to be provided.  Missing functionality will cause the resulting object to appear
+read-only, write-only, and/or unseekable depending on which underlying methods
+are absent.
 
 ## FEATURES
 
-* All standard Ruby 1.8.6 IO operations.
+* All standard Ruby 1.8.6 and 1.8.7 IO operations.
+* Obeys `$KCODE` settings.
 * Buffered operations.
 * Configurable buffer size.
 
 ## KNOWN BUGS/LIMITATIONS
 
-* Only up to version 1.8.6 of Ruby's IO interface is implemented.
+* Only versions 1.8.6 and 1.8.7 of Ruby's IO interface are implemented.
+  Version 1.9.1 support is planned.
 * Ruby's finalization capabilities fall a bit short in a few respects, and as a
   result, it is impossible to cause the close, close_read, or close_write
-  methods to be called automatically when an including class is garbage
-  collected.  Define a class open method in the manner of File.open which
-  guarantees that an appropriate close method will be called after executing a
-  block.  Other than that, be diligent about calling the close methods.
+  methods to be called automatically when a descendent class is garbage
+  collected.  Use the class open method which guarantees that an appropriate
+  close method will be called after executing a block.  Other than that, be
+  diligent about calling the close methods.
 
 ## SYNOPSIS
 
@@ -43,20 +48,7 @@ A simple ROT13 codec:
 ```ruby
 require 'io/like'
 
-class ROT13Filter
-  include IO::Like
-
-  def self.open(delegate_io)
-    filter = new(delegate_io)
-    return filter unless block_given?
-
-    begin
-      yield(filter)
-    ensure
-      filter.close unless filter.closed?
-    end
-  end
-
+class ROT13Filter < IO::Like
   def initialize(delegate_io)
     @delegate_io = delegate_io
   end
