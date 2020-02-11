@@ -36,10 +36,11 @@ ruby_version_is '1.8.7' do
     end
 
     it "raises EOFError on empty stream" do
-      File.open(tmp('empty.txt'), "w+") do |empty|
+      tmp_file = tmp('empty.txt')
+      File.open(tmp_file, "w+") do |empty|
         lambda { empty.readbyte }.should raise_error(EOFError)
       end
-      File.unlink(tmp("empty.txt"))
+      File.unlink(tmp_file)
     end
 
     it "raises IOError on closed stream" do
