@@ -27,28 +27,21 @@ SPEC = eval(File.read(GEMSPEC), nil, GEMSPEC)
 # redundantly generated lists of files that probably will not protect the
 # project from the unintentional inclusion or exclusion of files in the
 # distribution.
-PKG_FILES = FileList.new(Dir.glob('**/*', File::FNM_DOTMATCH)) do |files|
-  # Exclude anything that doesn't exist as well as directories.
-  files.exclude {|file| ! File.exist?(file) || File.directory?(file)}
-  # Exclude Git administrative files.
-  files.exclude(%r{(^|[/\\])\.git(ignore|modules|keep)?([/\\]|$)})
-  # Exclude editor swap/temporary files.
-  files.exclude('**/.*.sw?')
-  # Exclude gemspec files.
-  files.exclude('*.gemspec')
-  # Exclude the README template file.
-  files.exclude('README.md.erb')
-  # Exclude resources for bundler.
-  files.exclude('Gemfile', 'Gemfile.lock')
-  files.exclude(%r{^.bundle([/\\]|$)})
-  files.exclude(%r{^vendor/bundle([/\\]|$)})
-  # Exclude generated content, except for the README file.
-  files.exclude(%r{^(pkg|doc|.yardoc)([/\\]|$)})
-  # Exclude examples.
-  files.exclude(%r{^examples([/\\]|$)})
-  # Exclude Rubinius compiled Ruby files.
-  files.exclude('**/*.rbc')
-  files.exclude('.rbx/**/*')
+PKG_FILES = FileList.new('**/*') do |files|
+  files.exclude(
+    # Test files
+    'spec/**/*', 'rubyspec/**/*', 'mspec/**/*', 'spec_helper.rb', 'io-like.mspec',
+    # Non-shipping source files
+    '*.gemspec', 'Gemfile', 'Gemfile.lock', 'Rakefile', 'README.md.erb',
+    # Examples
+    'examples/**/*',
+    # Bundler files
+    'vendor/bundle/**/*',
+    # Generated content except for README
+    'pkg/**/*', 'doc/**/*'
+  )
+  # Exclude directories.
+  files.exclude {|file| File.directory?(file)}
 end
 
 # Make sure that :clean and :clobber will not whack the repository files.
