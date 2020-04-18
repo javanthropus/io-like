@@ -69,6 +69,16 @@ VALUE string_spec_rb_str_buf_new2(VALUE self) {
   return rb_str_buf_new2("hello\0invisible");
 }
 
+VALUE string_spec_rb_str_tmp_new(VALUE self, VALUE len) {
+  VALUE str = rb_str_tmp_new(NUM2LONG(len));
+  rb_obj_reveal(str, rb_cString);
+  return str;
+}
+
+VALUE string_spec_rb_str_tmp_new_klass(VALUE self, VALUE len) {
+  return RBASIC_CLASS(rb_str_tmp_new(NUM2LONG(len)));
+}
+
 VALUE string_spec_rb_str_buf_cat(VALUE self, VALUE str) {
   const char *question_mark = "?";
   rb_str_buf_cat(str, question_mark, strlen(question_mark));
@@ -284,6 +294,25 @@ VALUE string_spec_RSTRING_PTR_iterate(VALUE self, VALUE str) {
   return Qnil;
 }
 
+VALUE string_spec_RSTRING_PTR_iterate_uint32(VALUE self, VALUE str) {
+  uint32_t* ptr;
+  long i, l = RSTRING_LEN(str) / sizeof(uint32_t);
+
+  ptr = (uint32_t *)RSTRING_PTR(str);
+  for(i = 0; i < l; i++) {
+    rb_yield(UINT2NUM(ptr[i]));
+  }
+  return Qnil;
+}
+
+VALUE string_spec_RSTRING_PTR_short_memcpy(VALUE self, VALUE str) {
+  /* Short memcpy operations may be optimised by the compiler to a single write. */
+  if (RSTRING_LEN(str) >= 8) {
+    memcpy(RSTRING_PTR(str), "Infinity", 8);
+  }
+  return str;
+}
+
 VALUE string_spec_RSTRING_PTR_assign(VALUE self, VALUE str, VALUE chr) {
   int i;
   char c;
@@ -362,11 +391,11 @@ static VALUE string_spec_rb_sprintf2(VALUE self, VALUE str, VALUE repl1, VALUE r
 }
 
 static VALUE string_spec_rb_sprintf3(VALUE self, VALUE str) {
-  return rb_sprintf("Result: %"PRIsVALUE".", str);
+  return rb_sprintf("Result: %" PRIsVALUE ".", str);
 }
 
 static VALUE string_spec_rb_sprintf4(VALUE self, VALUE str) {
-  return rb_sprintf("Result: %+"PRIsVALUE".", str);
+  return rb_sprintf("Result: %+" PRIsVALUE ".", str);
 }
 
 static VALUE string_spec_rb_vsprintf_worker(char* fmt, ...) {
@@ -432,6 +461,8 @@ void Init_string_spec(void) {
   rb_define_method(cls, "rb_str_buf_new", string_spec_rb_str_buf_new, 2);
   rb_define_method(cls, "rb_str_capacity", string_spec_rb_str_capacity, 1);
   rb_define_method(cls, "rb_str_buf_new2", string_spec_rb_str_buf_new2, 0);
+  rb_define_method(cls, "rb_str_tmp_new", string_spec_rb_str_tmp_new, 1);
+  rb_define_method(cls, "rb_str_tmp_new_klass", string_spec_rb_str_tmp_new_klass, 1);
   rb_define_method(cls, "rb_str_buf_cat", string_spec_rb_str_buf_cat, 1);
   rb_define_method(cls, "rb_str_cat", string_spec_rb_str_cat, 1);
   rb_define_method(cls, "rb_str_cat2", string_spec_rb_str_cat2, 1);
@@ -477,6 +508,8 @@ void Init_string_spec(void) {
   rb_define_method(cls, "RSTRING_LEN", string_spec_RSTRING_LEN, 1);
   rb_define_method(cls, "RSTRING_LENINT", string_spec_RSTRING_LENINT, 1);
   rb_define_method(cls, "RSTRING_PTR_iterate", string_spec_RSTRING_PTR_iterate, 1);
+  rb_define_method(cls, "RSTRING_PTR_iterate_uint32", string_spec_RSTRING_PTR_iterate_uint32, 1);
+  rb_define_method(cls, "RSTRING_PTR_short_memcpy", string_spec_RSTRING_PTR_short_memcpy, 1);
   rb_define_method(cls, "RSTRING_PTR_assign", string_spec_RSTRING_PTR_assign, 2);
   rb_define_method(cls, "RSTRING_PTR_set", string_spec_RSTRING_PTR_set, 3);
   rb_define_method(cls, "RSTRING_PTR_after_funcall", string_spec_RSTRING_PTR_after_funcall, 2);

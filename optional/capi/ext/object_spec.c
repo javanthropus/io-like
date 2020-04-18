@@ -102,7 +102,7 @@ static VALUE so_rb_obj_dup(VALUE self, VALUE klass) {
 static VALUE so_rb_obj_call_init(VALUE self, VALUE object,
                                  VALUE nargs, VALUE args) {
   int c_nargs = FIX2INT(nargs);
-  VALUE *c_args = alloca(sizeof(VALUE) * c_nargs);
+  VALUE *c_args = (VALUE*) alloca(sizeof(VALUE) * c_nargs);
   int i;
 
   for (i = 0; i < c_nargs; i++)
@@ -348,9 +348,9 @@ static VALUE object_spec_rb_class_inherited_p(VALUE self, VALUE mod, VALUE arg) 
 static VALUE speced_allocator(VALUE klass) {
   VALUE flags = 0;
   VALUE instance;
-  if (rb_class_inherited_p(klass, rb_cString)) {
+  if (RTEST(rb_class_inherited_p(klass, rb_cString))) {
     flags = T_STRING;
-  } else if (rb_class_inherited_p(klass, rb_cArray)) {
+  } else if (RTEST(rb_class_inherited_p(klass, rb_cArray))) {
     flags = T_ARRAY;
   } else {
     flags = T_OBJECT;

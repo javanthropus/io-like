@@ -41,5 +41,15 @@ platform_is_not :windows do
       st.file?.should == true
       st.symlink?.should == false
     end
+
+    it "returns an error when given missing non-ASCII path" do
+      missing_path = "/missingfilepath\xE3E4".b
+      -> {
+        File.stat(missing_path)
+      }.should raise_error(SystemCallError) { |e|
+        [Errno::ENOENT, Errno::EILSEQ].should include(e.class)
+        e.message.should include(missing_path)
+      }
+    end
   end
 end
