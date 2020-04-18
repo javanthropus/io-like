@@ -158,6 +158,20 @@ describe "C-API String function" do
     end
   end
 
+  describe "rb_str_tmp_new" do
+    it "returns a hidden string (RBasic->klass is NULL)" do
+      @s.rb_str_tmp_new_klass(4).should == false
+    end
+
+    it "returns a new String object filled with \\0 bytes" do
+      s = @s.rb_str_tmp_new(4)
+      s.encoding.should == Encoding::BINARY
+      s.bytesize.should == 4
+      s.size.should == 4
+      s.should == "\x00\x00\x00\x00"
+    end
+  end
+
   describe "rb_str_new" do
     it "creates a new String with BINARY Encoding" do
       @s.rb_str_new("", 0).encoding.should == Encoding::BINARY
@@ -512,6 +526,24 @@ describe "C-API String function" do
         chars << c
       end
       chars.should == [55, 48, 227, 131, 145, 227, 130, 175]
+    end
+
+    it "returns a pointer which can be cast and used as another type" do
+      s = "70パク".
+        encode(Encoding::UTF_16LE).
+        force_encoding(Encoding::UTF_16LE).
+        encode(Encoding::UTF_8)
+
+      ints = []
+      @s.RSTRING_PTR_iterate_uint32(s) do |i|
+        ints << i
+      end
+      ints.should == s.unpack('LL')
+    end
+
+    it "allows a short memcpy to the string which may be converted to a single write operation by the compiler" do
+      str = "        "
+      @s.RSTRING_PTR_short_memcpy(str).should == "Infinity"
     end
   end
 

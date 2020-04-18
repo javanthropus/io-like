@@ -6,7 +6,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu, macos, windows ]
-        ruby: [ 2.4.9, 2.5.7, 2.6.5, 2.7.0 ]
+        ruby: [ 2.5.8, 2.6.6, 2.7.1 ]
     runs-on: ${{ matrix.os }}-latest
     steps:
     - name: git config autocrlf
@@ -17,6 +17,7 @@ jobs:
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby }}
+        bundler: none
     - name: Clone MSpec
       run: git clone https://github.com/ruby/mspec.git ../mspec
 
@@ -25,6 +26,11 @@ jobs:
       env:
         CHECK_LEAKS: true
       run: ../mspec/bin/mspec --timeout 30
+    - name: Run C-API specs as C++
+      if: matrix.os != 'windows'
+      env:
+        SPEC_CAPI_CXX: true
+      run: ../mspec/bin/mspec :capi
 
     - name: Run specs (Windows)
       if: matrix.os == 'windows'
