@@ -4,7 +4,7 @@ require 'mspec/runner/formatters'
 
 class MSpecScript
   # An ordered list of the directories containing specs to run
-  set :files, ['spec', 'rubyspec']
+  set :files, ['spec', 'rubyspec/core/io']
 
   # The default implementation to run the specs.
   set :target, 'ruby'
@@ -54,3 +54,5 @@ class MSpecScript
     irrelevant_instance_methods +
     non_compliant
 end
+
+# vim: set ft=ruby:
