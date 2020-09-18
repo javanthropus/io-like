@@ -7,6 +7,8 @@ jobs:
       matrix:
         os: [ ubuntu, macos, windows ]
         ruby: [ 2.5.8, 2.6.6, 2.7.1 ]
+        exclude:
+        - { os: windows, ruby: 2.5.8 }
     runs-on: ${{ matrix.os }}-latest
     steps:
     - name: git config autocrlf
@@ -46,7 +48,7 @@ jobs:
     name: RuboCop
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v2
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: 2.6
