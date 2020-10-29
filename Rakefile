@@ -30,11 +30,12 @@ SPEC = eval(File.read(GEMSPEC), nil, GEMSPEC)
 PKG_FILES = FileList.new('**/*') do |files|
   files.exclude(
     # Test files
-    'spec/**/*', 'rubyspec/**/*', 'mspec/**/*', 'spec_helper.rb', 'io-like.mspec',
+    'spec/**/*', 'rubyspec/**/*', 'mspec/**/*', 'mspec-overrides/**/*',
+    'spec_helper.rb', 'io-like.mspec',
     # Non-shipping source files
     '*.gemspec', 'Gemfile', 'Gemfile.lock', 'Rakefile', 'README.md.erb',
-    # Examples
-    'examples/**/*',
+    # Examples and experiments
+    'examples/**/*', 'experiments/**/*',
     # Bundler files
     'vendor/bundle/**/*',
     # Generated content except for README
@@ -55,7 +56,7 @@ CLEAN.include('**/.*.sw?')
 def get_version_argument
   version = ENV['VERSION']
   if version.to_s.empty?
-    raise "No version specified: Add VERSION=X.Y.Z to the command line"
+    raise 'No version specified: Add VERSION=X.Y.Z to the command line'
   end
   begin
     Gem::Version.create(version.dup)
@@ -116,7 +117,7 @@ namespace :build do
       common_files = manifest_files & pkg_files
       manifest_files -= common_files
       pkg_files -= common_files
-      message = ["The manifest does not match the automatic file list."]
+      message = ['The manifest does not match the automatic file list.']
       unless manifest_files.empty? then
         message << "  Extraneous files:\n    " + manifest_files.join("\n    ")
       end
@@ -129,7 +130,8 @@ namespace :build do
 
   # Creates the README.md file from a template, the license files, and the
   # gemspec contents.
-  file 'README.md' => ['README.md.erb', 'LICENSE', 'LICENSE-rubyspec', GEMSPEC] do
+  file 'README.md' => ['README.md.erb', 'LICENSE', 'rubyspec/LICENSE',
+                       'examples/rot13filter.rb', GEMSPEC] do
     spec = SPEC
     File.open('README.md', 'w') do |readme|
       readme.write(
@@ -161,7 +163,7 @@ end
 # Create the test task.
 desc 'Run tests'
 task :test do
-  sh "mspec -B io-like.mspec"
+  sh "mspec/bin/mspec run -B io-like.mspec #{ENV['TEST_OPTS']}"
 end
 
 # Version string management tasks.

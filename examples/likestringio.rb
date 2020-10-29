@@ -1,168 +1,138 @@
-# encoding: UTF-8
 require 'io/like'
+require 'io/like_helpers/abstract_io'
 
-class LikeStringIO
-  include IO::Like
+class LikeStringIO < IO::Like
+  class StringWrapper < IO::LikeHelpers::AbstractIO
+    def initialize(string, append: false, truncate: false)
+      super()
 
-  def self.open(string = '', mode = 'rw')
-    lsio = new(string, mode)
-    return lsio unless block_given?
+      @string = string
+      @string.clear if truncate
+      @append = append
+      @pos = 0
 
-    begin
-      yield(lsio)
-    ensure
-      lsio.close unless lsio.closed?
+      @delegate = self
+    end
+
+    attr_reader :string
+
+    def string=(string)
+      @string = string
+    end
+
+    def read(length, buffer: nil)
+      raise EOFError, 'end of file reached' if @pos >= @string.bytesize
+
+      content = @string.b[@pos, length]
+      return content if buffer.nil?
+
+      buffer[0, content.bytesize] = content
+      return content.bytesize
+    end
+    alias_method :unbuffered_read, :read
+
+    def read_buffer_empty?
+      true
+    end
+
+    def seek(amount, whence)
+      case whence
+      when IO::SEEK_SET, :SET
+        new_pos = amount
+      when IO::SEEK_CUR, :CUR
+        new_pos = @pos + amount
+      when IO::SEEK_END, :END
+        new_pos = @string.bytesize + amount
+      end
+
+      raise Errno::EINVAL, 'Invalid argument' if new_pos < 0
+
+      @pos = new_pos
+    end
+    alias_method :unbuffered_seek, :seek
+
+    def truncate(length)
+      @string.slice!(length..-1)
+      0
+    end
+
+    def unread(buffer, length: buffer.bytesize)
+      length = Integer(length)
+      raise ArgumentError 'length must be at least 0' if length < 0
+
+      return nil if length == 0
+
+      amount = length
+      amount = @pos if amount > @pos
+      start = @pos - amount
+      @string[start, amount] = buffer[-amount, amount]
+      remaining = length - amount
+      @string.insert(0, buffer[0, remaining]) if remaining > 0
+      @pos -= amount
+
+      nil
+    end
+
+    def write(buffer, length: buffer.bytesize)
+      @pos = @string.bytesize if append
+
+      # Pad any space between the end of the wrapped string and the current
+      # position with null characters.
+      if @pos > @string.bytesize then
+        @string << "\0" * (@pos - @string.bytesize)
+      end
+
+      @string.force_encoding('binary')
+      buffer.force_encoding('binary')
+      @string[@pos, length] = buffer[0, length]
+      @string.force_encoding(external_encoding)
+      buffer.force_encoding(external_encoding)
+      @pos += length
+
+      length
+    end
+    alias_method :unbuffered_write, :write
+
+    def write_buffer_empty?
+      true
     end
   end
 
-  def initialize(string = '', mode = 'rw')
-    @unbuffered_pos = 0
-    @string = string
-    self.fill_size = 0
-    self.flush_size = 0
-    self.sync = true
-    # TODO: These need to be set based on mode.
-    @closed_read = false
-    @closed_write = false
+  def initialize(string = '', mode = 'r+')
+    super(StringWrapper.new(string, mode))
   end
 
-  def close
-    raise IOError, 'closed stream' if closed_read? && closed_write?
-    close_read unless closed_read?
-    close_write unless closed_write?
+  def reopen()
+    unless args.size == 1 || args.size == 2
+      raise ArgumentError,
+        "wrong number of arguments (given #{args.size}, expected 1..2)"
+    end
   end
 
-  def close_read
-    raise IOError, 'closing non-duplex IO for reading' if @closed_read
-    @closed_read = true
-  end
+  def set_encoding(ext_enc, int_enc = nil, **kwargs)
+    @external_encoding = Encoding.find(ext_enc)
+    @internal_encoding = nil
+    string.force_encoding(@external_encoding)
 
-  def close_write
-    raise IOError, 'closing non-duplex IO for writing' if @closed_write
-    flush
-    @closed_write = true
-  end
-
-  def closed?
-    closed_read? && closed_write?
-  end
-
-  def closed_read?
-    @closed_read
-  end
-
-  def closed_write?
-    @closed_write
-  end
-
-  def eof
-    @unbuffered_pos >= @string.length
-  end
-  alias :eof? :eof
-
-  def readable?
-    ! closed_read? && true
+    self
   end
 
   def size
-    string.size
+    @delegate.string.bytesize
   end
 
   def string
-    flush
-    @string
+    @delegate.string
   end
 
   def string=(string)
-    @string = string
-    @unbuffered_pos = 0
-    internal_read_buffer.slice!(0..-1)
-    internal_write_buffer.slice!(0..-1)
+    @delegate.string = string
   end
 
   def truncate(length)
-    raise IOError, 'not opened for writing' unless writable?
-    raise Errno::EINVAL, 'Invalid argument - negative length' unless length > 0
-
-    if length > @string.length then
-      @string += "\000" * (length - @string.length)
-    else
-      @string.slice!(0, length)
-    end
-
-    length
-  end
-
-  def unread(string)
-    raise IOError, 'closed stream' if closed_read?
-    raise IOError, 'not opened for reading' unless readable?
-
-    # Pad any space between the end of the wrapped string and the current
-    # position with null characters.
-    if @unbuffered_pos > @string.length then
-      @string << ("\000" * (@unbuffered_pos - @string.length))
-    end
-
-    length = [string.length, @unbuffered_pos].min
-    old_pos = @unbuffered_pos
-    @unbuffered_pos -= length
-    @string = @string.slice(0, @unbuffered_pos) +
-              string.slice(-length, length) +
-              @string.slice(old_pos..-1)
-
-    nil
-  end
-
-  def writable?
-    ! closed_write? && true
-  end
-
-  private
-
-  def unbuffered_read(length)
-    # Error out of the end of the wrapped string is reached.
-    raise EOFError, 'end of file reached' if eof?
-
-    # Fill a buffer with the data from the wrapped string.
-    buffer = @string.slice(@unbuffered_pos, length)
-    # Update the position.
-    @unbuffered_pos += buffer.length
-
-    buffer
-  end
-
-  def unbuffered_seek(offset, whence = IO::SEEK_SET)
-    # Convert the offset and whence into an absolute position.
-    case whence
-    when IO::SEEK_SET
-      new_pos = offset
-    when IO::SEEK_CUR
-      new_pos = @unbuffered_pos + offset
-    when IO::SEEK_END
-      new_pos = @string.length + offset
-    end
-
-    # Error out if the position is before the beginning of the wrapped string.
-    raise Errno::EINVAL, 'Invalid argument' if new_pos < 0
-
-    # Set the new position.
-    @unbuffered_pos = new_pos
-  end
-
-  def unbuffered_write(string)
-    # Pad any space between the end of the wrapped string and the current
-    # position with null characters.
-    if @unbuffered_pos > @string.length then
-      @string << ("\000" * (@unbuffered_pos - @string.length))
-    end
-
-    # Insert the new string into the wrapped string, replacing sections as
-    # necessary.
-    @string = @string.slice(0, @unbuffered_pos) +
-              string +
-              (@string.slice((@unbuffered_pos + string.length)..-1) || '')
-
-    # Update the position.
-    @unbuffered_pos += string.length
+    raise IOError, 'not opened for writing' unless @writable
+    @delegate.truncate(length)
   end
 end
+
+# vim: ts=2 sw=2 et

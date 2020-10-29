@@ -3,13 +3,16 @@
 This file lists noteworthy changes which may affect users of this project.  More
 detailed information is available in the rest of the documentation.
 
-<b>NOTE:</b> Date stamps in the following entries are in YYYY/MM/DD format.
+**NOTE:** Date stamps in the following entries are in YYYY/MM/DD format.
 
 
-## v?.?.? (????/??/??)
-* Reimplemented all modules as classes
-** !!WARNING!! Breaks API compatibility with prior versions
-* Added #read_nonblock and #write_nonblock (Grant Gardner)
+## v0.4.0.pre1 (????/??/??)
+* Reimplemented all version specific IO::Like modules as a single class
+  * **WARNING:** Breaks API compatibility with prior versions
+* Added full API compatibility for Ruby 2.5 through 3.0
+  * Support for character encodings
+  * Asynchronous/nonblocking methods
+  * Many missing helper methods
 * Reworked spec handling to make it easier to import rubyspec snapshots almost
   trivially (Grant Gardner, Jeremy Bopp)
 

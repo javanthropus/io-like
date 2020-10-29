@@ -1,7 +1,6 @@
 # IO::Like - in the Likeness of IO
 
-An abstract class which provides the functionality of an IO object to any
-descendent class which provides a couple of simple methods.
+A composable implementation of IO methods.
 
 ## LINKS
 
@@ -11,26 +10,19 @@ descendent class which provides a couple of simple methods.
 
 ## DESCRIPTION
 
-The IO::Like class provides the methods of an IO object based upon on a few
-simple methods provided by the descendent class: unbuffered_read,
-unbuffered_write, and unbuffered_seek.  These methods provide the underlying
-read, write, and seek support respectively, and only the method or methods
-necessary to the correct operation of the IO aspects of the descendent class need
-to be provided.  Missing functionality will cause the resulting object to appear
-read-only, write-only, and/or unseekable depending on which underlying methods
-are absent.
+This gem makes it possible to build filters or pipelines for processing data
+into or out of streams of bytes while maintaining compatibility with native Ruby
+IO classes.  Ruby IO classes may function as both sources and sinks, or entirely
+new IO implementations may be created.
 
 ## FEATURES
 
-* All standard Ruby 1.8.6 and 1.8.7 IO operations.
-* Obeys `$KCODE` settings.
+* All standard Ruby 2.5 to 3.0 IO methods.
 * Buffered operations.
 * Configurable buffer size.
 
 ## KNOWN BUGS/LIMITATIONS
 
-* Only versions 1.8.6 and 1.8.7 of Ruby's IO interface are implemented.
-  Version 1.9.1 support is planned.
 * Ruby's finalization capabilities fall a bit short in a few respects, and as a
   result, it is impossible to cause the close, close_read, or close_write
   methods to be called automatically when a descendent class is garbage
@@ -47,83 +39,99 @@ A simple ROT13 codec:
 
 ```ruby
 require 'io/like'
+require 'io/like_helpers/buffered_io'
+require 'io/like_helpers/delegated_io'
+require 'io/like_helpers/io_wrapper'
 
-class ROT13Filter < IO::Like
-  def initialize(delegate_io)
-    @delegate_io = delegate_io
-  end
+include IO::LikeHelpers
 
-  private
-
-  def encode_rot13(string)
-    result = string.dup
-    0.upto(result.length) do |i|
-      case result[i]
-      when 65..90
-        result[i] = (result[i] - 52) % 26 + 65
-      when 97..122
-        result[i] = (result[i] - 84) % 26 + 97
-      end
+class ROT13Filter < DelegatedIO
+  def read(length, buffer: nil)
+    result = super
+    if buffer.nil?
+      encode_rot13(result)
+    else
+      encode_rot13(buffer)
     end
     result
   end
 
-  def unbuffered_read(length)
-    encode_rot13(@delegate_io.sysread(length))
+  def write(buffer, length: buffer.bytesize)
+    super(encode_rot13(buffer[0, length]), length: length)
   end
 
-  def unbuffered_seek(offset, whence = IO::SEEK_SET)
-    @delegate_io.sysseek(offset, whence)
-  end
+  private
 
-  def unbuffered_write(string)
-    @delegate_io.syswrite(encode_rot13(string))
-  end
-end
-
-File.open('normal_file.txt', 'w') do |f|
-  f.puts('This is a test')
-end
-
-File.open('rot13_file.txt', 'w') do |f|
-  ROT13Filter.open(f) do |rot13|
-    rot13.puts('This is a test')
+  def encode_rot13(buffer)
+    0.upto(buffer.length - 1) do |i|
+      ord = buffer[i].ord
+      case ord
+      when 65..90
+        buffer[i] = ((ord - 52) % 26 + 65).chr
+      when 97..122
+        buffer[i] = ((ord - 84) % 26 + 97).chr
+      end
+    end
+    buffer
   end
 end
 
-File.open('normal_file.txt') do |f|
-  ROT13Filter.open(f) do |rot13|
-    puts(rot13.read)                      # -> Guvf vf n grfg
+class ROT13IO < IO::Like
+  def initialize(io, *args, **kwargs)
+    super(BufferedIO.new(ROT13Filter.new(IOWrapper.new(io))), *args, **kwargs)
   end
 end
 
-File.open('rot13_file.txt') do |f|
-  ROT13Filter.open(f) do |rot13|
-    puts(rot13.read)                      # -> This is a test
+if $0 == __FILE__ then
+  IO.pipe do |r, w|
+    w.puts('This is a test')
+    w.close
+    ROT13IO.open(r) do |rot13|
+      puts(rot13.read)                    # -> Guvf vf n grfg
+    end
   end
-end
 
-File.open('normal_file.txt') do |f|
-  ROT13Filter.open(f) do |rot13|
-    rot13.pos = 5
-    puts(rot13.read)                      # -> vf n grfg
+  IO.pipe do |r, w|
+    ROT13IO.open(w) do |rot13|
+      rot13.puts('This is a test')
+    end
+    puts(r.read)                          # -> Guvf vf n grfg
   end
-end
 
-File.open('rot13_file.txt') do |f|
-  ROT13Filter.open(f) do |rot13|
-    rot13.pos = 5
-    puts(rot13.read)                      # -> is a test
+  IO.pipe do |r, w|
+    w.puts('Guvf vf n grfg')
+    w.close
+    ROT13IO.open(r) do |rot13|
+      puts(rot13.read)                    # -> This is a test
+    end
   end
-end
 
-File.open('normal_file.txt') do |f|
-  ROT13Filter.open(f) do |rot13|
-    ROT13Filter.open(rot13) do |rot26|    # ;-)
+  IO.pipe do |r, w|
+    w.puts('This is a test')
+    w.close
+    ROT13IO.open(r) do |rot13|
+      puts(rot13.each_line.to_a.inspect)  # -> ["Guvf vf n grfg\n"]
+    end
+  end
+
+  IO.pipe do |r, w|
+    w.puts('Guvf vf n grfg')
+    w.close
+    ROT13IO.open(r) do |rot13|
+      puts(rot13.each_line.to_a.inspect)  # -> ["This is a test\n"]
+    end
+  end
+
+  IO.pipe do |r, w|
+    w.puts('This is a test')
+    w.close
+    IO::Like.open(ROT13Filter.new(ROT13Filter.new(IOWrapper.new(r)))) do |rot26| # ;-)
       puts(rot26.read)                    # -> This is a test
     end
   end
 end
+
+# vim: ts=2 sw=2 et
 ```
 
 ## REQUIREMENTS
@@ -132,17 +140,7 @@ end
 
 ## INSTALL
 
-Download the GEM file and install it with:
-
-    $ gem install io-like-VERSION.gem
-
-or directly with:
-
     $ gem install io-like
-
-Removal is the same in either case:
-
-    $ gem uninstall io-like
 
 ## DEVELOPERS
 
@@ -232,8 +230,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## RUBYSPEC LICENSE
 
-Files under the `rubyspec` directory are copied whole or in part from the
-Rubyspec project.
+Files under the `rubyspec` directory are copied in whole from the Rubyspec
+project.
 
 ```
 Copyright (c) 2008 Engine Yard, Inc. All rights reserved.

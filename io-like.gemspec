@@ -1,8 +1,6 @@
-# encoding: UTF-8
-
 Gem::Specification.new do |s|
   s.name        = 'io-like'
-  s.version     = '0.3.1'
+  s.version     = '0.4.0.pre1'
   s.licenses    = ['MIT']
   s.platform    = Gem::Platform::RUBY
   s.authors     = [
@@ -18,19 +16,15 @@ Gem::Specification.new do |s|
     jpickwell@users.noreply.github.com
   )
   s.homepage    = 'http://github.com/javanthropus/io-like'
-  s.summary     = 'An abstract class which provides the functionality of an IO object to any descendent class which provides a couple of simple methods.'
+  s.summary     = 'A composable implementation of IO methods.'
   s.description = <<-EOD
-The IO::Like class provides the methods of an IO object based upon on a few
-simple methods provided by the descendent class: unbuffered_read,
-unbuffered_write, and unbuffered_seek.  These methods provide the underlying
-read, write, and seek support respectively, and only the method or methods
-necessary to the correct operation of the IO aspects of the descendent class need
-to be provided.  Missing functionality will cause the resulting object to appear
-read-only, write-only, and/or unseekable depending on which underlying methods
-are absent.
+This gem makes it possible to build filters or pipelines for processing data
+into or out of streams of bytes while maintaining compatibility with native Ruby
+IO classes.  Ruby IO classes may function as both sources and sinks, or entirely
+new IO implementations may be created.
   EOD
 
-  s.required_ruby_version = '>= 1.8.1'
+  s.required_ruby_version = '>= 2.5.0'
 
   s.add_development_dependency('rake', '~> 13.0')
   s.add_development_dependency('yard', '~> 0.9')
@@ -40,7 +34,7 @@ are absent.
 
   s.extra_rdoc_files = %w(
     LICENSE
-    LICENSE-rubyspec
+    rubyspec/LICENSE
     NEWS.md
     README.md
   )
@@ -48,12 +42,15 @@ are absent.
                      '--charset' << 'utf-8' <<
                      '--line-numbers' << '--inline-source'
 
-  s.files       = %w(
+  s.files = %w(
     LICENSE
     NEWS.md
     README.md
-    lib/io/like-1.8.6.rb
-    lib/io/like-1.8.7.rb
+    lib/io/like_helpers/abstract_io.rb
+    lib/io/like_helpers/io_wrapper.rb
+    lib/io/like_helpers/delegated_io.rb
+    lib/io/like_helpers/duplexed_io.rb
+    lib/io/like_helpers/buffered_io.rb
     lib/io/like.rb
   )
 end

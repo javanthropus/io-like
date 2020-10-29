@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-require 'mspec/runner/formatters'
+require_relative 'spec_helper'
 
 class MSpecScript
   # An ordered list of the directories containing specs to run
@@ -10,41 +10,38 @@ class MSpecScript
   set :target, 'ruby'
 
   # Ignore tests for constants.
-  constant_checks = ["IO::SEEK_SET", "IO::SEEK_CUR", "IO::SEEK_END"]
+  constant_checks = ['IO::SEEK_SET', 'IO::SEEK_CUR', 'IO::SEEK_END']
 
   # Ignore IO class methods.
   irrelevant_class_methods = [
-    "IO.for_fd", "IO.foreach", "IO.pipe", "IO.popen", "IO.read", "IO.new",
-    "IO#initialize", "IO.open", "IO.select",
-    # rubyspec bug - this is actually IO.readlines, not IO#readines
-    "IO#readlines when passed a string that starts with a |"
+    'IO.binread', 'IO.binwrite', 'IO.copy_stream', 'IO.foreach', 'IO.for_fd',
+    'IO.new', 'IO.open', 'IO.pipe', 'IO.popen', 'IO.readlines', 'IO.read',
+    'IO.select', 'IO.sysopen', 'IO.try_convert', 'IO.write'
   ]
 
   # Ignore instance methods related to file descriptor IO.
   irrelevant_instance_methods = [
-    "IO#dup", "IO#ioctl", "IO#fcntl", "IO#fsync", "IO#pid", "IO#stat",
-    "IO#fileno", "IO#to_i", "IO#reopen", "terminal device (TTY)"
+    'IO#initialize'
   ]
 
   # Ignore some intentionally non-compliant methods.
   non_compliant = [
-    "IO#read_nonblock changes the behavior of #read to nonblocking",
-    "IO#ungetc raises IOError when invoked on stream that was not yet read",
-    # The very definition says to expect unpredictable results for the below.
-    "IO#sysread on a file reads normally even when called immediately after a buffered IO#read",
-    # These #close_read and #close_write specs all rely on a duplexed IO object.
-    "IO#close_read closes the read end of a duplex I/O stream",
-    "IO#close_read raises an IOError on subsequent invocations",
-    "IO#close_read allows subsequent invocation of close",
-    "IO#close_read raises IOError on closed stream",
-    "IO#close_write closes the write end of a duplex I/O stream",
-    "IO#close_write raises an IOError on subsequent invocations",
-    "IO#close_write allows subsequent invocation of close",
-    "IO#close_write flushes and closes the write stream",
-    "IO#close_write raises IOError on closed stream",
+    # These are low level methods that cannot be emulated with the same
+    # concurrency guarantees as real implementations.
+    'IO#pread', 'IO#pwrite',
+    # Cannot change object class from Ruby code, so we cannot comply with some
+    # aspects of IO#reopen.
+    'IO#reopen changes the class of the instance to the class of the object returned by #to_io',
+    'IO#reopen with an IO may change the class of the instance',
+    # This test checks too closely that the io instance is actually an instance
+    # of IO.
+    'IO#reopen with an IO does not call #to_io',
+    # IO::Like#to_io always returns the underlying IO instance if there is one
+    # and raises errors otherwise, so it never returns self.
+    'IO#to_io returns self',
     # Cannot set $_ from Ruby code, so we cannot comply with anything mentioning
     # $_.
-    "$_"
+    '$_'
   ]
 
   # Exclude IO specs not relevant to IO::Like.

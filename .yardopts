@@ -1,1 +1,1 @@
---markup markdown --protected --private --main README.md lib/**/*.rb - NEWS.md LICENSE LICENSE-rubyspec
+--markup markdown --protected --private --main README.md lib/**/*.rb - NEWS.md LICENSE

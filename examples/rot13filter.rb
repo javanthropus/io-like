@@ -1,94 +1,94 @@
-# encoding: UTF-8
 require 'io/like'
+require 'io/like_helpers/buffered_io'
+require 'io/like_helpers/delegated_io'
+require 'io/like_helpers/io_wrapper'
 
-class ROT13Filter
-  include IO::Like
+include IO::LikeHelpers
 
-  def self.open(delegate_io)
-    filter = new(delegate_io)
-    return filter unless block_given?
-
-    begin
-      yield(filter)
-    ensure
-      filter.close unless filter.closed?
-    end
-  end
-
-  def initialize(delegate_io)
-    @delegate_io = delegate_io
-  end
-
-  private
-
-  def encode_rot13(string)
-    result = string.dup
-    0.upto(result.length) do |i|
-      case result[i]
-      when 65..90
-        result[i] = (result[i] - 52) % 26 + 65
-      when 97..122
-        result[i] = (result[i] - 84) % 26 + 97
-      end
+class ROT13Filter < DelegatedIO
+  def read(length, buffer: nil)
+    result = super
+    if buffer.nil?
+      encode_rot13(result)
+    else
+      encode_rot13(buffer)
     end
     result
   end
 
-  def unbuffered_read(length)
-    encode_rot13(@delegate_io.sysread(length))
+  def write(buffer, length: buffer.bytesize)
+    super(encode_rot13(buffer[0, length]), length: length)
   end
 
-  def unbuffered_seek(offset, whence = IO::SEEK_SET)
-    @delegate_io.sysseek(offset, whence)
-  end
+  private
 
-  def unbuffered_write(string)
-    @delegate_io.syswrite(encode_rot13(string))
+  def encode_rot13(buffer)
+    0.upto(buffer.length - 1) do |i|
+      ord = buffer[i].ord
+      case ord
+      when 65..90
+        buffer[i] = ((ord - 52) % 26 + 65).chr
+      when 97..122
+        buffer[i] = ((ord - 84) % 26 + 97).chr
+      end
+    end
+    buffer
+  end
+end
+
+class ROT13IO < IO::Like
+  def initialize(io, *args, **kwargs)
+    super(BufferedIO.new(ROT13Filter.new(IOWrapper.new(io))), *args, **kwargs)
   end
 end
 
 if $0 == __FILE__ then
-  File.open('normal_file.txt', 'w') do |f|
-    f.puts('This is a test')
+  IO.pipe do |r, w|
+    w.puts('This is a test')
+    w.close
+    ROT13IO.open(r) do |rot13|
+      puts(rot13.read)                    # -> Guvf vf n grfg
+    end
   end
 
-  File.open('rot13_file.txt', 'w') do |f|
-    ROT13Filter.open(f) do |rot13|
+  IO.pipe do |r, w|
+    ROT13IO.open(w) do |rot13|
       rot13.puts('This is a test')
     end
+    puts(r.read)                          # -> Guvf vf n grfg
   end
 
-  File.open('normal_file.txt') do |f|
-    ROT13Filter.open(f) do |rot13|
-      puts(rot13.read)                      # -> Guvf vf n grfg
+  IO.pipe do |r, w|
+    w.puts('Guvf vf n grfg')
+    w.close
+    ROT13IO.open(r) do |rot13|
+      puts(rot13.read)                    # -> This is a test
     end
   end
 
-  File.open('rot13_file.txt') do |f|
-    ROT13Filter.open(f) do |rot13|
-      puts(rot13.read)                      # -> This is a test
+  IO.pipe do |r, w|
+    w.puts('This is a test')
+    w.close
+    ROT13IO.open(r) do |rot13|
+      puts(rot13.each_line.to_a.inspect)  # -> ["Guvf vf n grfg\n"]
     end
   end
 
-  File.open('normal_file.txt') do |f|
-    ROT13Filter.open(f) do |rot13|
-      rot13.pos = 5
-      puts(rot13.read)                      # -> vf n grfg
+  IO.pipe do |r, w|
+    w.puts('Guvf vf n grfg')
+    w.close
+    ROT13IO.open(r) do |rot13|
+      puts(rot13.each_line.to_a.inspect)  # -> ["This is a test\n"]
     end
   end
 
-  File.open('rot13_file.txt') do |f|
-    ROT13Filter.open(f) do |rot13|
-      rot13.pos = 5
-      puts(rot13.read)                      # -> is a test
-    end
-  end
-
-  File.open('normal_file.txt') do |f|
-    ROT13Filter.open(f) do |rot13|
-      ROT13Filter.open(rot13) do |rot26|    # ;-)
-        puts(rot26.read)                    # -> This is a test
-      end
+  IO.pipe do |r, w|
+    w.puts('This is a test')
+    w.close
+    IO::Like.open(ROT13Filter.new(ROT13Filter.new(IOWrapper.new(r)))) do |rot26| # ;-)
+      puts(rot26.read)                    # -> This is a test
     end
   end
 end
+
+# vim: ts=2 sw=2 et
