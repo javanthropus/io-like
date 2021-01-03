@@ -21,3 +21,6 @@
 
 # Temporary directories
 /rubyspec_temp/
+
+# Code coverage reports
+/coverage/

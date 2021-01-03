@@ -30,6 +30,7 @@ new IO implementations may be created.
   s.add_development_dependency('yard', '~> 0.9')
   s.add_development_dependency('github-markup', '~> 3.0')
   s.add_development_dependency('redcarpet', '~> 3.1')
+  s.add_development_dependency('simplecov', '~> 0.20.0')
 
 
   s.extra_rdoc_files = %w(

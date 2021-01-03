@@ -15,6 +15,7 @@ detailed information is available in the rest of the documentation.
   * Many missing helper methods
 * Reworked spec handling to make it easier to import rubyspec snapshots almost
   trivially (Grant Gardner, Jeremy Bopp)
+* Added code coverage tooling
 
 
 ## v0.3.1 (2020/02/09)
