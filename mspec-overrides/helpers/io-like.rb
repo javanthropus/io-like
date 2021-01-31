@@ -105,7 +105,7 @@ class File
   class << self
     alias_method :__file_open, :open
     def open(*args, **kwargs, &block)
-      if caller.grep(%r{_spec\.rb:\d+:in }).empty?
+      unless caller.any? %r{rubyspec/core/io/.*\.rb:\d+:in }
         return __file_open(*args, **kwargs, &block)
       end
 
@@ -124,7 +124,9 @@ class IO
   class << self
     alias_method :__pipe, :pipe
     def pipe(*args, &block)
-      return __pipe(*args, &block) if caller.grep(%r{_spec\.rb:\d+:in }).empty?
+      unless caller.any? %r{rubyspec/core/io/.*\.rb:\d+:in }
+        return __pipe(*args, &block)
+      end
 
       r, w = __pipe(*args)
       r, w = io_like_wrapped_io(r), io_like_wrapped_io(w)
@@ -142,8 +144,8 @@ class IO
     # Implement simplified IO.popen replacement that returns a duplexed IO::Like
     # instance wrapping read and write pipes.
     alias_method :__popen, :popen
-    def popen(cmd, mode, &block)
-      if caller.grep(%r{_spec\.rb:\d+:in }).empty?
+    def popen(cmd, mode = 'r', &block)
+      unless caller.any? %r{rubyspec/core/io/.*\.rb:\d+:in }
         return __popen(cmd, mode, &block)
       end
 
@@ -174,22 +176,23 @@ class IO
       pid = Process.spawn(cmd, **kwargs)
       Process.detach(pid)
 
+      args = []
       r_child.close unless r_child.nil?
       w_child.close unless w_child.nil?
       unless r_parent.nil?
-        r_parent =
+        args <<
           IO::LikeHelpers::BufferedIO.new(
             IO::LikeHelpers::IOWrapper.new(r_parent)
           )
       end
       unless w_parent.nil?
-        w_parent =
+        args <<
           IO::LikeHelpers::BufferedIO.new(
             IO::LikeHelpers::IOWrapper.new(w_parent)
           )
       end
 
-      IO::Like.open(r_parent, w_parent, pid: pid, &block)
+      IO::Like.open(*args, pid: pid, sync: true, &block)
     end
   end
 end

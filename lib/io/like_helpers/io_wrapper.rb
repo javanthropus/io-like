@@ -10,8 +10,8 @@ class IO; module LikeHelpers
 class IOWrapper < DelegatedIO
   include RubyFacts
 
-  def initialize(delegate)
-    super(delegate, autoclose: true)
+  def initialize(delegate, autoclose: true)
+    super
 
     flags = delegate.fcntl(Fcntl::F_GETFL) & Fcntl::O_ACCMODE
     @readable = flags == Fcntl::O_RDONLY || flags == Fcntl::O_RDWR
@@ -33,23 +33,16 @@ class IOWrapper < DelegatedIO
     @readable
   end
 
-  def seek(amount, whence)
+  def ready?
+    !!super
+  end
+
+  def seek(amount, whence = IO::SEEK_SET)
     delegate.sysseek(amount, whence)
   end
 
-  def seekable?
-    return @seekable if defined? @seekable
-
-    @seekable = begin
-                  delegate.seek(0, IO::SEEK_CUR)
-                  true
-                rescue Errno::ESPIPE
-                  false
-                end
-  end
-
-  def wait(events, timeout = nil)
-    return super unless RBVER_LT_3_0
+  def wait(events, timeout)
+    return !!super unless RBVER_LT_3_0
 
     mode = case events & (IO::READABLE | IO::WRITABLE)
            when IO::READABLE | IO::WRITABLE
@@ -58,8 +51,10 @@ class IOWrapper < DelegatedIO
              :read
            when IO::WRITABLE
              :write
+           else
+             return false
            end
-    delegate.wait(timeout, mode)
+    !!delegate.wait(timeout, mode)
   end
 
   def write(buffer, length: buffer.bytesize)
@@ -80,9 +75,7 @@ class IOWrapper < DelegatedIO
   end
 
   def write_nonblock(buffer)
-    result = delegate.write_nonblock(buffer, exception: false)
-    raise EOFError if result.nil?
-    result
+    delegate.write_nonblock(buffer, exception: false)
   end
 end
 end; end

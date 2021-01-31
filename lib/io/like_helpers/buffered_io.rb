@@ -4,6 +4,11 @@ require 'io/like_helpers/io'
 class IO; module LikeHelpers
 class BufferedIO < DelegatedIO
   def initialize(delegate, autoclose: true, buffer_size: 8192)
+    buffer_size = Integer(buffer_size)
+    if buffer_size <= 0
+      raise ArgumentError, 'buffer_size must be greater than 0'
+    end
+
     super(delegate, autoclose: autoclose)
 
     @buffer_size = buffer_size
@@ -13,25 +18,17 @@ class BufferedIO < DelegatedIO
   end
 
   def initialize_dup(other)
+    assert_open
     super
 
-    # Clear the buffer and reset the file position if possible.
-    other.flush
-
     @buffer = @buffer.dup
-    @start_idx = @end_idx = 0
   end
 
   attr_reader :buffer_size
 
-  def delegate=(delegate)
-    flush if @mode == :write
-    @delegate = delegate
-    @start_idx = @end_idx = 0
-    @mode = nil
-  end
-
   def close
+    return nil if closed?
+
     if @mode == :write
       result = flush
       return result if Symbol === result
@@ -41,13 +38,15 @@ class BufferedIO < DelegatedIO
   end
 
   def fdatasync
+    assert_open
+
     result = flush
     return result if Symbol === result
     super
   end
 
   def flush
-    return nil if @buffer_size <= 0
+    assert_open
 
     set_write_mode
 
@@ -61,12 +60,16 @@ class BufferedIO < DelegatedIO
   end
 
   def fsync
+    assert_open
+
     result = flush
     return result if Symbol === result
     super
   end
 
   def nread
+    assert_readable
+
     return 0 if read_buffer_empty?
     return @end_idx - @start_idx
   end
@@ -79,12 +82,10 @@ class BufferedIO < DelegatedIO
   # raises EOFError when reading at the end of file
   def read(length, buffer: nil)
     length = Integer(length)
-    raise ArgumentError 'length must be at least 0' if length < 0
+    raise ArgumentError, 'length must be at least 0' if length < 0
 
     result = set_read_mode
     return result if Symbol === result
-
-    return super if @buffer_size <= 0
 
     # Reload the internal buffer when empty.
     if @start_idx >= @end_idx
@@ -112,8 +113,6 @@ class BufferedIO < DelegatedIO
   end
 
   def seek(amount, whence = IO::SEEK_SET)
-    return super if @buffer_size <= 0
-
     case @mode
     when :write
       result = flush
@@ -133,25 +132,28 @@ class BufferedIO < DelegatedIO
   end
 
   def unbuffered_read(length, buffer: nil)
-    bypass_buffer { read(length, buffer: buffer) }
+    assert_readable
+    delegate.read(length, buffer: buffer)
   end
 
-  def unbuffered_seek(amount, whence)
-    bypass_buffer { seek(amount, whence) }
+  def unbuffered_seek(amount, whence = IO::SEEK_SET)
+    assert_open
+    delegate.seek(amount, whence)
   end
 
   def unbuffered_write(buffer, length: buffer.bytesize)
-    bypass_buffer { write(buffer, length: length) }
+    assert_writable
+    delegate.write(buffer, length: length)
   end
 
   def unread(buffer, length: buffer.bytesize)
+    assert_readable
+
     length = Integer(length)
-    raise ArgumentError 'length must be at least 0' if length < 0
+    raise ArgumentError, 'length must be at least 0' if length < 0
 
-    return nil if length == 0
-    raise IOError, 'insufficient buffer space for unread' if @buffer_size <= 0
-
-    set_read_mode
+    result = set_read_mode
+    return result if Symbol === result
 
     used = @end_idx - @start_idx
     if length > @buffer_size - used
@@ -173,6 +175,8 @@ class BufferedIO < DelegatedIO
   end
 
   def wait(events, timeout = nil)
+    assert_open
+
     if events & (IO::READABLE | IO::PRIORITY) > 0 && ! read_buffer_empty?
       return true
     end
@@ -181,9 +185,12 @@ class BufferedIO < DelegatedIO
   end
 
   def write(buffer, length: buffer.bytesize)
-    set_write_mode
+    assert_writable
 
-    return super if @buffer_size <= 0
+    length = Integer(length)
+    raise ArgumentError, 'length must be at least 0' if length < 0
+
+    set_write_mode
 
     available = @buffer_size - @end_idx
     if available <= 0
@@ -193,8 +200,6 @@ class BufferedIO < DelegatedIO
       @start_idx = @end_idx = 0
       available = @buffer_size
     end
-
-    return 0 if buffer.empty? || length == 0
 
     length = available if available < length
     @buffer[@end_idx, length] = buffer.b[0, length]
@@ -208,13 +213,6 @@ class BufferedIO < DelegatedIO
 
   private
 
-  def bypass_buffer
-    @buffer_size, buffer_size = 0, @buffer_size
-    yield
-  ensure
-    @buffer_size = buffer_size
-  end
-
   def set_read_mode
     if @mode == :write
       result = flush
@@ -227,7 +225,7 @@ class BufferedIO < DelegatedIO
   def set_write_mode
     if @mode == :read
       # Rewind delegate to buffered read position if possible.
-      seek(0, IO::SEEK_CUR) if seekable?
+      seek(0, IO::SEEK_CUR) rescue nil
       # Ensure the read buffer is cleared even if the stream is not seekable.
       @start_idx = @end_idx = 0
     end

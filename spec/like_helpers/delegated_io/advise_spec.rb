@@ -1,6 +1,5 @@
 # -*- encoding: utf-8 -*-
 require_relative '../../../spec_helper'
-require_relative '../../../rubyspec/core/io/fixtures/classes'
 
 describe "IO::LikeHelpers::DelegatedIO#advise" do
   it "delegates to its delegate" do
@@ -8,6 +7,20 @@ describe "IO::LikeHelpers::DelegatedIO#advise" do
     obj.should_receive(:advise).and_return(:result)
     io = IO::LikeHelpers::DelegatedIO.new(obj)
     io.advise(:foo).should == :result
+  end
+
+  it "raises IOError when its delegate raises it" do
+    obj = mock("io")
+    obj.should_receive(:advise).with(:foo, 0, 0).and_raise(IOError.new('closed stream'))
+    io = IO::LikeHelpers::DelegatedIO.new(obj)
+    -> { io.advise(:foo) }.should raise_error(IOError, 'closed stream')
+  end
+
+  it "raises IOError if the stream is closed" do
+    obj = mock("io")
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
+    io.close
+    -> { io.advise(:foo) }.should raise_error(IOError, 'closed stream')
   end
 end
 

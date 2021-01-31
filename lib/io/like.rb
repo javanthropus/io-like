@@ -112,7 +112,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is closed
   def binmode
-    raise IOError, 'closed stream' if closed?
+    assert_open
     @binmode = true
     set_encoding('binary')
     self
@@ -124,7 +124,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is closed
   def binmode?
-    raise IOError, 'closed stream' if closed?
+    assert_open
     @binmode
   end
 
@@ -171,7 +171,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is non-duplexed and writable
   def close_read
-    return if @closed_read
+    return if closed_read?
 
     if ! @skip_duplexed_check && ! duplexed? && writable?
       raise IOError, 'closing non-duplex IO for reading'
@@ -190,7 +190,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is non-duplexed and readable
   def close_write
-    return if @closed_write
+    return if closed_write?
 
     if ! @skip_duplexed_check && ! duplexed? && readable?
       raise IOError, 'closing non-duplex IO for writing'
@@ -373,7 +373,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is closed
   def external_encoding
-    raise IOError, 'closed stream' if closed?
+    assert_open
 
     return @external_encoding if ! @external_encoding.nil? || writable?
     return Encoding::default_external
@@ -390,7 +390,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is not open for writing
   def flush
-    raise IOError, 'closed stream' if closed?
+    assert_open
 
     @buffer_changed = false
     loop do
@@ -460,20 +460,13 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # @return [String] a string representation of this object
-  def inspect
-    "<#{self.class}:#{delegate.delegate.inspect}>"
-  end
-
-  ##
   # @return [Encoding] the Encoding object that represents the encoding of the
   #   internal string conversion
   # @return [nil] if no encoding is specified
   #
   # @raise [IOError] if the stream is closed
   def internal_encoding
-    raise IOError, 'closed stream' if closed?
-
+    assert_open
     @internal_encoding
   end
 
@@ -490,8 +483,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is not open for reading
   def lineno
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! readable?
+    assert_readable
 
     @lineno ||= 0
   end
@@ -505,8 +497,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is not open for reading
   def lineno=(integer)
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! readable?
+    assert_readable
 
     @lineno = Integer(integer)
   end
@@ -523,25 +514,13 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # @return [Integer] the number of bytes that can be read without blocking or
-  #   `0` if unknown
-  #
-  # @raise [IOError] if the stream is not open for reading
-  def nread
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! readable?
-
-    super
-  end
-
-  ##
   # @return [Integer] the process ID of a child process associated with this
   #   stream
   # @return [nil] if there is no associated child process
   #
   # @raise [IOError] if the stream is closed
   def pid
-    raise IOError, 'closed stream' if closed?
+    assert_open
     return @pid unless @pid.nil?
     super
   end
@@ -555,8 +534,7 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [IOError] if the stream is closed
   # @raise [Errno::ESPIPE] if the stream is not seekable
   def pos
-    raise IOError, 'closed stream' if closed?
-    raise Errno::ESPIPE if duplexed?
+    assert_open
 
     flush
     delegate.seek(0, IO::SEEK_CUR)
@@ -598,6 +576,9 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is not open for writing
   def print(*args)
+    # NOTE:
+    # Through Ruby 3.0, $_ is always nil on entry to a Ruby method.  This
+    # assignment is kept in case that ever changes.
     args << $_ if args.empty?
     first_arg = true
     args.each do |arg|
@@ -724,8 +705,7 @@ class Like < LikeHelpers::DuplexedIO
       raise ArgumentError, "negative length #{length} given"
     end
 
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! readable?
+    assert_readable
 
     result = read_bytes(length)
     encode_buffer(result) if length.nil?
@@ -776,8 +756,7 @@ class Like < LikeHelpers::DuplexedIO
   def read_nonblock(length, buffer = nil, exception: true)
     length = Integer(length)
     raise ArgumentError, 'length must be at least 0' if length < 0
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! readable?
+    assert_readable
 
     result = if length == 0
                ''
@@ -812,8 +791,7 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [EOFError] if reading begins at the end of the stream
   # @raise [IOError] if the stream is not open for reading
   def readbyte
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! readable?
+    assert_readable
 
     byte = blocking_read(1)
     byte[0].ord
@@ -825,8 +803,7 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [EOFError] if reading begins at the end of the stream
   # @raise [IOError] if the stream is not open for reading
   def readchar
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! readable?
+    assert_readable
 
     ext_enc = external_encoding || Encoding.default_external
     buffer = ''.force_encoding(ext_enc)
@@ -878,8 +855,7 @@ class Like < LikeHelpers::DuplexedIO
   def readline(*args, chomp: false)
     sep_string, limit = parse_readline_args(args)
 
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! readable?
+    assert_readable
 
     ext_enc = external_encoding || Encoding.default_external
     buffer = ''.force_encoding(ext_enc)
@@ -924,6 +900,9 @@ class Like < LikeHelpers::DuplexedIO
     # Set the last line number in the global.
     $. = lineno
     # Set the last read line in the global and return it.
+    # NOTE:
+    # Through Ruby 3.0, assigning to $_ has no effect outside of a method that
+    # does it.  This assignment is kept in case that ever changes.
     $_ = buffer
   end
 
@@ -971,8 +950,7 @@ class Like < LikeHelpers::DuplexedIO
   def readpartial(length, buffer = nil)
     length = Integer(length)
     raise ArgumentError, 'length must be at least 0' if length < 0
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! readable?
+    assert_readable
 
     buffer ||= ''
     return buffer if length == 0
@@ -1022,11 +1000,11 @@ class Like < LikeHelpers::DuplexedIO
         io = args[0].to_io unless IO::Like === io
 
         if IO::Like === io
-          raise IOError, 'closed stream' if closed?
-          delegate_r.close
-          delegate_w.close
+          assert_open
+          close
           @delegate = io.delegate_r.dup
           @delegate_w = io.duplexed? ? io.delegate_w.dup : delegate_r
+          @closed = @closed_write = false
           return self
         end
 
@@ -1035,7 +1013,7 @@ class Like < LikeHelpers::DuplexedIO
             "can't convert #{args[0].class} to IO (#{args[0].class}#to_io gives #{io.class})"
         end
 
-        raise IOError, 'closed stream' if closed? || io.closed?
+        assert_open
         io = io.dup
       rescue NoMethodError
         mode = readable? ? 'r' : 'w'
@@ -1048,10 +1026,9 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     io = IO::LikeHelpers::BufferedIO.new(IO::LikeHelpers::IOWrapper.new(io))
-    delegate_r.close
-    delegate_w.close
+    close
     @delegate = @delegate_w = io
-    @closed_read = @closed_write = false
+    @closed = @closed_write = false
 
     self
   end
@@ -1091,8 +1068,6 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [IOError] if the stream is closed
   # @raise [Errno::ESPIPE] if the stream is not seekable
   def seek(offset, whence = IO::SEEK_SET)
-    raise IOError, 'closed stream' if closed?
-
     super
     @buffer_changed = false
     0
@@ -1130,7 +1105,7 @@ class Like < LikeHelpers::DuplexedIO
   #   encoding is given and **not** `nil`
   # @raise [ArgumentError] if an encoding given as a string is invalid
   def set_encoding(*args)
-    raise IOError, 'closed stream' if closed?
+    assert_open
 
     # Pull out the last argument if it's an options hash.
     @encoding_opts = args.last.kind_of?(Hash) ? args.pop : {}
@@ -1272,7 +1247,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is closed
   def sync
-    raise IOError, 'closed stream' if closed?
+    assert_open
     @sync ||= false
   end
 
@@ -1287,7 +1262,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is closed
   def sync=(sync)
-    raise IOError, 'closed stream' if closed?
+    assert_open
     @sync = sync ? true : false
   end
 
@@ -1315,8 +1290,8 @@ class Like < LikeHelpers::DuplexedIO
 
     return (buffer.nil? ? '' : buffer) if length == 0
 
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! readable?
+    assert_readable
+
     unless delegate_r.read_buffer_empty?
       raise IOError, 'sysread for buffered IO' if @buffer_changed
 
@@ -1364,7 +1339,7 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [IOError] if the stream is closed
   # @raise [Errno::ESPIPE] if the stream is not seekable
   def sysseek(offset, whence = IO::SEEK_SET)
-    raise IOError, 'closed stream' if closed?
+    assert_open
     unless delegate_r.read_buffer_empty?
       raise IOError, 'sysseek for buffered IO' if @buffer_changed
 
@@ -1373,7 +1348,6 @@ class Like < LikeHelpers::DuplexedIO
     unless delegate_w.write_buffer_empty?
       warn('warning: sysseek for buffered IO')
     end
-    raise Errno::ESPIPE if duplexed?
 
     delegate.unbuffered_seek(offset, whence)
   end
@@ -1386,8 +1360,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is not open for writing
   def syswrite(string)
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for writing' if closed_write? || ! writable?
+    assert_writable
     unless delegate_w.write_buffer_empty?
       warn('warning: syswrite for buffered IO')
     end
@@ -1413,8 +1386,7 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [IOError] if the stream is not open for reading
   # @raise [IOError] if the internal read buffer does not have enough space
   def ungetbyte(obj)
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! readable?
+    assert_readable
 
     return if obj.nil?
 
@@ -1449,8 +1421,7 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [IOError] if the stream is not open for reading
   # @raise [IOError] if the internal read buffer does not have enough space
   def ungetc(string)
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! readable?
+    assert_readable
 
     return if string.nil? && RBVER_LT_3_0
 
@@ -1494,7 +1465,7 @@ class Like < LikeHelpers::DuplexedIO
     end
     events = IO::READABLE if events == 0
 
-    raise IOError, 'closed stream' if closed?
+    assert_open
 
     super(events, timeout)
   end
@@ -1512,8 +1483,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @version \>= Ruby 3.0
   def wait_priority(timeout = nil)
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! delegate.readable?
+    assert_readable
 
     delegate.wait(IO::PRIORITY, timeout)
   end
@@ -1529,8 +1499,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is not open for reading
   def wait_readable(timeout = nil)
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading' if closed_read? || ! delegate.readable?
+    assert_readable
 
     delegate.wait(IO::READABLE, timeout)
   end
@@ -1543,8 +1512,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is not open for writing
   def wait_writable(timeout = nil)
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for writing' if closed_write? || ! delegate.writable?
+    assert_writable
 
     delegate.wait(IO::WRITABLE, timeout)
   end
@@ -1575,8 +1543,7 @@ class Like < LikeHelpers::DuplexedIO
       return 0 if strings[0].empty?
     end
 
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for writing' if closed_write? || ! writable?
+    assert_writable
 
     flush if sync
     total_bytes_written = 0
@@ -1625,8 +1592,7 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [Errno::EBADF] if non-blocking mode is not supported
   # @raise [SystemCallError] if there are low level errors
   def write_nonblock(string, exception: true)
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for writing' if closed_write? || ! writable?
+    assert_writable
 
     string = string.to_s
     string = string.encode(external_encoding) unless external_encoding.nil?
@@ -1647,11 +1613,11 @@ class Like < LikeHelpers::DuplexedIO
     end
   end
 
-  # Hide these to preserve the interface of IO.
-  protected :delegate_r, :delegate_w, :duplexed?
+  # Expose these to other instances of this class for use with #reopen.
+  protected :delegate_r, :delegate_w
 
   # Hide these to preserve the interface of IO.
-  private :delegate, :readable?, :seekable?, :writable?
+  private :readable?, :writable?
 
   private
 

@@ -9,50 +9,36 @@ class DuplexedIO < DelegatedIO
     super(delegate_r, autoclose: autoclose)
 
     @delegate_w = delegate_w
-
-    @closed_read = false
     @closed_write = false
   end
 
   def initialize_dup(other)
     super
 
-    @delegate_w = @delegate_w.dup
+    @delegate_w = other.duplexed? ? @delegate_w.dup : @delegate
   end
 
-  def delegate
-    delegate_r.closed? ? delegate_w : delegate_r
-  end
+  private attr_reader :delegate_w
+  alias_method :delegate_r, :delegate
 
-  def delegate_r
-    @delegate
-  end
-
-  attr_reader :delegate_w
-
-  def duplexed?
+  protected def duplexed?
     delegate_r != delegate_w
   end
 
   def close
-    return if closed?
+    return nil if closed?
 
-    if @autoclose
-      result = close_write
-      return result if Symbol === result
-      result = close_read
-      return result if Symbol === result
-    end
+    result = close_write
+    return result if Symbol === result
+    result = close_read
+    return result if Symbol === result
 
     nil
   end
 
+  alias_method :closed_read?, :closed?
   def closed?
-    @closed_read && @closed_write
-  end
-
-  def closed_read?
-    @closed_read
+    closed_read? && closed_write?
   end
 
   def closed_write?
@@ -60,48 +46,71 @@ class DuplexedIO < DelegatedIO
   end
 
   def close_read
-    return if @closed_read
+    return nil if closed_read?
 
-    delegate_r.close if autoclose?
-    @closed_read = true
+    if @autoclose
+      result = delegate_r.close
+      return result if Symbol === result
+    end
+    @closed = true
     @closed_write = true unless duplexed?
+    @delegate = @delegate_w
 
     nil
   end
 
   def close_write
-    return if @closed_write
+    return nil if closed_write?
 
-    delegate_w.close if autoclose?
+    if @autoclose
+      result = delegate_w.close
+      return result if Symbol === result
+    end
     @closed_write = true
-    @closed_read = true unless duplexed?
+    @closed = true unless duplexed?
+    @delegate_w = @delegate
 
     nil
   end
 
   def close_on_exec=(close_on_exec)
+    return super unless duplexed?
+
+    assert_open
+
     delegate_r.close_on_exec = delegate_w.close_on_exec = close_on_exec
+
     nil
   end
 
+  ##
+  # @return [String] a string representation of this object
+  def inspect
+    "<#{self.class}:#{delegate_r.inspect}, #{delegate_w.inspect}>"
+  end
+
   def nonblock=(nonblock)
+    return super unless duplexed?
+
+    assert_open
+
     delegate_r.nonblock = delegate_w.nonblock = nonblock
+
     nonblock
   end
 
-  def read(length, buffer: nil)
-    delegate_r.read(length, buffer: buffer)
-  end
-
   def readable?
+    return false if closed_read?
     delegate_r.readable?
   end
 
   def write(buffer, length: buffer.bytesize)
+    assert_writable
     delegate_w.write(buffer, length: length)
   end
 
   def writable?
+    return false if closed_write?
     delegate_w.writable?
   end
 end

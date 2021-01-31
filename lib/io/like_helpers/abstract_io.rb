@@ -4,20 +4,18 @@ class AbstractIO
     @closed = false
   end
 
+  def dup
+    assert_open
+    super
+  end
+
   def advise(advice, offset, len)
-    nil
-  end
-
-  def autoclose=(autoclose)
-    autoclose
-  end
-
-  def autoclose?
-    true
+    raise NotImplementedError
   end
 
   def close
     @closed = true
+    nil
   end
 
   def closed?
@@ -29,7 +27,7 @@ class AbstractIO
   end
 
   def close_on_exec?
-    true
+    raise NotImplementedError
   end
 
   def fcntl(*args)
@@ -37,7 +35,7 @@ class AbstractIO
   end
 
   def fileno
-    nil
+    raise NotImplementedError
   end
   alias_method :to_i, :fileno
 
@@ -51,23 +49,27 @@ class AbstractIO
   end
 
   def nonblock=(nonblock)
+    raise NotImplementedError
   end
 
   def nonblock?
-    true
+    raise NotImplementedError
+  end
+
+  def path
+    raise NotImplementedError
   end
 
   def pid
-    nil
+    raise NotImplementedError
   end
 
   def nread
-    0
+    raise NotImplementedError
   end
 
   def read(length, buffer: nil)
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading'
+    assert_readable
   end
 
   def readable?
@@ -75,23 +77,13 @@ class AbstractIO
   end
 
   def ready?
+    assert_open
     true
   end
 
   def seek(amount, whence)
-    raise IOError, 'closed stream' if closed?
+    assert_open
     raise Errno::ESPIPE
-  end
-
-  def seekable?
-    return @seekable if defined? @seekable
-
-    @seekable = begin
-                  seek(0, IO::SEEK_CUR)
-                  true
-                rescue Errno::ESPIPE
-                  false
-                end
   end
 
   def stat
@@ -103,21 +95,37 @@ class AbstractIO
   end
 
   def tty?
+    assert_open
     false
   end
   alias_method :isatty, :tty?
 
   def wait(events, timeout = nil)
-    true
+    raise NotImplementedError
   end
 
   def write(buffer, length: buffer.bytesize)
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for writing'
+    assert_writable
   end
 
   def writable?
     false
+  end
+
+  private
+
+  def assert_open
+    raise IOError, 'closed stream' if closed?
+  end
+
+  def assert_readable
+    assert_open
+    raise IOError, 'not opened for reading' unless readable?
+  end
+
+  def assert_writable
+    assert_open
+    raise IOError, 'not opened for writing' unless writable?
   end
 end
 end; end
