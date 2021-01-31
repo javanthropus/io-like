@@ -17,8 +17,6 @@ class DelegatedIO < AbstractIO
     @delegate = @delegate.dup
   end
 
-  private attr_reader :delegate
-
   def advise(advice, offset = 0, len = 0)
     assert_open
     delegate.advise(advice, offset, len)
@@ -204,6 +202,10 @@ class DelegatedIO < AbstractIO
     return false if closed?
     delegate.writable?
   end
+
+  private
+
+  attr_reader :delegate
 end
 end; end
 

@@ -18,13 +18,6 @@ class DuplexedIO < DelegatedIO
     @delegate_w = other.duplexed? ? @delegate_w.dup : @delegate
   end
 
-  private attr_reader :delegate_w
-  alias_method :delegate_r, :delegate
-
-  protected def duplexed?
-    delegate_r != delegate_w
-  end
-
   def close
     return nil if closed?
 
@@ -113,6 +106,17 @@ class DuplexedIO < DelegatedIO
     return false if closed_write?
     delegate_w.writable?
   end
+
+  protected
+
+  def duplexed?
+    delegate_r != delegate_w
+  end
+
+  private
+
+  attr_reader :delegate_w
+  alias_method :delegate_r, :delegate
 end
 end; end
 
