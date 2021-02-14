@@ -79,6 +79,7 @@ class DuplexedIO < DelegatedIO
   ##
   # @return [String] a string representation of this object
   def inspect
+    return super unless duplexed?
     "<#{self.class}:#{delegate_r.inspect}, #{delegate_w.inspect}>"
   end
 
