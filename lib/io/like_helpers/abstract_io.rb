@@ -1,5 +1,33 @@
 class IO; module LikeHelpers
 class AbstractIO
+  ##
+  # @overload open(*args, **kwargs)
+  #   Equivalent to {#initialize}.
+  #
+  #   @return a new instances of this class
+  #
+  # @overload open(*args, **kwargs)
+  #   Yields the new instance of this class to the block, ensures the instance
+  #   is closed once the block completes, and returns the result of the block.
+  #
+  #   @yieldparam stream an instance of this class
+  #
+  #   @return [block result]
+  #
+  # @param args a list of arguments passed to the initializer of this class
+  # @param kwargs a list of keyword arguments passed to the initializer of this
+  #   class
+  def self.open(*args, **kwargs)
+    io = new(*args, **kwargs)
+    return io unless block_given?
+
+    begin
+      yield(io)
+    ensure
+      io.close
+    end
+  end
+
   def initialize
     @closed = false
   end

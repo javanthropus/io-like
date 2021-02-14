@@ -14,32 +14,6 @@ class Like < LikeHelpers::DuplexedIO
   include Enumerable
 
   ##
-  # @overload open(*args, **kwargs)
-  #   Equivalent to {#initialize}.
-  #
-  #   @return [Like] a new instances of this class
-  #
-  # @overload open(*args, **kwargs)
-  #   Yields the new instance of this class to the block, ensures the instance
-  #   is closed once the block completes, and returns the result of the block.
-  #
-  #   @yieldparam stream [Like] an instance of this class
-  #
-  #   @return [block result]
-  #
-  # @param (see #initialize)
-  def self.open(*args, **kwargs)
-    io = new(*args, **kwargs)
-    return io unless block_given?
-
-    begin
-      yield(io)
-    ensure
-      io.close
-    end
-  end
-
-  ##
   # Creates a new instance of this class.
   #
   # @param delegate_r [LikeHelpers::BufferedIO] delegate for read operations
