@@ -4,8 +4,8 @@ require_relative '../../spec_helper'
 describe "IO::Like#sysread" do
   describe "on write-only stream" do
     before :each do
-      @filename = tmp("IO_Like_writeonly_file") + $$.to_s
-      @writeonly_file = File.open(@filename, "w")
+      @filename = tmp("IO_Like_writeonly_file")
+      @writeonly_file = io_like_wrapped_io(File.open(@filename, "w"))
     end
 
     after :each do

@@ -3,8 +3,8 @@
 describe :io_like__each, :shared => true do
   describe "on write-only stream" do
     before :each do
-      @filename = tmp("IO_Like_writeonly_file") + $$.to_s
-      @writeonly_file = File.open(@filename, "w")
+      @filename = tmp("IO_Like_writeonly_file")
+      @writeonly_file = io_like_wrapped_io(File.open(@filename, "w"))
     end
 
     after :each do

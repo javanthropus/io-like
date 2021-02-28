@@ -4,7 +4,7 @@ require_relative '../../rubyspec/core/io/fixtures/classes'
 
 describe "IO::Like#rewind" do
   before :each do
-    @io = IOSpecs.io_fixture "lines.txt"
+    @io = io_like_wrapped_io(IOSpecs.io_fixture("lines.txt"))
   end
 
   after :each do

@@ -9,7 +9,7 @@ describe "IO::Like#write" do
     before :each do
       @filename = tmp("IO_Like_readonly_file")
       File.write(@filename, "hello")
-      @readonly_file = File.open(@filename, "r")
+      @readonly_file = io_like_wrapped_io(File.open(@filename, "r"))
     end
 
     after :each do
@@ -22,8 +22,22 @@ describe "IO::Like#write" do
     end
   end
 
-  it "returns 0 when writing zero bytes" do
-    IOSpecs.closed_io.write("").should == 0
+  describe "on a closed stream" do
+    before :each do
+      @filename = tmp("IO_Like_writeonly_file")
+      File.write(@filename, "hello")
+      @writeonly_file = io_like_wrapped_io(File.open(@filename, "w"))
+      @writeonly_file.close
+    end
+
+    after :each do
+      @writeonly_file.close
+      rm_r @filename
+    end
+
+    it "returns 0 when writing zero bytes" do
+      @writeonly_file.write("").should == 0
+    end
   end
 end
 
