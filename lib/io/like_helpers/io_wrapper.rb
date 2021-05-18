@@ -10,14 +10,6 @@ class IO; module LikeHelpers
 class IOWrapper < DelegatedIO
   include RubyFacts
 
-  def initialize(delegate, autoclose: true)
-    super
-
-    flags = delegate.fcntl(Fcntl::F_GETFL) & Fcntl::O_ACCMODE
-    @readable = flags == Fcntl::O_RDONLY || flags == Fcntl::O_RDWR
-    @writable = flags == Fcntl::O_WRONLY || flags == Fcntl::O_RDWR
-  end
-
   def read(length, buffer: nil)
     content = delegate.nonblock? ?
       read_nonblock(length) :
@@ -30,7 +22,15 @@ class IOWrapper < DelegatedIO
   end
 
   def readable?
-    @readable
+    return @readable if defined? @readable
+
+    @readable =
+      begin
+        delegate.read(0)
+        true
+      rescue IOError
+        false
+      end
   end
 
   def ready?
@@ -63,7 +63,15 @@ class IOWrapper < DelegatedIO
   end
 
   def writable?
-    @writable
+    return @writable if defined? @writable
+
+    @writable =
+      begin
+        delegate.write
+        true
+      rescue IOError
+        false
+      end
   end
 
   private
