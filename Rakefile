@@ -14,12 +14,11 @@ GEMSPEC = Dir['*.gemspec'].first
 SPEC = eval(File.read(GEMSPEC), nil, GEMSPEC)
 
 # A dynamically generated list of files that should match the manifest (the
-# combined contents of SPEC.files and SPEC.test_files).  The idea is for this
-# list to contain all project files except for those that have been explicitly
-# excluded.  This list will be compared with the manifest from the SPEC in order
-# to help catch the addition or removal of files to or from the project that
-# have not been accounted for either by an exclusion here or an inclusion in the
-# SPEC manifest.
+# contents of SPEC.files).  The idea is for this list to contain all project
+# files except for those that have been explicitly excluded.  This list will be
+# compared with the manifest from the SPEC in order to help catch the addition
+# or removal of files to or from the project that have not been accounted for
+# either by an exclusion here or an inclusion in the SPEC manifest.
 #
 # NOTE:
 # It is critical that the manifest is *not* automatically generated via globbing
