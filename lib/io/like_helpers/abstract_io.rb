@@ -24,7 +24,10 @@ class AbstractIO
     begin
       yield(io)
     ensure
-      io.close
+      while Symbol === io.close do
+        warn 'warning: waiting for nonblocking close to complete at the end of the open method'
+        io.wait(IO::READABLE | IO::WRITABLE)
+      end
     end
   end
 
