@@ -125,11 +125,16 @@ class Like < LikeHelpers::DuplexedIO
   ##
   # Closes the stream, flushing any buffered data first.
   #
+  # This always blocks when buffered data needs to be written, even when the
+  # stream is in nonblocking mode.
+  #
   # @return [nil]
   def close
     @skip_duplexed_check = true
     begin
-      super
+      while Symbol === super do
+        delegate.wait(IO::READABLE | IO::WRITABLE)
+      end
     ensure
       @skip_duplexed_check = false
     end
