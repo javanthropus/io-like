@@ -720,6 +720,8 @@ class Like < LikeHelpers::DuplexedIO
   # @return [String] the data read from the stream
   # @return [:wait_readable, :wait_writable] if _exception_ is `false` and no
   #   data is available
+  # @return [nil] if _exception_ is `false` and reading begins at the end of the
+  #   stream
   #
   # @raise [EOFError] if reading begins at the end of the stream
   # @raise [IOError] if the stream is not open for reading
