@@ -11,6 +11,7 @@ class IOWrapper < DelegatedIO
   include RubyFacts
 
   def read(length, buffer: nil)
+    assert_readable
     content = delegate.nonblock? ?
       read_nonblock(length) :
       delegate.sysread(length)
@@ -38,6 +39,7 @@ class IOWrapper < DelegatedIO
   end
 
   def seek(amount, whence = IO::SEEK_SET)
+    assert_open
     delegate.sysseek(amount, whence)
   end
 
@@ -58,6 +60,7 @@ class IOWrapper < DelegatedIO
   end
 
   def write(buffer, length: buffer.bytesize)
+    assert_writable
     return delegate.syswrite(buffer[0, length]) unless delegate.nonblock?
     write_nonblock(buffer[0, length])
   end
