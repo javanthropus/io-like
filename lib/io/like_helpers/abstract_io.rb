@@ -31,6 +31,8 @@ class AbstractIO
     end
   end
 
+  ##
+  # Creates a new instance of this class.
   def initialize
     @closed = false
   end
@@ -112,6 +114,24 @@ class AbstractIO
     true
   end
 
+  ##
+  # Sets the current, unbuffered stream position to _offset_ based on the
+  # setting of _whence_.
+  #
+  # | _whence_ | _offset_ Interpretation |
+  # | -------- | ----------------------- |
+  # | `:CUR` or `IO::SEEK_CUR` | _offset_ added to current stream position |
+  # | `:END` or `IO::SEEK_END` | _offset_ added to end of stream position (_offset_ will usually be negative here) |
+  # | `:SET` or `IO::SEEK_SET` | _offset_ used as absolute position |
+  #
+  # @param offset [Integer] the amount to move the position in bytes
+  # @param whence [Integer, Symbol] the position alias from which to consider
+  #   _offset_
+  #
+  # @return [Integer] the new stream position
+  #
+  # @raise [IOError] if the stream is closed
+  # @raise [Errno::ESPIPE] if the stream is not seekable
   def seek(amount, whence)
     assert_open
     raise Errno::ESPIPE
@@ -131,6 +151,16 @@ class AbstractIO
   end
   alias_method :isatty, :tty?
 
+  ##
+  # Waits until the stream becomes ready for at least 1 of the specified events.
+  #
+  # @param events [Integer] a bit mask of `IO::READABLE`, `IO::WRITABLE`, or
+  #   `IO::PRIORITY`
+  # @param timeout [Numeric, nil] the timeout in seconds or no timeout if `nil`
+  #
+  # @return [true] if the stream becomes ready for at least one of the given
+  #   events
+  # @return [false] if the IO does not become ready before the timeout
   def wait(events, timeout = nil)
     raise NotImplementedError
   end
@@ -145,10 +175,22 @@ class AbstractIO
 
   private
 
+  ##
+  # Raises an exception if the stream is closed.
+  #
+  # @return [nil]
+  #
+  # @raise IOError if the stream is closed
   def assert_open
     raise IOError, 'closed stream' if closed?
   end
 
+  ##
+  # Raises an exception if the stream is closed or not open for reading.
+  #
+  # @return [nil]
+  #
+  # @raise IOError if the stream is closed or not open for reading
   def assert_readable
     assert_open
     raise IOError, 'not opened for reading' unless readable?

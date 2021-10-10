@@ -1339,6 +1339,8 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @param string [String] a string of bytes to be written
   #
+  # @return [Integer] the number of bytes written
+  #
   # @raise [IOError] if the stream is not open for writing
   def syswrite(string)
     assert_writable
@@ -1419,26 +1421,57 @@ class Like < LikeHelpers::DuplexedIO
     result
   end
 
+  ##
+  # @overload wait(events, timeout)
+  #   @param events [Integer] a bit mask of `IO::READABLE`, `IO::WRITABLE`, or
+  #     `IO::PRIORITY`
+  #   @param timeout [Numeric, nil] the timeout in seconds or no timeout if
+  #     `nil`
+  #
+  # @overload wait(timeout = nil, mode = :read)
+  #   @param timeout [Numeric]
+  #   @param mode [Symbol]
+  #
+  #   @deprecated Included for compability with Ruby 2.7 and earlier
+  #
+  # @return [self] if the stream becomes ready for at least one of the given
+  #   events
+  # @return [nil] if the IO does not become ready before the timeout
+  #
+  # @raise [IOError] if the stream is closed
   def wait(*args)
     events = 0
     timeout = nil
     if RBVER_LT_3_0
+      # Ruby <=2.7 compatibility mode while running Ruby <=2.7.
       args.each do |arg|
         case arg
         when Symbol
           events |= wait_event_from_symbol(arg)
         else
           timeout = arg
+          unless timeout.nil? || timeout >= 0
+            raise ArgumentError, 'time interval must not be negative'
+          end
         end
       end
     else
       if args.size < 2 || args.size >= 2 && Symbol === args[1]
+        # Ruby <=2.7 compatibility mode while running Ruby >=3.0.
         timeout = args[0] if args.size > 0
+        unless timeout.nil? || timeout >= 0
+          raise ArgumentError, 'time interval must not be negative'
+        end
         events = args[1..-1]
           .map { |mode| wait_event_from_symbol(mode) }
           .inject(0) { |memo, value| memo | value }
       elsif args.size == 2
-        events, timeout = args
+        # Ruby >=3.0 mode.
+        events = Integer(args[0])
+        timeout = args[1]
+        unless timeout.nil? || timeout >= 0
+          raise ArgumentError, 'time interval must not be negative'
+        end
       else
         # Arguments are invalid, but punt like Ruby 3.0 does.
         return nil
@@ -1448,7 +1481,8 @@ class Like < LikeHelpers::DuplexedIO
 
     assert_open
 
-    super(events, timeout)
+    return self if super(events, timeout)
+    return nil
   end
 
   unless RBVER_LT_3_0
@@ -1457,16 +1491,17 @@ class Like < LikeHelpers::DuplexedIO
   #
   # Returns `true` immediately if buffered data is available to read.
   #
-  # @return [true] when the stream is priority
-  # @return [false] when the call times out
+  # @return [self] when the stream is priority
+  # @return [nil] when the call times out
   #
-  # @raise [IOError] if the stream is not open for writing
+  # @raise [IOError] if the stream is not open for reading
   #
   # @version \>= Ruby 3.0
   def wait_priority(timeout = nil)
     assert_readable
 
-    delegate.wait(IO::PRIORITY, timeout)
+    return self if delegate.wait(IO::PRIORITY, timeout)
+    return nil
   end
   end
 
@@ -1475,27 +1510,29 @@ class Like < LikeHelpers::DuplexedIO
   #
   # Returns `true` immediately if buffered data is available to read.
   #
-  # @return [true] when the stream is readable
-  # @return [false] when the call times out
+  # @return [self] when the stream is readable
+  # @return [nil] when the call times out
   #
   # @raise [IOError] if the stream is not open for reading
   def wait_readable(timeout = nil)
     assert_readable
 
-    delegate.wait(IO::READABLE, timeout)
+    return self if delegate.wait(IO::READABLE, timeout)
+    return nil
   end
 
   ##
   # Waits until the stream is writable or until `timeout` is reached.
   #
-  # @return [true] when the stream is writable
-  # @return [false] when the call times out
+  # @return [self] when the stream is writable
+  # @return [nil] when the call times out
   #
   # @raise [IOError] if the stream is not open for writing
   def wait_writable(timeout = nil)
     assert_writable
 
-    delegate.wait(IO::WRITABLE, timeout)
+    return self if delegate.wait(IO::WRITABLE, timeout)
+    return nil
   end
 
   ##
