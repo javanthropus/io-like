@@ -43,7 +43,7 @@ class IOWrapper < DelegatedIO
     delegate.sysseek(amount, whence)
   end
 
-  def wait(events, timeout)
+  def wait(events, timeout = nil)
     return !!super unless RBVER_LT_3_0
 
     mode = case events & (IO::READABLE | IO::WRITABLE)
