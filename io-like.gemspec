@@ -35,9 +35,9 @@ new IO implementations may be created.
 
   s.extra_rdoc_files = %w(
     LICENSE
-    rubyspec/LICENSE
     NEWS.md
     README.md
+    rubyspec/LICENSE
   )
   s.rdoc_options  << '--title' << 'IO::Like Documentation' <<
                      '--charset' << 'utf-8' <<
@@ -47,11 +47,13 @@ new IO implementations may be created.
     LICENSE
     NEWS.md
     README.md
+    lib/io/like.rb
     lib/io/like_helpers/abstract_io.rb
-    lib/io/like_helpers/io_wrapper.rb
+    lib/io/like_helpers/buffered_io.rb
     lib/io/like_helpers/delegated_io.rb
     lib/io/like_helpers/duplexed_io.rb
-    lib/io/like_helpers/buffered_io.rb
-    lib/io/like.rb
+    lib/io/like_helpers/io.rb
+    lib/io/like_helpers/io_wrapper.rb
+    lib/io/like_helpers/ruby_facts.rb
   )
 end

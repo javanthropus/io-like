@@ -29,8 +29,8 @@ SPEC = eval(File.read(GEMSPEC), nil, GEMSPEC)
 PKG_FILES = FileList.new('**/*') do |files|
   files.exclude(
     # Test files
-    'spec/**/*', 'rubyspec/**/*', 'mspec/**/*', 'mspec-overrides/**/*',
-    'spec_helper.rb', 'io-like.mspec',
+    'spec/**/*', 'mspec/**/*', 'mspec-overrides/**/*', 'spec_helper.rb',
+    'io-like.mspec',
     # Non-shipping source files
     '*.gemspec', 'Gemfile', 'Gemfile.lock', 'Rakefile', 'README.md.erb',
     # Examples and experiments
@@ -38,8 +38,10 @@ PKG_FILES = FileList.new('**/*') do |files|
     # Bundler files
     'vendor/bundle/**/*',
     # Generated content except for README
-    'pkg/**/*', 'doc/**/*'
+    'pkg/**/*', 'doc/**/*', 'coverage/**/*'
   )
+  # Exclude rubyspec files except for the license.
+  files.exclude { |e| e != 'rubyspec/LICENSE' && e =~ %r{^rubyspec/.*} }
   # Exclude directories.
   files.exclude {|file| File.directory?(file)}
 end
@@ -113,15 +115,14 @@ namespace :build do
     manifest_files = (SPEC.files + SPEC.test_files).sort.uniq
     pkg_files = PKG_FILES.sort.uniq
     if manifest_files != pkg_files then
-      common_files = manifest_files & pkg_files
-      manifest_files -= common_files
-      pkg_files -= common_files
+      extraneous_files = manifest_files - pkg_files
+      missing_files = pkg_files - manifest_files
       message = ['The manifest does not match the automatic file list.']
-      unless manifest_files.empty? then
-        message << "  Extraneous files:\n    " + manifest_files.join("\n    ")
+      unless extraneous_files.empty? then
+        message << "  Extraneous files:\n    " + extraneous_files.join("\n    ")
       end
-      unless pkg_files.empty?
-        message << "  Missing files:\n    " + pkg_files.join("\n    ")
+      unless missing_files.empty?
+        message << "  Missing files:\n    " + missing_files.join("\n    ")
       end
       raise message.join("\n")
     end
