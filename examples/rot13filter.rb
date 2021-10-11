@@ -6,6 +6,15 @@ require 'io/like_helpers/io_wrapper'
 include IO::LikeHelpers
 
 class ROT13Filter < DelegatedIO
+  def self.io_like(delegate, **kwargs, &b)
+    autoclose = kwargs.delete(:autoclose) { true }
+    IO::Like.open(
+      BufferedIO.new(new(IOWrapper.new(delegate, autoclose: autoclose))),
+      **kwargs,
+      &b
+    )
+  end
+
   def read(length, buffer: nil)
     result = super
     if buffer.nil?
@@ -36,23 +45,17 @@ class ROT13Filter < DelegatedIO
   end
 end
 
-class ROT13IO < IO::Like
-  def initialize(io, *args, **kwargs)
-    super(BufferedIO.new(ROT13Filter.new(IOWrapper.new(io))), *args, **kwargs)
-  end
-end
-
 if $0 == __FILE__ then
   IO.pipe do |r, w|
     w.puts('This is a test')
     w.close
-    ROT13IO.open(r) do |rot13|
+    ROT13Filter.io_like(r) do |rot13|
       puts(rot13.read)                    # -> Guvf vf n grfg
     end
   end
 
   IO.pipe do |r, w|
-    ROT13IO.open(w) do |rot13|
+    ROT13Filter.io_like(w) do |rot13|
       rot13.puts('This is a test')
     end
     puts(r.read)                          # -> Guvf vf n grfg
@@ -61,7 +64,7 @@ if $0 == __FILE__ then
   IO.pipe do |r, w|
     w.puts('Guvf vf n grfg')
     w.close
-    ROT13IO.open(r) do |rot13|
+    ROT13Filter.io_like(r) do |rot13|
       puts(rot13.read)                    # -> This is a test
     end
   end
@@ -69,7 +72,7 @@ if $0 == __FILE__ then
   IO.pipe do |r, w|
     w.puts('This is a test')
     w.close
-    ROT13IO.open(r) do |rot13|
+    ROT13Filter.io_like(r) do |rot13|
       puts(rot13.each_line.to_a.inspect)  # -> ["Guvf vf n grfg\n"]
     end
   end
@@ -77,7 +80,7 @@ if $0 == __FILE__ then
   IO.pipe do |r, w|
     w.puts('Guvf vf n grfg')
     w.close
-    ROT13IO.open(r) do |rot13|
+    ROT13Filter.io_like(r) do |rot13|
       puts(rot13.each_line.to_a.inspect)  # -> ["This is a test\n"]
     end
   end
