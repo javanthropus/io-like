@@ -14,7 +14,7 @@ ruby_version_is '2.7' do
         end
 
         ruby_version_is "3.0" do
-          @src = '[0, 1] => [a, b]'
+          @src = 'warn "This is experimental warning.", category: :experimental'
         end
       end
 
@@ -26,6 +26,12 @@ ruby_version_is '2.7' do
 
     it "raises for unknown category" do
       -> { Warning[:noop] = false }.should raise_error(ArgumentError, /unknown category: noop/)
+    end
+
+    it "raises for non-Symbol category" do
+      -> { Warning[42] = false }.should raise_error(TypeError)
+      -> { Warning[false] = false }.should raise_error(TypeError)
+      -> { Warning["noop"] = false }.should raise_error(TypeError)
     end
   end
 end
