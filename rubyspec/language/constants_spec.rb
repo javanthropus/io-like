@@ -432,17 +432,15 @@ describe "Module#private_constant marked constants" do
     -> {mod::Foo}.should raise_error(NameError)
   end
 
-  ruby_version_is "2.6" do
-    it "sends #const_missing to the original class or module" do
-      mod = Module.new
-      mod.const_set :Foo, true
-      mod.send :private_constant, :Foo
-      def mod.const_missing(name)
-        name == :Foo ? name : super
-      end
-
-      mod::Foo.should == :Foo
+  it "sends #const_missing to the original class or module" do
+    mod = Module.new
+    mod.const_set :Foo, true
+    mod.send :private_constant, :Foo
+    def mod.const_missing(name)
+      name == :Foo ? name : super
     end
+
+    mod::Foo.should == :Foo
   end
 
   describe "in a module" do
@@ -713,20 +711,24 @@ describe 'Allowed characters' do
     end.should raise_error(NameError, /wrong constant name/)
   end
 
-  ruby_version_is ""..."2.6" do
-    it 'does not allow not ASCII upcased characters at the beginning' do
-      -> do
-        Module.new.const_set("ἍBB", 1)
-      end.should raise_error(NameError, /wrong constant name/)
-    end
+  it 'allows not ASCII upcased characters at the beginning' do
+    mod = Module.new
+    mod.const_set("ἍBB", 1)
+
+    eval("mod::ἍBB").should == 1
   end
+end
 
-  ruby_version_is "2.6" do
-    it 'allows not ASCII upcased characters at the beginning' do
-      mod = Module.new
-      mod.const_set("ἍBB", 1)
-
-      eval("mod::ἍBB").should == 1
+describe 'Assignment' do
+  context 'dynamic assignment' do
+    it 'raises SyntaxError' do
+      -> do
+        eval <<-CODE
+          def test
+            B = 1
+          end
+        CODE
+      end.should raise_error(SyntaxError, /dynamic constant assignment/)
     end
   end
 end

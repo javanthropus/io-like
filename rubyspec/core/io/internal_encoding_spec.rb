@@ -1,4 +1,5 @@
 require_relative '../../spec_helper'
+require_relative 'fixtures/classes'
 
 describe :io_internal_encoding, shared: true do
   describe "when Encoding.default_internal is not set" do
@@ -112,8 +113,12 @@ describe "IO#internal_encoding" do
     Encoding.default_internal = @internal
   end
 
-  it "raises an IOError on closed stream" do
-    -> { IOSpecs.closed_io.internal_encoding }.should raise_error(IOError)
+  ruby_version_is '3.1' do
+    it "can be retrieved from a closed stream" do
+      io = IOSpecs.io_fixture("lines.txt", "r")
+      io.close
+      io.internal_encoding.should equal(Encoding.default_internal)
+    end
   end
 
   describe "with 'r' mode" do
