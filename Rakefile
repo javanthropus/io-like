@@ -220,4 +220,9 @@ namespace :repo do
       raise 'Workspace has been modified.  Commit pending changes and try again.'
     end
   end
+
+  desc 'Update the rubyspec subtree from upstream'
+  task :update_rubyspec do
+    sh 'git subtree pull --squash -P rubyspec https://github.com/ruby/spec.git master'
+  end
 end
