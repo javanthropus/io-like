@@ -350,9 +350,9 @@ class Like < LikeHelpers::DuplexedIO
   #   stream
   # @return [nil] if the stream is writable and no encoding is specified
   #
-  # @raise [IOError] if the stream is closed
+  # @raise [IOError] if the stream is closed and Ruby version is less than 3.1
   def external_encoding
-    assert_open
+    assert_open if RBVER_LT_3_1
 
     return @external_encoding if ! @external_encoding.nil? || writable?
     return Encoding::default_external
@@ -443,9 +443,9 @@ class Like < LikeHelpers::DuplexedIO
   #   internal string conversion
   # @return [nil] if no encoding is specified
   #
-  # @raise [IOError] if the stream is closed
+  # @raise [IOError] if the stream is closed and Ruby version is less than 3.1
   def internal_encoding
-    assert_open
+    assert_open if RBVER_LT_3_1
     @internal_encoding
   end
 
