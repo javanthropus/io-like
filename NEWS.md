@@ -9,7 +9,7 @@ detailed information is available in the rest of the documentation.
 ## v0.4.0.pre1 (????/??/??)
 * Reimplemented all version specific IO::Like modules as a single class
   * **WARNING:** Breaks API compatibility with prior versions
-* Added full API compatibility for Ruby 2.5 through 3.0
+* Added full API compatibility for Ruby 2.6 through 3.1
   * Support for character encodings
   * Asynchronous/nonblocking methods
   * Many missing helper methods
