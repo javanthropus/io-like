@@ -1355,7 +1355,7 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     delegate_w.flush
-    delegate_w.unbuffered_write(string.to_s)
+    delegate_w.unbuffered_write(string.to_s.b)
   end
 
   ##
