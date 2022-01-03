@@ -1626,6 +1626,7 @@ class Like < LikeHelpers::DuplexedIO
 
     string = string.to_s
     string = string.encode(external_encoding) unless external_encoding.nil?
+    string = string.b unless string.encoding == Encoding::ASCII_8BIT
 
     self.nonblock = true
     result = delegate_w.flush || delegate_w.unbuffered_write(string)
