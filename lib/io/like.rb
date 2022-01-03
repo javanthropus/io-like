@@ -1151,9 +1151,9 @@ class Like < LikeHelpers::DuplexedIO
     unless binmode?
       raise ArgumentError, 'ASCII incompatible encoding needs binmode'
     end
-    if ! @internal_encoding.nil?
+    if ! internal_encoding.nil?
       raise ArgumentError, 'encoding conversion is set'
-    elsif ! (@external_encoding.nil? || @external_encoding == Encoding::BINARY)
+    elsif ! (external_encoding.nil? || external_encoding == Encoding::BINARY)
       raise ArgumentError, "encoding is set to #{external_encoding} already"
     end
 
