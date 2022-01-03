@@ -1167,7 +1167,8 @@ class Like < LikeHelpers::DuplexedIO
           case b3 = getbyte
           when nil
           when 0xBF
-            return @external_encoding = Encoding::UTF_8
+            set_encoding(Encoding::UTF_8)
+            return Encoding::UTF_8
           end
           ungetbyte(b3)
         end
@@ -1176,7 +1177,8 @@ class Like < LikeHelpers::DuplexedIO
         case b2 = getbyte
         when nil
         when 0xFF
-          return @external_encoding = Encoding::UTF_16BE
+          set_encoding(Encoding::UTF_16BE)
+          return Encoding::UTF_16BE
         end
         ungetbyte(b2)
       when 0xFF
@@ -1189,12 +1191,14 @@ class Like < LikeHelpers::DuplexedIO
             case b4 = getbyte
             when nil
             when 0x00
-              return @external_encoding = Encoding::UTF_32LE
+              set_encoding(Encoding::UTF_32LE)
+              return Encoding::UTF_32LE
             end
             ungetbyte(b4)
           end
           ungetbyte(b3)
-          return @external_encoding = Encoding::UTF_16LE
+          set_encoding(Encoding::UTF_16LE)
+          return Encoding::UTF_16LE
         end
         ungetbyte(b2)
       when 0x00
@@ -1207,7 +1211,8 @@ class Like < LikeHelpers::DuplexedIO
             case b4 = getbyte
             when nil
             when 0xFF
-              return @external_encoding = Encoding::UTF_32BE
+              set_encoding(Encoding::UTF_32BE)
+              return Encoding::UTF_32BE
             end
             ungetbyte(b4)
           end
@@ -1218,7 +1223,8 @@ class Like < LikeHelpers::DuplexedIO
       ungetbyte(b1)
     end
 
-    return @external_encoding = nil
+    set_encoding(nil)
+    return nil
   end
   end
 
