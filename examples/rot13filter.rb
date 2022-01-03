@@ -45,7 +45,7 @@ class ROT13Filter < DelegatedIO
   end
 end
 
-if $0 == __FILE__ then
+if $0 == __FILE__
   IO.pipe do |r, w|
     w.puts('This is a test')
     w.close
