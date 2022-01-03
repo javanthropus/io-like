@@ -51,7 +51,13 @@ class Like < LikeHelpers::DuplexedIO
     @binmode = false
     self.binmode if binmode
     unless binmode && external_encoding.nil? && internal_encoding.nil?
-      set_encoding(external_encoding, internal_encoding)
+      if ! RBVER_LT_2_7 && ! (Encoding === external_encoding) && external_encoding =~ /^bom\|/i
+        if set_encoding_by_bom.nil?
+          set_encoding(external_encoding.to_s[4..-1], internal_encoding)
+        end
+      else
+        set_encoding(external_encoding, internal_encoding)
+      end
     end
 
     @pid = pid
