@@ -156,7 +156,7 @@ class Like < LikeHelpers::DuplexedIO
       raise IOError, 'closing non-duplex IO for reading'
     end
 
-    delegate_r.wait(IO::READABLE) while Symbol === super
+    wait_readable while Symbol === super
 
     nil
   end
