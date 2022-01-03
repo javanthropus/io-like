@@ -5,74 +5,28 @@ require 'io/like_helpers/io_wrapper'
 
 include IO::LikeHelpers
 
-class FilteredIO < DelegatedIO
-  def self.open_iolike(*args, **kwargs)
-    iolike = new_iolike(*args, **kwargs)
-    return iolike unless block_given?
-
-    begin
-      yield(iolike)
-    ensure
-      iolike.close
-    end
-  end
-
-  def self.new_iolike(
-    io,
-    autoclose: true,
-    binmode: false,
-    internal_encoding: nil,
-    external_encoding: nil,
-    sync: false,
-    newline: :lf
-  )
-    IO::Like.new(
-      BufferedIO.new(
-        new(IOWrapper.new(io), autoclose: autoclose)
-      ),
-      autoclose: true,
-      binmode: binmode,
-      internal_encoding: internal_encoding,
-      external_encoding: external_encoding,
-      sync: sync,
-      newline: newline
+class RunLengthEncoder < DelegatedIO
+  def self.io_like(delegate, **kwargs, &b)
+    autoclose = kwargs.delete(:autoclose) { true }
+    IO::Like.open(
+      BufferedIO.new(new(IOWrapper.new(delegate, autoclose: autoclose))),
+      **kwargs,
+      &b
     )
   end
 
-  def read(length, buffer: nil)
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for reading'
-  end
-
-  def readable?
-    false
-  end
-
-  def seek(amount, whence = IO::SEEK_SET)
-    raise IOError, 'closed stream' if closed?
-    raise Errno::ESPIPE
-  end
-
-  def seekable?
-    false
-  end
-
-  def write(buffer, length: buffer.bytesize)
-    raise IOError, 'closed stream' if closed?
-    raise IOError, 'not opened for writing'
-  end
-
-  def writable?
-    false
-  end
-end
-
-class RunLengthEncodingReader < FilteredIO
   def initialize(delegate, autoclose: true)
     super(delegate, autoclose: autoclose)
 
     @run_size = 0
     @run_byte = nil
+    @pending_write = false
+  end
+
+  def close
+    result = flush
+    return result if Symbol === result
+    super
   end
 
   def read(length, buffer: nil)
@@ -108,25 +62,6 @@ class RunLengthEncodingReader < FilteredIO
     return length
   end
 
-  def readable?
-    true
-  end
-end
-
-class RunLengthEncodingWriter < FilteredIO
-  def initialize(delegate, autoclose: true)
-    super(delegate, autoclose: autoclose)
-
-    @run_size = 0
-    @run_byte = nil
-  end
-
-  def close
-    result = flush
-    return result if Symbol === result
-    super
-  end
-
   def write(buffer, length: buffer.bytesize)
     raise IOError, 'closed stream' if closed?
     raise IOError, 'not opened for writing' unless writable?
@@ -139,9 +74,9 @@ class RunLengthEncodingWriter < FilteredIO
           return total_written if total_written > 0
           return result
         end
-        @pending = 2
         @run_byte = byte
         @run_size = 1
+        @pending_write = true
       else
         @run_size += 1
       end
@@ -150,33 +85,23 @@ class RunLengthEncodingWriter < FilteredIO
     length
   end
 
-  def writable?
-    true
-  end
-
   private
 
   def flush
+    return nil unless @pending_write
     return nil unless @run_size > 0
 
-    if @pending == 2
-      result = delegate.write(@run_size.chr)
-      return result if Symbol === result
-      @pending -= 1
-    end
-    if @pending == 1
-      result = delegate.write(@run_byte.chr)
-      return result if Symbol === result
-      @pending -= 1
-    end
+    result = delegate.write(@run_size.chr + @run_byte.chr)
+    return result if Symbol === result
+    @pending_write = false
 
     nil
   end
 end
 
-if $0 == __FILE__ then
+if $0 == __FILE__
   IO.pipe do |r, w|
-    RunLengthEncodingWriter.open_iolike(w) do |rle|
+    RunLengthEncoder.io_like(w) do |rle|
       rle.puts('abbccc')
     end
     puts r.read.inspect
@@ -185,8 +110,17 @@ if $0 == __FILE__ then
   IO.pipe do |r, w|
     w.write("\u0001a\u0002b\u0003c\u0001\n")
     w.close
-    RunLengthEncodingReader.open_iolike(r) do |rle|
+    RunLengthEncoder.io_like(r) do |rle|
       puts rle.readline.inspect
+    end
+  end
+
+  IO.pipe do |r, w|
+    RunLengthEncoder.io_like(w) do |rle|
+      rle.puts('abbccc')
+    end
+    RunLengthEncoder.io_like(r) do |rle|
+      puts rle.read
     end
   end
 end
