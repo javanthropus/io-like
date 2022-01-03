@@ -205,7 +205,10 @@ class DelegatedIO < AbstractIO
 
   private
 
-  attr_reader :delegate
+  def delegate
+    raise IOError, 'uninitialized stream' if @delegate.nil?
+    @delegate
+  end
 end
 end; end
 
