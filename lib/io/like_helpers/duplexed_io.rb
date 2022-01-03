@@ -45,8 +45,8 @@ class DuplexedIO < DelegatedIO
       result = delegate_r.close
       return result if Symbol === result
     end
-    @closed = true
     @closed_write = true unless duplexed?
+    @closed = true
     @delegate = @delegate_w
 
     nil
@@ -59,8 +59,8 @@ class DuplexedIO < DelegatedIO
       result = delegate_w.close
       return result if Symbol === result
     end
-    @closed_write = true
     @closed = true unless duplexed?
+    @closed_write = true
     @delegate_w = @delegate
 
     nil
