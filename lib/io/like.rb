@@ -858,15 +858,12 @@ class Like < LikeHelpers::DuplexedIO
         ungetbyte(byte)
       end
 
-      loop do
+      until (! sep_string.nil? && buffer.end_with?(sep_string)) ||
+            (! limit.nil? &&
+             (buffer.bytesize >= limit + 16 ||
+              (buffer.bytesize >= limit && buffer.valid_encoding?)))
         buffer << blocking_read(1).force_encoding(ext_enc)
         @buffer_changed = true
-        if (! sep_string.nil? && buffer.end_with?(sep_string)) ||
-           (! limit.nil? &&
-            (buffer.bytesize >= limit + 16 ||
-             (buffer.bytesize >= limit && buffer[-1].valid_encoding?)))
-          break
-        end
       end
 
       if paragraph_requested
