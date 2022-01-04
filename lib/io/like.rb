@@ -1700,7 +1700,7 @@ class Like < LikeHelpers::DuplexedIO
     rescue EOFError
     end
 
-    buffers.join
+    buffers.join('')
   end
 
   ##
