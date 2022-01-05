@@ -689,6 +689,7 @@ class Like < LikeHelpers::DuplexedIO
     unless length.nil? || length >= 0
       raise ArgumentError, "negative length #{length} given"
     end
+    buffer = buffer.to_str unless buffer.nil?
 
     assert_readable
 
@@ -696,14 +697,9 @@ class Like < LikeHelpers::DuplexedIO
     encode_buffer(result) if length.nil?
 
     unless buffer.nil?
-      buffer = buffer.to_str
-      if result.empty?
-        buffer.slice!(0..-1)
-      else
-        orig_encoding = buffer.encoding
-        buffer.replace(result)
-        buffer.force_encoding(orig_encoding) unless length.nil?
-      end
+      orig_encoding = buffer.encoding
+      buffer.replace(result)
+      buffer.force_encoding(orig_encoding) unless length.nil?
       result = buffer
     end
 
