@@ -195,7 +195,15 @@ class LikeStringIO < IO::Like
     )
   end
 
+  def external_encoding
+    result = super
+    return nil if @in_set_encoding_by_bom
+    result
+  end
+
   def reopen(*args)
+    assert_thawed
+
     if args.size == 1 && LikeStringIO === args[0]
       @delegate = args[0].delegate_r
       @delegate_w = @delegate
@@ -204,12 +212,6 @@ class LikeStringIO < IO::Like
     end
 
     self
-  end
-
-  def external_encoding
-    result = super
-    return nil if @in_set_encoding_by_bom
-    result
   end
 
   def set_encoding(*args)
@@ -231,26 +233,32 @@ class LikeStringIO < IO::Like
   end
 
   def size
+    assert_thawed
+
     delegate.string.bytesize
   end
 
   def string
+    assert_thawed
+
     delegate.string
   end
 
   def string=(string)
-    if frozen?
-      raise FrozenError, "can't modify frozen #{self.class.name}: #{inspect}"
-    end
+    assert_thawed
 
     delegate.string = string
   end
 
   def sync
+    assert_thawed
+
     true
   end
 
   def sync=(sync)
+    assert_thawed
+
     nil
   end
 
@@ -275,6 +283,17 @@ class LikeStringIO < IO::Like
   end
 
   private
+
+  def assert_thawed
+    if frozen?
+      raise FrozenError, "can't modify frozen #{self.class.name}: #{inspect}"
+    end
+  end
+
+  def assert_open
+    assert_thawed
+    super
+  end
 
   def decode_mode(mode, frozen)
     case mode
