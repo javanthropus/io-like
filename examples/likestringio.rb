@@ -263,7 +263,7 @@ class LikeStringIO < IO::Like
   end
 
   ##
-  # This is just a wrapper for #read that raises IOError instead of returning
+  # This is just a wrapper for #read that raises EOFError instead of returning
   # `nil`.
   def sysread(*args)
     result = read(*args)
