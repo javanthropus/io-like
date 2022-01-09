@@ -65,7 +65,6 @@ class Like < LikeHelpers::DuplexedIO
     self.sync = sync
     self.ors = newline
 
-    @buffer_changed = false
     @skip_duplexed_check = false
   end
 
@@ -94,7 +93,7 @@ class Like < LikeHelpers::DuplexedIO
   def binmode
     assert_open
     @binmode = true
-    set_encoding('binary')
+    set_encoding(Encoding::ASCII_8BIT)
     self
   end
 
@@ -137,15 +136,11 @@ class Like < LikeHelpers::DuplexedIO
   # @return [nil]
   def close
     @skip_duplexed_check = true
-    begin
-      while Symbol === super do
-        delegate.wait(IO::READABLE | IO::WRITABLE)
-      end
-    ensure
-      @skip_duplexed_check = false
-    end
+    ensure_blocking { super }
 
     nil
+  ensure
+    @skip_duplexed_check = false
   end
 
   ##
@@ -162,7 +157,7 @@ class Like < LikeHelpers::DuplexedIO
       raise IOError, 'closing non-duplex IO for reading'
     end
 
-    wait_readable while Symbol === super
+    ensure_blocking { super }
 
     nil
   end
@@ -182,7 +177,7 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     flush if writable?
-    wait_writable while Symbol === super
+    ensure_blocking { super }
 
     nil
   end
@@ -377,18 +372,9 @@ class Like < LikeHelpers::DuplexedIO
   def flush
     assert_open
 
-    @buffer_changed = false
-    loop do
-      result = begin
-                 delegate_w.flush
-               rescue Errno::EINTR
-                 retry
-               end
-      return self unless Symbol === result
-      # A wait timeout is used in order to allow a retry in case the stream was
-      # closed in another thread while waiting.
-      wait_writable(1)
-    end
+    ensure_blocking { delegate_w.flush }
+
+    self
   end
 
   ##
@@ -562,7 +548,7 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [IOError] if the stream is not open for writing
   def print(*args)
     # NOTE:
-    # Through Ruby 3.0, $_ is always nil on entry to a Ruby method.  This
+    # Through Ruby 3.1, $_ is always nil on entry to a Ruby method.  This
     # assignment is kept in case that ever changes.
     args << $_ if args.empty?
     first_arg = true
@@ -685,7 +671,6 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [ArgumentError] if _length_ is less than 0
   # @raise [IOError] if the stream is not open for reading
   def read(length = nil, buffer = nil)
-    # Check the validity of the method arguments.
     unless length.nil? || length >= 0
       raise ArgumentError, "negative length #{length} given"
     end
@@ -693,22 +678,24 @@ class Like < LikeHelpers::DuplexedIO
 
     assert_readable
 
-    result = read_bytes(length)
-    encode_buffer(result) if length.nil?
-
+    content = read_bytes(length)
     unless buffer.nil?
       orig_encoding = buffer.encoding
-      buffer.replace(result)
-      buffer.force_encoding(orig_encoding) unless length.nil?
-      result = buffer
+      buffer.replace(content)
+      buffer.force_encoding(orig_encoding)
+      content = buffer
+    end
+    if length.nil? && external_encoding != Encoding::ASCII_8BIT
+      # Convert to the stream's internal encoding setting when reading all
+      # content from a non-binary stream.
+      content.force_encoding(external_encoding || Encoding.default_external)
+      unless internal_encoding.nil?
+        content.encode!(internal_encoding, **@encoding_opts)
+      end
     end
 
-    if result.empty? && ! length.nil?
-      return result if length == 0
-      return nil
-    end
-
-    return result
+    return nil if content.empty? && (length || 0) > 0
+    return content
   end
 
   ##
@@ -739,24 +726,30 @@ class Like < LikeHelpers::DuplexedIO
   def read_nonblock(length, buffer = nil, exception: true)
     length = Integer(length)
     raise ArgumentError, 'length must be at least 0' if length < 0
+    buffer = buffer.to_str unless buffer.nil?
+
     assert_readable
 
-    result = if length == 0
-               ''
-             else
-               self.nonblock = true
-               begin
-                 delegate_r.read(length)
-               rescue EOFError
-                 raise if exception
-                 return nil
-               end
-             end
+    return (buffer || ''.force_encoding(Encoding::ASCII_8BIT)) if length == 0
+
+    self.nonblock = true
+    result = handle_buffer(length, buffer) do
+      unless delegate_r.read_buffer_empty?
+        break delegate_r.read(length, buffer: buffer)
+      end
+
+      delegate_r.unbuffered_read(length, buffer: buffer)
+    end
 
     case result
     when String
-      return result if buffer.nil?
-      return buffer.replace(result)
+      # This means that a buffer was not given and that the delegate returned a
+      # buffer with the content.
+      return result
+    when Integer
+      # This means that a buffer was given and that the content is in the
+      # buffer.
+      return buffer
     when :wait_readable
       return result unless exception
       raise IO::EWOULDBLOCKWaitReadable
@@ -766,6 +759,9 @@ class Like < LikeHelpers::DuplexedIO
     else
       raise "Unexpected result: #{result}"
     end
+  rescue EOFError
+    raise if exception
+    return nil
   end
 
   ##
@@ -776,7 +772,7 @@ class Like < LikeHelpers::DuplexedIO
   def readbyte
     assert_readable
 
-    byte = blocking_read(1)
+    byte = ensure_blocking { delegate_r.read(1) }
     byte[0].ord
   end
 
@@ -793,8 +789,8 @@ class Like < LikeHelpers::DuplexedIO
 
     begin
       loop do
-        buffer << blocking_read(1).force_encoding(ext_enc)
-        break if buffer[0].valid_encoding? || buffer.bytesize >= 16
+        buffer << ensure_blocking { delegate_r.read(1) }.force_encoding(ext_enc)
+        break if buffer.valid_encoding? || buffer.bytesize >= 16
       end
     rescue EOFError
       raise if buffer.empty?
@@ -802,11 +798,10 @@ class Like < LikeHelpers::DuplexedIO
     char = buffer[0]
     ungetbyte(buffer[1..-1].b)
 
-    if internal_encoding.nil?
-      char.encode!(**@encoding_opts)
-    else
+    unless internal_encoding.nil?
       char.encode!(internal_encoding, **@encoding_opts)
     end
+
     char
   end
 
@@ -843,14 +838,14 @@ class Like < LikeHelpers::DuplexedIO
     ext_enc = external_encoding || Encoding.default_external
     buffer = ''.force_encoding(ext_enc)
 
-    newline = "\n"
+    newline = "\n".freeze
     paragraph_requested = ! sep_string.nil? && sep_string.empty?
     sep_string = "\n\n" if paragraph_requested
     sep_string = sep_string.encode(ext_enc) unless sep_string.nil?
 
     begin
       if paragraph_requested
-        while (byte = blocking_read(1)) == newline do; end
+        while (byte = ensure_blocking { delegate_r.read(1) }) == newline do; end
         ungetbyte(byte)
       end
 
@@ -858,12 +853,11 @@ class Like < LikeHelpers::DuplexedIO
             (! limit.nil? &&
              (buffer.bytesize >= limit + 16 ||
               (buffer.bytesize >= limit && buffer.valid_encoding?)))
-        buffer << blocking_read(1).force_encoding(ext_enc)
-        @buffer_changed = true
+        buffer << ensure_blocking { delegate_r.read(1) }.force_encoding(ext_enc)
       end
 
       if paragraph_requested
-        while (byte = blocking_read(1)) == newline do; end
+        while (byte = ensure_blocking { delegate_r.read(1) }) == newline do; end
         ungetbyte(byte)
       end
     rescue EOFError
@@ -881,7 +875,7 @@ class Like < LikeHelpers::DuplexedIO
     $. = lineno
     # Set the last read line in the global and return it.
     # NOTE:
-    # Through Ruby 3.0, assigning to $_ has no effect outside of a method that
+    # Through Ruby 3.1, assigning to $_ has no effect outside of a method that
     # does it.  This assignment is kept in case that ever changes.
     $_ = buffer
   end
@@ -930,15 +924,24 @@ class Like < LikeHelpers::DuplexedIO
   def readpartial(length, buffer = nil)
     length = Integer(length)
     raise ArgumentError, 'length must be at least 0' if length < 0
+    buffer = buffer.to_str unless buffer.nil?
+
     assert_readable
 
-    buffer ||= ''
-    return buffer if length == 0
+    return (buffer || ''.force_encoding(Encoding::ASCII_8BIT)) if length == 0
 
-    blocking_read(length, buffer: buffer)
-    buffer
+    result = handle_buffer(length, buffer) do
+      unless delegate_r.read_buffer_empty?
+        break delegate_r.read(length, buffer: buffer)
+      end
+
+      ensure_blocking { delegate_r.unbuffered_read(length, buffer: buffer) }
+    end
+
+    # The delegate returns the read content unless a buffer is given.
+    return buffer.nil? ? result : buffer
   rescue EOFError
-    buffer.replace('')
+    buffer.clear unless buffer.nil?
     raise
   end
 
@@ -1049,7 +1052,6 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [Errno::ESPIPE] if the stream is not seekable
   def seek(offset, whence = IO::SEEK_SET)
     super
-    @buffer_changed = false
     0
   end
 
@@ -1273,36 +1275,22 @@ class Like < LikeHelpers::DuplexedIO
   def sysread(length, buffer = nil)
     length = Integer(length)
     raise ArgumentError, "negative length #{length} given" if length < 0
+    buffer = buffer.to_str unless buffer.nil?
 
-    return (buffer.nil? ? '' : buffer) if length == 0
+    return (buffer || ''.force_encoding(Encoding::ASCII_8BIT)) if length == 0
 
     assert_readable
 
     unless delegate_r.read_buffer_empty?
-      raise IOError, 'sysread for buffered IO' if @buffer_changed
-
-      buffered_bytes = delegate_r.read(length)
-      length -= buffered_bytes.size
+      raise IOError, 'sysread for buffered IO'
     end
 
-    if length > 0
-      begin
-        delegate_r.flush
-        unbuffered_bytes = delegate_r.unbuffered_read(length)
-      rescue EOFError
-        raise if buffered_bytes.nil?
-      end
+    result = handle_buffer(length, buffer) do
+      ensure_blocking { delegate_r.unbuffered_read(length, buffer: buffer) }
     end
 
-    all_bytes = if ! (buffered_bytes.nil? || unbuffered_bytes.nil?)
-                  buffered_bytes << unbuffered_bytes
-                elsif buffered_bytes.nil?
-                  unbuffered_bytes
-                else
-                  buffered_bytes
-                end
-    return all_bytes if buffer.nil?
-    return buffer.to_str.replace(all_bytes)
+    # The delegate returns the read content unless a buffer is given.
+    return buffer.nil? ? result : buffer
   end
 
   ##
@@ -1327,9 +1315,7 @@ class Like < LikeHelpers::DuplexedIO
   def sysseek(offset, whence = IO::SEEK_SET)
     assert_open
     unless delegate_r.read_buffer_empty?
-      raise IOError, 'sysseek for buffered IO' if @buffer_changed
-
-      return delegate.seek(offset, whence)
+      raise IOError, 'sysseek for buffered IO'
     end
     unless delegate_w.write_buffer_empty?
       warn('warning: sysseek for buffered IO')
@@ -1387,7 +1373,6 @@ class Like < LikeHelpers::DuplexedIO
                String.new(obj)
              end
     result = delegate.unread(string.b)
-    @buffer_changed = true
     result
   end
 
@@ -1422,7 +1407,6 @@ class Like < LikeHelpers::DuplexedIO
                String.new(string)
              end
     result = delegate.unread(string.b)
-    @buffer_changed = true
     result
   end
 
@@ -1568,29 +1552,30 @@ class Like < LikeHelpers::DuplexedIO
 
     assert_writable
 
-    flush if sync
-    total_bytes_written = 0
-    strings.each do |string|
+    buffer = strings.map do |string|
       string = string.to_s
-      string = string.encode(external_encoding) unless external_encoding.nil?
-      bytes_written = 0
-      while bytes_written < string.bytesize do
-        result = begin
-                   sync ?
-                     delegate_w.unbuffered_write(string[bytes_written..-1]) :
-                     delegate_w.write(string[bytes_written..-1])
-                 rescue Errno::EINTR
-                   retry
-                 end
-        if Symbol === result
-          wait_writable
-          next
+      unless external_encoding.nil?
+        # Convert to the external encoding if possible.
+        begin
+          string = string.encode(external_encoding)
+        rescue Encoding::UndefinedConversionError
         end
-        bytes_written += result
       end
-      total_bytes_written += bytes_written
+      string = string.b unless string.encoding == Encoding::ASCII_8BIT
+      string
+    end.join('')
+
+    flush if sync
+    bytes_written = 0
+    while bytes_written < buffer.bytesize do
+      bytes_written += ensure_blocking do
+        sync ?
+          delegate_w.unbuffered_write(buffer[bytes_written..-1]) :
+          delegate_w.write(buffer[bytes_written..-1])
+      end
     end
-    total_bytes_written
+
+    bytes_written
   end
 
   ##
@@ -1645,32 +1630,49 @@ class Like < LikeHelpers::DuplexedIO
 
   private
 
-  ##
-  # @api private
-  #
-  # Reads up to _length_ bytes from the readable delegate into _buffer_, if
-  # given.
-  #
-  # This method always blocks, even when the delegate is non-blocking.
-  #
-  # @param length [Integer] the number of bytes to read
-  # @param buffer [String] the buffer into which bytes will be stored
-  #
-  # @return [Integer] the number of bytes actually read, if _buffer_ is not
-  #   `nil`
-  # @return [String] the bytes that were read, if _buffer_ is not given or `nil`
-  def blocking_read(length, buffer: nil)
-    loop do
-      result = begin
-                 delegate_r.read(length, buffer: buffer)
-               rescue Errno::EINTR
-                 retry
-               end
-      return result unless Symbol === result
-      # A wait timeout is used in order to allow a retry in case the stream was
-      # closed in another thread while waiting.
-      wait_readable(1)
+  def handle_buffer(length, buffer)
+    unless buffer.nil?
+      orig_encoding = buffer.encoding
+      buffer.force_encoding(Encoding::ASCII_8BIT)
+
+      # Ensure the given buffer is large enough to hold the requested number of
+      # bytes because the delegate will not read more than the buffer given to
+      # it can hold.
+      buffer << "\0".b * (length - buffer.bytesize) if length > buffer.bytesize
     end
+
+    result = yield
+
+    unless buffer.nil?
+      # A buffer was given to fill, so the delegate returned the number of bytes
+      # read.  Truncate the buffer if necessary and restore its original
+      # encoding.
+      buffer.slice!(result..-1)
+      buffer.force_encoding(orig_encoding)
+    end
+
+    result
+  end
+
+  def ensure_blocking
+    begin
+      while Symbol === (result = yield) do
+        # A wait timeout is used in order to allow a retry in case the stream was
+        # closed in another thread while waiting.
+        case result
+        when :wait_readable
+          wait_readable(1)
+        when :wait_writable
+          wait_writable(1)
+        else
+          raise "Unexpected result: #{result}"
+        end
+      end
+    rescue Errno::EINTR
+      retry
+    end
+
+    result
   end
 
   ##
@@ -1687,9 +1689,16 @@ class Like < LikeHelpers::DuplexedIO
   def read_bytes(length)
     buffers = []
     remaining = length.nil? ? 8192 : length
+
+    unless delegate_r.read_buffer_empty?
+      buffers << delegate_r.read(remaining)
+      remaining -= buffers[0].bytesize unless length.nil?
+    end
+
     begin
+      delegate_r.flush
       while remaining > 0 do
-        bytes = blocking_read(remaining)
+        bytes = ensure_blocking { delegate_r.unbuffered_read(remaining) }
         buffers << bytes
         remaining -= bytes.bytesize unless length.nil?
       end
@@ -1711,9 +1720,7 @@ class Like < LikeHelpers::DuplexedIO
   def encode_buffer(buffer)
     if external_encoding != Encoding::ASCII_8BIT
       buffer.force_encoding(external_encoding || Encoding.default_external)
-      if internal_encoding.nil?
-        buffer.encode!(**@encoding_opts)
-      else
+      unless internal_encoding.nil?
         buffer.encode!(internal_encoding, **@encoding_opts)
       end
     end
