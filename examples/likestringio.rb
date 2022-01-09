@@ -418,6 +418,30 @@ class LikeStringIO < IO::Like
 
     return [string, opt.merge!(decoded_mode)]
   end
+
+  ##
+  # This overrides the handling of any buffer given to read operations to always
+  # leave it in binary encoding, contrary to the behavior of real IO objects.
+  def handle_buffer(length, buffer)
+    unless buffer.nil?
+      buffer.force_encoding(Encoding::ASCII_8BIT)
+
+      # Ensure the given buffer is large enough to hold the requested number of
+      # bytes because the delegate will not read more than the buffer given to
+      # it can hold.
+      buffer << "\0".b * (length - buffer.bytesize) if length > buffer.bytesize
+    end
+
+    result = yield
+
+    unless buffer.nil?
+      # A buffer was given to fill, so the delegate returned the number of bytes
+      # read.  Truncate the buffer if necessary.
+      buffer.slice!(result..-1)
+    end
+
+    result
+  end
 end
 
 if $0 == __FILE__
