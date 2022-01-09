@@ -273,6 +273,8 @@ class LikeStringIO < IO::Like
   end
 
   def truncate(length)
+    assert_writable
+
     delegate.truncate(length)
   end
 
