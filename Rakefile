@@ -225,4 +225,9 @@ namespace :repo do
   task :update_rubyspec do
     sh 'git subtree pull --squash -P rubyspec https://github.com/ruby/spec.git master'
   end
+
+  desc 'Update the mspec subtree from upstream'
+  task :update_mspec do
+    sh 'git subtree pull --squash -P mspec https://github.com/ruby/mspec.git master'
+  end
 end
