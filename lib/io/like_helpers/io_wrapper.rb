@@ -41,18 +41,18 @@ class IOWrapper < DelegatedIO
   end
 
   ##
-  # Sets the current, unbuffered stream position to _offset_ based on the
+  # Sets the current, unbuffered stream position to _amount_ based on the
   # setting of _whence_.
   #
-  # | _whence_ | _offset_ Interpretation |
+  # | _whence_ | _amount_ Interpretation |
   # | -------- | ----------------------- |
-  # | `:CUR` or `IO::SEEK_CUR` | _offset_ added to current stream position |
-  # | `:END` or `IO::SEEK_END` | _offset_ added to end of stream position (_offset_ will usually be negative here) |
-  # | `:SET` or `IO::SEEK_SET` | _offset_ used as absolute position |
+  # | `:CUR` or `IO::SEEK_CUR` | _amount_ added to current stream position |
+  # | `:END` or `IO::SEEK_END` | _amount_ added to end of stream position (_amount_ will usually be negative here) |
+  # | `:SET` or `IO::SEEK_SET` | _amount_ used as absolute position |
   #
-  # @param offset [Integer] the amount to move the position in bytes
+  # @param amount [Integer] the amount to move the position in bytes
   # @param whence [Integer, Symbol] the position alias from which to consider
-  #   _offset_
+  #   _amount_
   #
   # @return [Integer] the new stream position
   #
