@@ -81,6 +81,29 @@ class AbstractIO
     raise NotImplementedError
   end
 
+  ##
+  # Yields `self` to the given block after setting the blocking mode as dictated
+  # by `nonblock`.
+  #
+  # Ensures that the original blocking mode is reinstated after yielding.
+  #
+  # @param nonblock [Boolean] sets the stream to non-blocking mode if `true` and
+  #   blocking mode otherwise
+  #
+  # @yieldparam self [Like] this stream
+  #
+  # @return [self]
+  def nonblock(nonblock = true)
+    assert_open
+    begin
+      orig_nonblock = nonblock?
+      self.nonblock = nonblock
+      yield(self)
+    ensure
+      self.nonblock = orig_nonblock
+    end
+  end
+
   def nonblock=(nonblock)
     raise NotImplementedError
   end

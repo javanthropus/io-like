@@ -99,28 +99,6 @@ class DelegatedIO < AbstractIO
     delegate.ioctl(integer_cmd, arg)
   end
 
-  ##
-  # Yields `self` to the given block after setting the blocking mode as dictated
-  # by `nonblock`.
-  #
-  # Ensures that the original blocking mode is reinstated after yielding.
-  #
-  # @param nonblock [Boolean] sets the stream to non-blocking mode if `true` and
-  #   blocking mode otherwise
-  #
-  # @yieldparam self [Like] this stream
-  #
-  # @return [self]
-  def nonblock(nonblock = true)
-    orig_nonblock = nonblock?
-    self.nonblock = nonblock
-    begin
-      yield(self)
-    ensure
-      self.nonblock = orig_nonblock
-    end
-  end
-
   def nonblock=(nonblock)
     assert_open
     delegate.nonblock = nonblock
