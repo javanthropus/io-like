@@ -35,7 +35,12 @@ class AbstractIO
 
   ##
   # Creates a new instance of this class.
-  def initialize
+  #
+  # @param kwargs [Hash] only provided for compatibility with .open on Ruby 2.6
+  #
+  # TODO:
+  # Remove explicit _kwargs_ parameter when Ruby 2.6 support is dropped.
+  def initialize(**kwargs)
     @closed = false
   end
 
