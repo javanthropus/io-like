@@ -132,16 +132,6 @@ class DelegatedIO < AbstractIO
     delegate.nonblock?
   end
 
-  ##
-  # @return [Integer] the number of bytes that can be read without blocking or
-  #   `0` if unknown
-  #
-  # @raise [IOError] if the stream is not open for reading
-  def nread
-    assert_readable
-    delegate.nread
-  end
-
   def path
     assert_open
     delegate.path

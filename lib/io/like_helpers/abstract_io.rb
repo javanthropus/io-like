@@ -97,10 +97,6 @@ class AbstractIO
     raise NotImplementedError
   end
 
-  def nread
-    raise NotImplementedError
-  end
-
   def read(length, buffer: nil)
     assert_readable
   end

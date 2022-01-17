@@ -485,6 +485,16 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
+  # @return [Integer] the number of bytes that can be read without blocking or
+  #   `0` if unknown
+  #
+  # @raise [IOError] if the stream is not open for reading
+  def nread
+    assert_readable
+    delegate_r.nread
+  end
+
+  ##
   # @return [Integer] the process ID of a child process associated with this
   #   stream
   # @return [nil] if there is no associated child process
