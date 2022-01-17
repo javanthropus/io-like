@@ -42,6 +42,11 @@ class LikeStringIO < IO::Like
       nil
     end
 
+    def nread
+      assert_readable
+      0
+    end
+
     def read(length, buffer: nil)
       length = Integer(length)
       raise ArgumentError, 'length must be at least 0' if length < 0
