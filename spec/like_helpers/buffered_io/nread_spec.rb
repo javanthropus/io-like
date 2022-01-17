@@ -39,3 +39,5 @@ describe "IO::LikeHelpers::BufferedIO#nread" do
     io.nread.should == 2
   end
 end
+
+# vim: ts=2 sw=2 et
