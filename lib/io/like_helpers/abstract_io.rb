@@ -26,7 +26,9 @@ class AbstractIO
     ensure
       while Symbol === io.close do
         warn 'warning: waiting for nonblocking close to complete at the end of the open method'
-        io.wait(IO::READABLE | IO::WRITABLE)
+        # A wait timeout is used in order to allow a retry in case the stream
+        # was closed in another thread while waiting.
+        io.wait(IO::READABLE | IO::WRITABLE, 1)
       end
     end
   end
