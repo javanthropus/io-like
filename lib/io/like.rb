@@ -936,7 +936,9 @@ class Like < LikeHelpers::DuplexedIO
 
     assert_readable
 
-    return (buffer || ''.force_encoding(Encoding::ASCII_8BIT)) if length == 0
+    if RBVER_LT_3_1 && length == 0
+      return (buffer || ''.force_encoding(Encoding::ASCII_8BIT))
+    end
 
     result = handle_buffer(length, buffer) do
       unless delegate_r.read_buffer_empty?
