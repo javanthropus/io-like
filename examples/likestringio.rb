@@ -15,7 +15,6 @@ class LikeStringIO < IO::Like
 
       raise Errno::EACCES if writable? && string.frozen?
 
-      self.encoding = opt.fetch(:encoding, string.encoding)
       @string.clear if @truncate
     end
 
@@ -28,7 +27,7 @@ class LikeStringIO < IO::Like
     def encoding=(encoding)
       encoding ||= @string.encoding
       @encoding = encoding
-      @string.force_encoding(encoding) if writable?
+      @string.force_encoding(encoding) unless @string.frozen?
     end
 
     def flush
@@ -101,8 +100,7 @@ class LikeStringIO < IO::Like
 
       assert_writable
 
-      encoding = string.encoding
-      string.force_encoding('binary')
+      string.force_encoding(Encoding::ASCII_8BIT)
       if length < string.bytesize
         string.slice!(length..-1)
       elsif length > string.bytesize
@@ -128,8 +126,7 @@ class LikeStringIO < IO::Like
         @pos = 0
       end
 
-      encoding = string.encoding
-      string.force_encoding('binary')
+      string.force_encoding(Encoding::ASCII_8BIT)
       pad_for_position
       string[@pos, replace_length] = buffer[0, length]
       string.force_encoding(encoding)
@@ -144,7 +141,7 @@ class LikeStringIO < IO::Like
 
       @pos = string.bytesize if @append
 
-      string.force_encoding('binary')
+      string.force_encoding(Encoding::ASCII_8BIT)
       pad_for_position
       string[@pos, length] = buffer[0, length]
       string.force_encoding(encoding)
@@ -186,19 +183,13 @@ class LikeStringIO < IO::Like
 
     string, opt = parse_init_args(string, mode, **opt)
     binmode = opt.delete(:binmode)
-    encoding = opt[:encoding]
+    encoding = opt.delete(:encoding)
 
     super(
       StringWrapper.new(string, **opt),
       binmode: binmode,
       external_encoding: encoding
     )
-  end
-
-  def external_encoding
-    result = super
-    return nil if @in_set_encoding_by_bom
-    result
   end
 
   def reopen(*args)
@@ -223,13 +214,8 @@ class LikeStringIO < IO::Like
 
   def set_encoding_by_bom
     rewind
-    binmode = @binmode
-    @binmode = true
-    @in_set_encoding_by_bom = true
+    binmode
     super
-  ensure
-    @in_set_encoding_by_bom = false
-    @binmode = binmode
   end
 
   def size
