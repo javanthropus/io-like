@@ -571,17 +571,11 @@ class Like < LikeHelpers::DuplexedIO
       # one unless no field separator is specified.
       if first_arg
         first_arg = false
-      elsif ! $,.nil?
+      else
         write($,)
       end
 
-      # If the argument is nil, write 'nil'; otherwise, write the stringified
-      # form of the argument.
-      if arg.nil?
-        write('nil')
-      else
-        write(arg)
-      end
+      write(arg)
     end
 
     # Write the output record separator if one is specified.
