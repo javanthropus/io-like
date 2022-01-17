@@ -116,10 +116,7 @@ class DuplexedIO < DelegatedIO
 
   private
 
-  def delegate_w
-    raise IOError, 'uninitialized stream' if @delegate_w.nil?
-    @delegate_w
-  end
+  attr_reader :delegate_w
   alias_method :delegate_r, :delegate
 end
 end; end
