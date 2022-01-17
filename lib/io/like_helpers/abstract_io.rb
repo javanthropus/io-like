@@ -168,7 +168,6 @@ class AbstractIO
     assert_open
     false
   end
-  alias_method :isatty, :tty?
 
   ##
   # Waits until the stream becomes ready for at least 1 of the specified events.

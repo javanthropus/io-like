@@ -442,6 +442,10 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
+  # For compatibility with `IO`.
+  alias_method :isatty, :tty?
+
+  ##
   # Returns the current line number of the stream.
   #
   # More accurately the number of times {#gets} is called on the stream and

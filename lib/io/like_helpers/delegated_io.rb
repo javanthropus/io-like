@@ -154,7 +154,6 @@ class DelegatedIO < AbstractIO
     assert_open
     delegate.tty?
   end
-  alias_method :isatty, :tty?
 
   def wait(events, timeout = nil)
     assert_open
