@@ -17,7 +17,7 @@ new IO implementations may be created.
 
 ## FEATURES
 
-* All standard Ruby 2.5 to 3.0 IO methods.
+* All standard Ruby 2.6 to 3.1 IO methods.
 * Buffered operations.
 * Configurable buffer size.
 
@@ -85,7 +85,7 @@ class ROT13Filter < DelegatedIO
   end
 end
 
-if $0 == __FILE__ then
+if $0 == __FILE__
   IO.pipe do |r, w|
     w.puts('This is a test')
     w.close
