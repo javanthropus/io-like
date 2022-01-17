@@ -1711,25 +1711,6 @@ class Like < LikeHelpers::DuplexedIO
   ##
   # @api private
   #
-  # Encodes `buffer` as dictated by the encodings defined for this stream,
-  # performing an in-place conversion to the internal encoding if necessary.
-  #
-  # @param buffer [String] the buffer to encode
-  #
-  # @return [nil]
-  def encode_buffer(buffer)
-    if external_encoding != Encoding::ASCII_8BIT
-      buffer.force_encoding(external_encoding || Encoding.default_external)
-      unless internal_encoding.nil?
-        buffer.encode!(internal_encoding, **@encoding_opts)
-      end
-    end
-    nil
-  end
-
-  ##
-  # @api private
-  #
   # Parse `args` into the separator and limit arguments needed by `#readline`
   # and `#each_line`.
   #
