@@ -1168,71 +1168,71 @@ class Like < LikeHelpers::DuplexedIO
       raise ArgumentError, "encoding is set to #{external_encoding} already"
     end
 
-    if readable?
-      case b1 = getbyte
+    return nil unless readable?
+
+    case b1 = getbyte
+    when nil
+    when 0xEF
+      case b2 = getbyte
       when nil
-      when 0xEF
-        case b2 = getbyte
+      when 0xBB
+        case b3 = getbyte
         when nil
-        when 0xBB
-          case b3 = getbyte
-          when nil
-          when 0xBF
-            set_encoding(Encoding::UTF_8)
-            return Encoding::UTF_8
-          end
-          ungetbyte(b3)
+        when 0xBF
+          set_encoding(Encoding::UTF_8)
+          return Encoding::UTF_8
         end
-        ungetbyte(b2)
-      when 0xFE
-        case b2 = getbyte
-        when nil
-        when 0xFF
-          set_encoding(Encoding::UTF_16BE)
-          return Encoding::UTF_16BE
-        end
-        ungetbyte(b2)
+        ungetbyte(b3)
+      end
+      ungetbyte(b2)
+    when 0xFE
+      case b2 = getbyte
+      when nil
       when 0xFF
-        case b2 = getbyte
-        when nil
-        when 0xFE
-          case b3 = getbyte
-          when nil
-          when 0x00
-            case b4 = getbyte
-            when nil
-            when 0x00
-              set_encoding(Encoding::UTF_32LE)
-              return Encoding::UTF_32LE
-            end
-            ungetbyte(b4)
-          end
-          ungetbyte(b3)
-          set_encoding(Encoding::UTF_16LE)
-          return Encoding::UTF_16LE
-        end
-        ungetbyte(b2)
-      when 0x00
-        case b2 = getbyte
+        set_encoding(Encoding::UTF_16BE)
+        return Encoding::UTF_16BE
+      end
+      ungetbyte(b2)
+    when 0xFF
+      case b2 = getbyte
+      when nil
+      when 0xFE
+        case b3 = getbyte
         when nil
         when 0x00
-          case b3 = getbyte
+          case b4 = getbyte
           when nil
-          when 0xFE
-            case b4 = getbyte
-            when nil
-            when 0xFF
-              set_encoding(Encoding::UTF_32BE)
-              return Encoding::UTF_32BE
-            end
-            ungetbyte(b4)
+          when 0x00
+            set_encoding(Encoding::UTF_32LE)
+            return Encoding::UTF_32LE
           end
-          ungetbyte(b3)
+          ungetbyte(b4)
         end
-        ungetbyte(b2)
+        ungetbyte(b3)
+        set_encoding(Encoding::UTF_16LE)
+        return Encoding::UTF_16LE
       end
-      ungetbyte(b1)
+      ungetbyte(b2)
+    when 0x00
+      case b2 = getbyte
+      when nil
+      when 0x00
+        case b3 = getbyte
+        when nil
+        when 0xFE
+          case b4 = getbyte
+          when nil
+          when 0xFF
+            set_encoding(Encoding::UTF_32BE)
+            return Encoding::UTF_32BE
+          end
+          ungetbyte(b4)
+        end
+        ungetbyte(b3)
+      end
+      ungetbyte(b2)
     end
+    ungetbyte(b1)
 
     set_encoding(nil)
     return nil
