@@ -29,7 +29,7 @@ class Like < LikeHelpers::DuplexedIO
   #   buffering
   # @param newline [Symbol] one of `:lf`, `:cr`, or `:crlf` to indicate the
   #   output record separator (line feed, carriage return, or carriage return +
-  #   line feed, respectively)
+  #   line feed, respectively), used only by #puts
   # @param pid [Integer] the return value for {#pid}
   def initialize(
     delegate_r,
