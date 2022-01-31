@@ -1234,7 +1234,6 @@ class Like < LikeHelpers::DuplexedIO
     end
     ungetbyte(b1)
 
-    set_encoding(nil)
     return nil
   end
   end
