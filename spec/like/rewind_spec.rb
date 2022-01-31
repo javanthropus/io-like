@@ -10,10 +10,6 @@ describe "IO::Like#rewind" do
   after :each do
     @io.close
   end
-
-  it "should return 0" do
-    @io.rewind.should == 0
-  end
 end
 
 # vim: ts=2 sw=2 et
