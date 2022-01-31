@@ -758,14 +758,8 @@ class Like < LikeHelpers::DuplexedIO
       # This means that a buffer was given and that the content is in the
       # buffer.
       return buffer
-    when :wait_readable
-      return result unless exception
-      raise IO::EWOULDBLOCKWaitReadable
-    when :wait_writable
-      return result unless exception
-      raise IO::EWOULDBLOCKWaitWritable
-    else
-      raise "Unexpected result: #{result}"
+    when Symbol
+      return nonblock_response(result, exception)
     end
   rescue EOFError
     raise if exception
@@ -1612,21 +1606,14 @@ class Like < LikeHelpers::DuplexedIO
     assert_writable
 
     string = string.to_s
-    string = string.b unless string.encoding == Encoding::ASCII_8BIT
 
     self.nonblock = true
-    result = delegate_w.flush || delegate_w.unbuffered_write(string)
+    result = delegate_w.flush || delegate_w.unbuffered_write(string.b)
     case result
     when Integer
       return result
-    when :wait_readable
-      return result unless exception
-      raise IO::EWOULDBLOCKWaitReadable
-    when :wait_writable
-      return result unless exception
-      raise IO::EWOULDBLOCKWaitWritable
-    else
-      raise "Unexpected result: #{result}"
+    when Symbol
+      return nonblock_response(result, exception)
     end
   end
 
@@ -1660,6 +1647,19 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     result
+  end
+
+  def nonblock_response(type, exception)
+    case type
+    when :wait_readable
+      return type unless exception
+      raise IO::EWOULDBLOCKWaitReadable
+    when :wait_writable
+      return type unless exception
+      raise IO::EWOULDBLOCKWaitWritable
+    else
+      raise "Unexpected nonblock response type: #{type}"
+    end
   end
 
   def ensure_blocking
