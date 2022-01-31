@@ -1612,7 +1612,6 @@ class Like < LikeHelpers::DuplexedIO
     assert_writable
 
     string = string.to_s
-    string = string.encode(external_encoding) unless external_encoding.nil?
     string = string.b unless string.encoding == Encoding::ASCII_8BIT
 
     self.nonblock = true
