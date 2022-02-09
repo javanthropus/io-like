@@ -77,7 +77,6 @@ class AbstractIO
   def fileno
     raise NotImplementedError
   end
-  alias_method :to_i, :fileno
 
   def fsync
     raise NotImplementedError
