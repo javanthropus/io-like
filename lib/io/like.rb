@@ -758,7 +758,7 @@ class Like < LikeHelpers::DuplexedIO
       # This means that a buffer was given and that the content is in the
       # buffer.
       return buffer
-    when Symbol
+    else
       return nonblock_response(result, exception)
     end
   rescue EOFError
@@ -1616,7 +1616,7 @@ class Like < LikeHelpers::DuplexedIO
     case result
     when Integer
       return result
-    when Symbol
+    else
       return nonblock_response(result, exception)
     end
   end
