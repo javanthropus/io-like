@@ -4,7 +4,22 @@ require 'io/like_helpers/ruby_facts.rb'
 class IO; module LikeHelpers
 class DelegatedIO < AbstractIO
   class << self
-    def delegate(*methods, to: :delegate, assert: :open)
+    ##
+    # Defines methods for instances of this class that delegates calls to
+    # another object.
+    #
+    # The delegation first calls an assert method to ensure the stream is in the
+    # nessary state to be able to perform the delegation.
+    #
+    # @param methods [Array<Symbol>] a list of methods to delegate
+    # @param to [Symbol] the target object
+    # @param assert [Symbol] the kind of assertion to call (`:open`,
+    #   `:readable`, or `:writable`)
+    private def delegate(*methods, to: :delegate, assert: :open)
+      unless %i{open readable writable}.include?(assert)
+        raise ArgumentError, "Invalid assert: #{assert}"
+      end
+
       location = caller_locations(1, 1).first
       file, line = location.path, location.lineno
 
