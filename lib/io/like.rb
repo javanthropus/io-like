@@ -1662,7 +1662,7 @@ class Like < LikeHelpers::DuplexedIO
       return type unless exception
       raise IO::EWOULDBLOCKWaitWritable
     else
-      raise "Unexpected nonblock response type: #{type}"
+      raise ArgumentError, "Invalid type: #{type}"
     end
   end
 
