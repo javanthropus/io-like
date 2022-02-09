@@ -124,7 +124,8 @@ class AbstractIO
   end
 
   def pid
-    raise NotImplementedError
+    assert_open
+    nil
   end
 
   def read(length, buffer: nil)
@@ -137,7 +138,7 @@ class AbstractIO
 
   def ready?
     assert_open
-    true
+    false
   end
 
   ##

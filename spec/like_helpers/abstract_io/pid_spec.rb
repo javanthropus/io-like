@@ -2,9 +2,9 @@
 require_relative '../../../spec_helper'
 
 describe "IO::LikeHelpers::AbstractIO#pid" do
-  it "raises NotImplementedError" do
+  it "returns nil" do
     io = IO::LikeHelpers::AbstractIO.new
-    -> { io.pid }.should raise_error(NotImplementedError)
+    io.pid.should be_nil
   end
 end
 
