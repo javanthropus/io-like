@@ -73,10 +73,6 @@ class DelegatedIO < AbstractIO
     nil
   end
 
-  def closed?
-    @closed
-  end
-
   ##
   # @return [String] a string representation of this object
   def inspect
