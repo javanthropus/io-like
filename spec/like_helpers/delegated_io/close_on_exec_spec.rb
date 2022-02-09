@@ -4,9 +4,9 @@ require_relative '../../../spec_helper'
 describe "IO::LikeHelpers::DelegatedIO#close_on_exec=" do
   it "delegates to its delegate" do
     obj = mock("io")
-    obj.should_receive(:close_on_exec=).and_return(:nil)
+    obj.should_receive(:close_on_exec=).with(true).and_return(:nil)
     io = IO::LikeHelpers::DelegatedIO.new(obj)
-    io.send(:close_on_exec=, true).should be_nil
+    io.send(:close_on_exec=, true).should be_true
   end
 
   it "raises IOError when its delegate raises it" do

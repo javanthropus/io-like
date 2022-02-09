@@ -1347,6 +1347,10 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
+  # This is for compatibility with IO.
+  alias_method :to_i, :fileno
+
+  ##
   # @overload ungetbyte(string)
   #   @param string [String] a string of bytes to push onto the internal read
   #     buffer

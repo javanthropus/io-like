@@ -15,7 +15,7 @@ describe "IO::LikeHelpers::IOWrapper#close_on_exec=" do
 
   it "delegates to its delegate" do
     io = IO::LikeHelpers::IOWrapper.new(@io)
-    io.send(:close_on_exec=, true).should be_nil
+    io.send(:close_on_exec=, true).should be_true
   end
 
   it "raises IOError when its delegate raises it" do

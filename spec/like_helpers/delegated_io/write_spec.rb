@@ -15,7 +15,7 @@ describe "IO::LikeHelpers::DelegatedIO#write" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
-    obj.should_receive(:write).with(buffer, length: 3).and_return(:result)
+    obj.should_receive(:write).with(buffer).and_return(:result)
     io = IO::LikeHelpers::DelegatedIO.new(obj)
     io.write(buffer).should == :result
   end

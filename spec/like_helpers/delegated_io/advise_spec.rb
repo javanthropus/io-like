@@ -11,7 +11,7 @@ describe "IO::LikeHelpers::DelegatedIO#advise" do
 
   it "raises IOError when its delegate raises it" do
     obj = mock("io")
-    obj.should_receive(:advise).with(:foo, 0, 0).and_raise(IOError.new('closed stream'))
+    obj.should_receive(:advise).with(:foo).and_raise(IOError.new('closed stream'))
     io = IO::LikeHelpers::DelegatedIO.new(obj)
     -> { io.advise(:foo) }.should raise_error(IOError, 'closed stream')
   end

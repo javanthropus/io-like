@@ -11,15 +11,6 @@ describe "IO::LikeHelpers::DuplexedIO#write" do
     io.write(buffer, length: 1).should == :result
   end
 
-  it "defaults the number of bytes to write to the number of bytes in the buffer" do
-    buffer = 'foo'.b
-    obj = mock("io")
-    obj.should_receive(:writable?).and_return(true)
-    obj.should_receive(:write).with(buffer, length: 3).and_return(:result)
-    io = IO::LikeHelpers::DuplexedIO.new(obj)
-    io.write(buffer).should == :result
-  end
-
   it "raises IOError when its delegate raises it" do
     buffer = 'foo'.b
     obj = mock("io")

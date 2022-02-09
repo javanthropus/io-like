@@ -73,7 +73,7 @@ class DuplexedIO < DelegatedIO
 
     delegate_r.close_on_exec = delegate_w.close_on_exec = close_on_exec
 
-    nil
+    close_on_exec
   end
 
   ##
@@ -98,10 +98,7 @@ class DuplexedIO < DelegatedIO
     delegate_r.readable?
   end
 
-  def write(buffer, length: buffer.bytesize)
-    assert_writable
-    delegate_w.write(buffer, length: length)
-  end
+  delegate :write, to: :delegate_w, assert: :writable
 
   def writable?
     return false if closed_write?

@@ -6,7 +6,7 @@ describe "IO::LikeHelpers::DuplexedIO#close_on_exec=" do
     obj = mock("io")
     obj.should_receive(:close_on_exec=).with(true).and_return(:nil)
     io = IO::LikeHelpers::DuplexedIO.new(obj)
-    io.send(:close_on_exec=, true).should be_nil
+    io.send(:close_on_exec=, true).should be_true
   end
 
   it "raises IOError when its delegate raises it" do
@@ -22,7 +22,7 @@ describe "IO::LikeHelpers::DuplexedIO#close_on_exec=" do
     obj_w = mock("writer_io")
     obj_w.should_receive(:close_on_exec=).with(true).and_return(:nil)
     io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w)
-    io.send(:close_on_exec=, true).should be_nil
+    io.send(:close_on_exec=, true).should be_true
   end
 
   it "raises IOError when the reader delegate raises it" do
@@ -48,7 +48,7 @@ describe "IO::LikeHelpers::DuplexedIO#close_on_exec=" do
     obj_w = mock("writer_io")
     io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w, autoclose: false)
     io.close_write
-    io.send(:close_on_exec=, true).should be_nil
+    io.send(:close_on_exec=, true).should be_true
   end
 
   it "delegates to the writer delegate when the read stream is closed" do
@@ -57,7 +57,7 @@ describe "IO::LikeHelpers::DuplexedIO#close_on_exec=" do
     obj_w.should_receive(:close_on_exec=).with(true).and_return(true)
     io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w, autoclose: false)
     io.close_read
-    io.send(:close_on_exec=, true).should be_nil
+    io.send(:close_on_exec=, true).should be_true
   end
 
   it "raises IOError when both streams are closed" do

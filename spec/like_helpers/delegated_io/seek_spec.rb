@@ -9,13 +9,6 @@ describe "IO::LikeHelpers::DelegatedIO#seek" do
     io.seek(1, :CUR).should == :result
   end
 
-  it "defaults the starting point to be absolute" do
-    obj = mock("io")
-    obj.should_receive(:seek).with(1, IO::SEEK_SET).and_return(:result)
-    io = IO::LikeHelpers::DelegatedIO.new(obj)
-    io.seek(1).should == :result
-  end
-
   it "raises IOError if the stream is closed" do
     obj = mock("io")
     io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)

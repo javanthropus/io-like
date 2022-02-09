@@ -1,7 +1,33 @@
 require 'io/like_helpers/abstract_io'
+require 'io/like_helpers/ruby_facts.rb'
 
 class IO; module LikeHelpers
 class DelegatedIO < AbstractIO
+  class << self
+    def delegate(*methods, to: :delegate, assert: :open)
+      location = caller_locations(1, 1).first
+      file, line = location.path, location.lineno
+
+      methods.map do |method|
+        args = if /[^\]]=$/.match?(method)
+                 'arg'
+               elsif RubyFacts::RBVER_LT_2_7
+                 '*args, &b'
+               else
+                 '*args, **kwargs, &b'
+               end
+
+        method_def = <<-EOM
+          def #{method}(#{args})
+            assert_#{assert}
+            #{to}.#{method}(#{args})
+          end
+        EOM
+        module_eval(method_def, file, line)
+      end
+    end
+  end
+
   def initialize(delegate, autoclose: true)
     raise ArgumentError, 'delegate cannot be nil' if delegate.nil?
     super()
@@ -15,11 +41,6 @@ class DelegatedIO < AbstractIO
 
     @autoclose = true
     @delegate = @delegate.dup
-  end
-
-  def advise(advice, offset = 0, len = 0)
-    assert_open
-    delegate.advise(advice, offset, len)
   end
 
   ##
@@ -56,114 +77,22 @@ class DelegatedIO < AbstractIO
     @closed
   end
 
-  def close_on_exec=(close_on_exec)
-    assert_open
-    delegate.close_on_exec = close_on_exec
-    nil
-  end
-
-  def close_on_exec?
-    assert_open
-    delegate.close_on_exec?
-  end
-
-  def fcntl(*args)
-    assert_open
-    delegate.fcntl(*args)
-  end
-
-  def fdatasync
-    assert_open
-    delegate.fdatasync
-  end
-
-  def fileno
-    assert_open
-    delegate.fileno
-  end
-  alias_method :to_i, :fileno
-
-  def fsync
-    assert_open
-    delegate.fsync
-  end
-
   ##
   # @return [String] a string representation of this object
   def inspect
     "<#{self.class}:#{delegate.inspect}>"
   end
 
-  def ioctl(integer_cmd, arg)
-    assert_open
-    delegate.ioctl(integer_cmd, arg)
-  end
+  delegate :advise, :close_on_exec=, :close_on_exec?, :fcntl, :fdatasync, :fileno, :fsync, :ioctl, :nonblock=, :nonblock?, :path, :pid, :ready?, :seek, :stat, :to_io, :tty?, :wait
 
-  def nonblock=(nonblock)
-    assert_open
-    delegate.nonblock = nonblock
-    nonblock
-  end
-
-  def nonblock?
-    assert_open
-    delegate.nonblock?
-  end
-
-  def path
-    assert_open
-    delegate.path
-  end
-
-  def pid
-    assert_open
-    delegate.pid
-  end
-
-  def read(length, buffer: nil)
-    assert_readable
-    delegate.read(length, buffer: buffer)
-  end
+  delegate :read, assert: :readable
 
   def readable?
     return false if closed?
     delegate.readable?
   end
 
-  def ready?
-    assert_open
-    delegate.ready?
-  end
-
-  def seek(amount, whence = IO::SEEK_SET)
-    assert_open
-    delegate.seek(amount, whence)
-  end
-
-  def stat
-    assert_open
-    delegate.stat
-  end
-
-  def to_io
-    assert_open
-    delegate.to_io
-  end
-
-  def tty?
-    assert_open
-    delegate.tty?
-  end
-
-  def wait(events, timeout = nil)
-    assert_open
-    delegate.wait(events, timeout)
-  end
-
-  def write(buffer, length: buffer.bytesize)
-    assert_writable
-    delegate.write(buffer, length: length)
-  end
+  delegate :write, assert: :writable
 
   def writable?
     return false if closed?

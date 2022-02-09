@@ -11,14 +11,6 @@ describe "IO::LikeHelpers::DuplexedIO#read" do
     io.read(1, buffer: buffer).should == :result
   end
 
-  it "defaults the buffer to nil" do
-    obj = mock("io")
-    obj.should_receive(:readable?).and_return(true)
-    obj.should_receive(:read).with(1, buffer: nil).and_return(:result)
-    io = IO::LikeHelpers::DuplexedIO.new(obj)
-    io.read(1).should == :result
-  end
-
   it "raises IOError when its delegate raises it" do
     buffer = 'foo'.b
     obj = mock("io")
