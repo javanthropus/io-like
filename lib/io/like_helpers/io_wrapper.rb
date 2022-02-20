@@ -12,7 +12,7 @@ class IOWrapper < DelegatedIO
 
   def read(length, buffer: nil)
     assert_readable
-    content = delegate.nonblock? ?
+    content = nonblock? ?
       read_nonblock(length) :
       delegate.sysread(length)
 
@@ -78,27 +78,54 @@ class IOWrapper < DelegatedIO
     # instance instead of true, contrary to documentation.
     return !!super unless RBVER_LT_3_0
 
-    mode = case events & (IO::READABLE | IO::WRITABLE)
-           when IO::READABLE | IO::WRITABLE
-             :read_write
-           when IO::READABLE
-             :read
-           when IO::WRITABLE
-             :write
-           else
-             return false
-           end
+    # The rest of this implementation is for backward compatibility with the
+    # IO#wait implamentation on Ruby versions prior to 3.0.
+    #
+    # TODO:
+    # Remove this when Ruby 2.7 and below are no longer supported by this
+    # library.
+    assert_open
+    mode =
+      case events & (IO::READABLE | IO::WRITABLE)
+      when IO::READABLE | IO::WRITABLE
+        :read_write
+      when IO::READABLE
+        :read
+      when IO::WRITABLE
+        :write
+      else
+        return false
+      end
     # The !! is a hack to work around the fact that IO#wait returns an object
     # instance instead of true, contrary to documentation.
     !!delegate.wait(timeout, mode)
   end
 
+  ##
+  # Writes bytes to the stream.
+  #
+  # Note that a partial write will occur if the stream is in non-blocking mode
+  # and writing more bytes would block.
+  #
+  # @param buffer [String] the bytes to write (encoding assumed to be binary)
+  # @param length [Integer] the number of bytes to write from `buffer`
+  #
+  # @return [Integer] the number of bytes written
+  # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
+  #   the operation would block
+  #
+  # @raise [IOError] if the stream is not writable
   def write(buffer, length: buffer.bytesize)
     assert_writable
-    return delegate.syswrite(buffer[0, length]) unless delegate.nonblock?
+    return delegate.syswrite(buffer[0, length]) unless nonblock?
     write_nonblock(buffer[0, length])
   end
 
+  ##
+  # Returns whether or not the stream is writable.
+  #
+  # @return [true] if the stream is writable
+  # @return [false] if the stream is not writable
   def writable?
     return @writable if defined? @writable
 

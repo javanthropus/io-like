@@ -69,6 +69,10 @@ class AbstractIO
     raise NotImplementedError
   end
 
+  def fdatasync
+    fsync
+  end
+
   def fileno
     raise NotImplementedError
   end
@@ -76,7 +80,6 @@ class AbstractIO
   def fsync
     raise NotImplementedError
   end
-  alias_method :fdatasync, :fsync
 
   def ioctl(integer_cmd, arg)
     raise NotImplementedError
