@@ -767,12 +767,12 @@ class Like < LikeHelpers::DuplexedIO
     return (buffer || ''.force_encoding(Encoding::ASCII_8BIT)) if length == 0
 
     self.nonblock = true
-    result = ensure_buffer(length, buffer) do
+    result = ensure_buffer(length, buffer) do |binary_buffer|
       unless delegate_r.read_buffer_empty?
-        break delegate_r.read(length, buffer: buffer)
+        break delegate_r.read(length, buffer: binary_buffer)
       end
 
-      delegate_r.unbuffered_read(length, buffer: buffer)
+      delegate_r.unbuffered_read(length, buffer: binary_buffer)
     end
 
     case result
@@ -968,12 +968,14 @@ class Like < LikeHelpers::DuplexedIO
       return (buffer || ''.force_encoding(Encoding::ASCII_8BIT))
     end
 
-    result = ensure_buffer(length, buffer) do
+    result = ensure_buffer(length, buffer) do |binary_buffer|
       unless delegate_r.read_buffer_empty?
-        break delegate_r.read(length, buffer: buffer)
+        break delegate_r.read(length, buffer: binary_buffer)
       end
 
-      ensure_blocking { delegate_r.unbuffered_read(length, buffer: buffer) }
+      ensure_blocking do
+        delegate_r.unbuffered_read(length, buffer: binary_buffer)
+      end
     end
 
     # The delegate returns the read content unless a buffer is given.
@@ -1321,8 +1323,10 @@ class Like < LikeHelpers::DuplexedIO
       raise IOError, 'sysread for buffered IO'
     end
 
-    result = ensure_buffer(length, buffer) do
-      ensure_blocking { delegate_r.unbuffered_read(length, buffer: buffer) }
+    result = ensure_buffer(length, buffer) do |binary_buffer|
+      ensure_blocking do
+        delegate_r.unbuffered_read(length, buffer: binary_buffer)
+      end
     end
 
     # The delegate returns the read content unless a buffer is given.
@@ -1718,7 +1722,7 @@ class Like < LikeHelpers::DuplexedIO
       buffer << "\0".b * (length - buffer.bytesize) if length > buffer.bytesize
     end
 
-    result = yield
+    result = yield(buffer)
   ensure
     unless buffer.nil?
       # A buffer was given to fill, so the delegate returned the number of bytes
