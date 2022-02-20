@@ -44,11 +44,6 @@ class AbstractIO
     @closed = false
   end
 
-  def dup
-    assert_open
-    super
-  end
-
   def advise(advice, offset, len)
     raise NotImplementedError
   end
@@ -224,6 +219,14 @@ class AbstractIO
   def assert_writable
     assert_open
     raise IOError, 'not opened for writing' unless writable?
+  end
+
+  def initialize_copy(other)
+    assert_open
+
+    super
+
+    nil
   end
 end
 end; end

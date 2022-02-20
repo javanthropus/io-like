@@ -17,13 +17,6 @@ class BufferedIO < DelegatedIO
     @mode = nil
   end
 
-  def initialize_dup(other)
-    assert_open
-    super
-
-    @buffer = @buffer.dup
-  end
-
   attr_reader :buffer_size
 
   def close
@@ -212,6 +205,14 @@ class BufferedIO < DelegatedIO
   end
 
   private
+
+  def initialize_copy(other)
+    super
+
+    @buffer = @buffer.dup
+
+    nil
+  end
 
   def set_read_mode
     if @mode == :write

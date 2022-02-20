@@ -51,13 +51,6 @@ class DelegatedIO < AbstractIO
     @autoclose = autoclose
   end
 
-  def initialize_dup(other)
-    super
-
-    @autoclose = true
-    @delegate = @delegate.dup
-  end
-
   ##
   # Sets whether or not to close the delegate(s) when {#close} is called.
   #
@@ -111,6 +104,15 @@ class DelegatedIO < AbstractIO
   end
 
   private
+
+  def initialize_copy(other)
+    super
+
+    @autoclose = true
+    @delegate = @delegate.dup
+
+    nil
+  end
 
   attr_reader :delegate
 end

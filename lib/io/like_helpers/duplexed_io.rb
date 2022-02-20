@@ -12,12 +12,6 @@ class DuplexedIO < DelegatedIO
     @closed_write = false
   end
 
-  def initialize_dup(other)
-    super
-
-    @delegate_w = other.duplexed? ? @delegate_w.dup : @delegate
-  end
-
   def close
     return nil if closed?
 
@@ -112,6 +106,14 @@ class DuplexedIO < DelegatedIO
   end
 
   private
+
+  def initialize_copy(other)
+    super
+
+    @delegate_w = other.duplexed? ? @delegate_w.dup : @delegate
+
+    nil
+  end
 
   attr_reader :delegate_w
   alias_method :delegate_r, :delegate
