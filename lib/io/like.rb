@@ -751,7 +751,7 @@ class Like < LikeHelpers::DuplexedIO
     return (buffer || ''.force_encoding(Encoding::ASCII_8BIT)) if length == 0
 
     self.nonblock = true
-    result = handle_buffer(length, buffer) do
+    result = ensure_buffer(length, buffer) do
       unless delegate_r.read_buffer_empty?
         break delegate_r.read(length, buffer: buffer)
       end
@@ -952,7 +952,7 @@ class Like < LikeHelpers::DuplexedIO
       return (buffer || ''.force_encoding(Encoding::ASCII_8BIT))
     end
 
-    result = handle_buffer(length, buffer) do
+    result = ensure_buffer(length, buffer) do
       unless delegate_r.read_buffer_empty?
         break delegate_r.read(length, buffer: buffer)
       end
@@ -962,9 +962,6 @@ class Like < LikeHelpers::DuplexedIO
 
     # The delegate returns the read content unless a buffer is given.
     return buffer.nil? ? result : buffer
-  rescue EOFError
-    buffer.clear unless buffer.nil?
-    raise
   end
 
   ##
@@ -1306,7 +1303,7 @@ class Like < LikeHelpers::DuplexedIO
       raise IOError, 'sysread for buffered IO'
     end
 
-    result = handle_buffer(length, buffer) do
+    result = ensure_buffer(length, buffer) do
       ensure_blocking { delegate_r.unbuffered_read(length, buffer: buffer) }
     end
 
@@ -1646,29 +1643,39 @@ class Like < LikeHelpers::DuplexedIO
 
   private
 
-  def handle_buffer(length, buffer)
+  ##
+  # Ensures that a buffer, if provided, is large enough to hold the requested
+  # number of bytes and is then truncated to the returned number of bytes while
+  # ensuring that the encoding is preserved.
+  #
+  # @param length [Integer] the minimum size of the buffer in bytes
+  # @param buffer [String, nil] the buffer
+  #
+  # @yieldparam binary_buffer [String, nil] a binary encoded String based on
+  #   `buffer` (if non-nil) that is at least `length` bytes long
+  # @yieldreturn [Integer, String, Symbol] the result of a low level read
+  #   operation. (See {IO::LikeHelpers::AbstractIO#read})
+  #
+  # @return the result of the given block
+  def ensure_buffer(length, buffer)
     unless buffer.nil?
       orig_encoding = buffer.encoding
       buffer.force_encoding(Encoding::ASCII_8BIT)
 
       # Ensure the given buffer is large enough to hold the requested number of
-      # bytes because the delegate will not read more than the buffer given to
-      # it can hold.
+      # bytes.
       buffer << "\0".b * (length - buffer.bytesize) if length > buffer.bytesize
     end
 
     result = yield
-
+  ensure
     unless buffer.nil?
       # A buffer was given to fill, so the delegate returned the number of bytes
       # read.  Truncate the buffer if necessary and restore its original
       # encoding.
-      buffer.slice!(result..-1)
+      buffer.slice!((result || 0)..-1)
       buffer.force_encoding(orig_encoding)
     end
-
-    result
-  end
 
   def nonblock_response(type, exception)
     case type
