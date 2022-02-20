@@ -1,4 +1,5 @@
 class IO; module LikeHelpers
+
 ##
 # This module provides constants that represent true/false facts about the Ruby
 # runtime.

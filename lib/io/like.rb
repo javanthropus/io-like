@@ -4,6 +4,9 @@ require 'io/like_helpers/io'
 require 'io/like_helpers/io_wrapper'
 require 'io/like_helpers/ruby_facts'
 
+##
+# All the goodies for this library go in this namespace.  It's probably a bad
+# idea.
 class IO
 
 ##

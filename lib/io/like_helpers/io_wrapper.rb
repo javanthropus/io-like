@@ -7,9 +7,31 @@ require 'io/like_helpers/io'
 require 'io/like_helpers/ruby_facts'
 
 class IO; module LikeHelpers
+
+##
+# This class adapts Ruby's IO implementation to the more primitive interface and
+# behaviors expected by this library.
 class IOWrapper < DelegatedIO
   include RubyFacts
 
+  ##
+  # Reads bytes from the stream.
+  #
+  # Note that a partial read will occur if reading starts at the end of the
+  # stream or if reading more bytes would block while the stream is in
+  # non-blocking mode.
+  #
+  # @param length [Integer] the number of bytes to read
+  # @param buffer [String] the buffer into which bytes will be read (encoding
+  #   assumed to be binary)
+  #
+  # @return [Integer] the number of bytes read if `buffer` is not `nil`
+  # @return [String] a buffer containing the bytes read if `buffer` is `nil`
+  # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
+  #   the operation would block
+  #
+  # @raise [EOFError] when reading at the end of the stream
+  # @raise [IOError] if the stream is not readable
   def read(length, buffer: nil)
     assert_readable
     content = nonblock? ?
@@ -22,6 +44,11 @@ class IOWrapper < DelegatedIO
     return content.bytesize
   end
 
+  ##
+  # Returns whether or not the stream is readable.
+  #
+  # @return [true] if the stream is readable
+  # @return [false] if the stream is not readable
   def readable?
     return @readable if defined? @readable
 
@@ -34,6 +61,11 @@ class IOWrapper < DelegatedIO
       end
   end
 
+  ##
+  # Returns whether or not the stream has input available.
+  #
+  # @return [true] if input is available
+  # @return [false] if input is not available
   def ready?
     # This is a hack to work around the fact that IO#ready? returns an object
     # instance instead of true, contrary to documentation.
@@ -140,12 +172,38 @@ class IOWrapper < DelegatedIO
 
   private
 
+  ##
+  # Reads bytes from the stream without blocking.
+  #
+  # Note that a partial read will occur if reading starts at the end of the
+  # stream or if reading more bytes would block.
+  #
+  # @param length [Integer] the number of bytes to read
+  #
+  # @return [String] a buffer containing the bytes read
+  # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
+  #   the operation would block
+  #
+  # @raise [EOFError] when reading at the end of the stream
+  # @raise [IOError] if the stream is not readable
   def read_nonblock(length)
     result = delegate.read_nonblock(length, exception: false)
     raise EOFError if result.nil?
     result
   end
 
+  ##
+  # Writes bytes to the stream without blocking.
+  #
+  # Note that a partial write will occur if writing more bytes would block.
+  #
+  # @param buffer [String] the bytes to write (encoding assumed to be binary)
+  #
+  # @return [Integer] the number of bytes written
+  # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
+  #   the operation would block
+  #
+  # @raise [IOError] if the stream is not writable
   def write_nonblock(buffer)
     delegate.write_nonblock(buffer, exception: false)
   end
