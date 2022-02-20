@@ -22,7 +22,7 @@ class Like < LikeHelpers::DuplexedIO
   # @param delegate_r [LikeHelpers::BufferedIO] delegate for read operations
   # @param delegate_w [LikeHelpers::BufferedIO] delegate for write operations
   # @param autoclose [Boolean] when `true` close the delegate(s) when this
-  #   object is closed
+  #   stream is closed
   # @param binmode [Boolean] when `true` suppresses EOL <-> CRLF conversion on
   #   Windows and sets external encoding to ASCII-8BIT unless explicitly
   #   specified
@@ -101,8 +101,9 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # @return [true] if the stream is in binary mode
-  # @return [false] if the stream is **not** in binary mode
+  # Returns `true` if the stream is in binary mode and `false` otherwise.
+  #
+  # @return [Boolean]
   #
   # @raise [IOError] if the stream is closed
   def binmode?
@@ -339,12 +340,14 @@ class Like < LikeHelpers::DuplexedIO
   alias :each :each_line
 
   ##
+  # Returns `true` if the end of the stream has been reached and `false`
+  # otherwise.
+  #
   # @note This method will block if reading the stream blocks.
   # @note This method relies on buffered operations, so using it in conjuction
   #   with {#sysread} will be complicated at best.
   #
-  # @return [true] if the end of the stream has been reached
-  # @return [false] if the end of the stream has **not** been reached
+  # @return [Boolean]
   #
   # @raise [IOError] if the stream is not open for reading
   def eof?
@@ -357,6 +360,8 @@ class Like < LikeHelpers::DuplexedIO
   alias :eof :eof?
 
   ##
+  # Returns the external encoding of the stream, if any.
+  #
   # @return [Encoding] the Encoding object that represents the encoding of the
   #   stream
   # @return [nil] if the stream is writable and no encoding is specified
@@ -388,6 +393,8 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
+  # Returns the next byte from the stream.
+  #
   # @return [Integer] the next byte from the stream
   # @return [nil] if the end of the stream has been reached
   #
@@ -399,6 +406,8 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
+  # Returns the next character from the stream.
+  #
   # @return [String] the next character from the stream
   # @return [nil] if the end of the stream has been reached
   #
@@ -409,6 +418,9 @@ class Like < LikeHelpers::DuplexedIO
     nil
   end
 
+  ##
+  # Returns the next line from the stream.
+  #
   # @overload gets(separator = $/, limit = nil, chomp: false)
   #
   #   @param separator [String, nil] a non-empty String that separates each
@@ -441,6 +453,8 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
+  # Returns the internal encoding of the stream, if any.
+  #
   # @return [Encoding] the Encoding object that represents the encoding of the
   #   internal string conversion
   # @return [nil] if no encoding is specified
@@ -509,8 +523,10 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # @return [Integer] the process ID of a child process associated with this
-  #   stream
+  # Returns the process ID of a child process associated with this stream, if
+  # any.
+  #
+  # @return [Integer] a process ID
   # @return [nil] if there is no associated child process
   #
   # @raise [IOError] if the stream is closed
@@ -1248,8 +1264,10 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # @return [true] if the internal write buffer is being bypassed
-  # @return [false] if the internal write buffer is being used
+  # Returns `true` if the internal write buffer is being bypassed and `false`
+  # otherwise.
+  #
+  # @return [Boolean]
   #
   # @raise [IOError] if the stream is closed
   def sync
