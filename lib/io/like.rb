@@ -1644,6 +1644,39 @@ class Like < LikeHelpers::DuplexedIO
   private
 
   ##
+  # Runs the given block in a wait loop that exits only when the block returns a
+  # non-Symbol value.
+  #
+  # This method is intended to wrap an IO operation that may be non-blocking and
+  # effectively turn it into a blocking operation without changing underlying
+  # settings of the stream itself.
+  #
+  # @return the return value of the block if not a Symbol
+  #
+  # @raise [RuntimeError] if the Symbol returned by the block is neither
+  #   `:wait_readable` nor `:wait_writable`
+  def ensure_blocking
+    begin
+      while Symbol === (result = yield) do
+        # A wait timeout is used in order to allow a retry in case the stream was
+        # closed in another thread while waiting.
+        case result
+        when :wait_readable
+          wait_readable(1)
+        when :wait_writable
+          wait_writable(1)
+        else
+          raise "Unexpected result: #{result}"
+        end
+      end
+    rescue Errno::EINTR
+      retry
+    end
+
+    result
+  end
+
+  ##
   # Ensures that a buffer, if provided, is large enough to hold the requested
   # number of bytes and is then truncated to the returned number of bytes while
   # ensuring that the encoding is preserved.
@@ -1676,111 +1709,9 @@ class Like < LikeHelpers::DuplexedIO
       buffer.slice!((result || 0)..-1)
       buffer.force_encoding(orig_encoding)
     end
-
-  def nonblock_response(type, exception)
-    case type
-    when :wait_readable
-      return type unless exception
-      raise IO::EWOULDBLOCKWaitReadable
-    when :wait_writable
-      return type unless exception
-      raise IO::EWOULDBLOCKWaitWritable
-    else
-      raise ArgumentError, "Invalid type: #{type}"
-    end
-  end
-
-  def ensure_blocking
-    begin
-      while Symbol === (result = yield) do
-        # A wait timeout is used in order to allow a retry in case the stream was
-        # closed in another thread while waiting.
-        case result
-        when :wait_readable
-          wait_readable(1)
-        when :wait_writable
-          wait_writable(1)
-        else
-          raise "Unexpected result: #{result}"
-        end
-      end
-    rescue Errno::EINTR
-      retry
-    end
-
-    result
   end
 
   ##
-  # @api private
-  #
-  # Reads and returns up to `length` bytes from this stream.
-  #
-  # This method always blocks, even when the stream is in non-blocking mode.  An
-  # empty `String` is returned if reading begins at the end of the stream.
-  #
-  # @param length [Integer] the number of bytes to read
-  #
-  # @return [String] up to `length` bytes read from this stream
-  def read_bytes(length)
-    buffers = []
-    remaining = length.nil? ? 8192 : length
-
-    unless delegate_r.read_buffer_empty?
-      buffers << delegate_r.read(remaining)
-      remaining -= buffers[0].bytesize unless length.nil?
-    end
-
-    begin
-      delegate_r.flush
-      while remaining > 0 do
-        bytes = ensure_blocking { delegate_r.unbuffered_read(remaining) }
-        buffers << bytes
-        remaining -= bytes.bytesize unless length.nil?
-      end
-    rescue EOFError
-    end
-
-    buffers.join('')
-  end
-
-  ##
-  # @api private
-  #
-  # The output record separator configured for this stream.
-  attr_reader :ors
-
-  ##
-  # @api private
-  #
-  # Sets the output record separator for this stream based on the `Symbol` given
-  # in `newline`.
-  #
-  # `newline` values:
-  # * `:cr` => `"\r"`
-  # * `:crlf` => `"\r\n"`
-  # * `:lf` => `"\n"`
-  #
-  # @param newline [Symbol] a `Symbol` that maps to an output record separator
-  #   `String`
-  #
-  # @return [String] the `String` represented by the given `Symbol`
-  def ors=(newline)
-    @ors = case newline
-           when :cr
-             "\r"
-           when :crlf
-             "\r\n"
-           when :lf
-             "\n"
-           else
-             raise ArgumentError, "unexpected value for newline option: #{newline}"
-           end
-  end
-
-  ##
-  # @api private
-  #
   # Write `item` followed by the record separator.  Recursively process
   # elements of `item` if it responds to `#to_ary` with a non-`nil` result.
   #
@@ -1825,8 +1756,90 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # @api private
+  # Converts non-blocking responses into exceptions if requested.
   #
+  # @param type [:wait_readable, :wait_writable] the type of non-blocking
+  #   response
+  # @param exception [Boolean] if `true`, raise an exception for `type`
+  #
+  # @return [:wait_readable, :wait_writable] if `exception` is `false`
+  def nonblock_response(type, exception)
+    case type
+    when :wait_readable
+      return type unless exception
+      raise IO::EWOULDBLOCKWaitReadable
+    when :wait_writable
+      return type unless exception
+      raise IO::EWOULDBLOCKWaitWritable
+    else
+      raise ArgumentError, "Invalid type: #{type}"
+    end
+  end
+
+  ##
+  # @return [String] the output record separator configured for this stream.
+  attr_reader :ors
+
+  ##
+  # Sets the output record separator for this stream based on the `Symbol` given
+  # in `newline`.
+  #
+  # `newline` values:
+  # * `:cr` => `"\r"`
+  # * `:crlf` => `"\r\n"`
+  # * `:lf` => `"\n"`
+  #
+  # @param newline [Symbol] a `Symbol` that maps to an output record separator
+  #   `String`
+  #
+  # @return [String] the `String` represented by the given `Symbol`
+  def ors=(newline)
+    @ors =
+      case newline
+      when :cr
+        "\r"
+      when :crlf
+        "\r\n"
+      when :lf
+        "\n"
+      else
+        raise ArgumentError,
+              "unexpected value for newline option: #{newline.inspect}"
+      end
+  end
+
+  ##
+  # Reads and returns up to `length` bytes from this stream.
+  #
+  # This method always blocks, even when the stream is in non-blocking mode.  An
+  # empty `String` is returned if reading begins at the end of the stream.
+  #
+  # @param length [Integer] the number of bytes to read
+  #
+  # @return [String] up to `length` bytes read from this stream
+  def read_bytes(length)
+    buffers = []
+    remaining = length.nil? ? 8192 : length
+
+    unless delegate_r.read_buffer_empty?
+      buffers << delegate_r.read(remaining)
+      remaining -= buffers[0].bytesize unless length.nil?
+    end
+
+    begin
+      delegate_r.flush
+      while remaining > 0 do
+        bytes = ensure_blocking { delegate_r.unbuffered_read(remaining) }
+        buffers << bytes
+        remaining -= bytes.bytesize unless length.nil?
+      end
+    rescue EOFError
+    end
+
+    buffers.join('')
+  end
+
+  ##
   # @return [Symbol] a `Symbol` equivalent to the given `mode` for Ruby 2.7 and
   #   lower for use with `#wait`
   def wait_event_from_symbol(mode)
