@@ -278,8 +278,8 @@ class Like < LikeHelpers::DuplexedIO
   #     stream
   #
   # @overload each_line(limit, chomp: false)
-  #   @param limit [Integer, nil] an Integer limiting the number of bytes
-  #     returned in each line or `nil` to indicate no limit
+  #   @param limit [Integer] an Integer limiting the number of bytes returned in
+  #     each line or `nil` to indicate no limit
   #   @param chomp [Boolean] when `true` trailing newlines and carriage returns
   #     will be removed from each line
   #
@@ -306,8 +306,8 @@ class Like < LikeHelpers::DuplexedIO
   #   Iterates over each line in the stream, where each line is separated by
   #   `$/`, yielding each line to the given block.
   #
-  #   @param limit [Integer, nil] an Integer limiting the number of bytes
-  #     returned in each line or `nil` to indicate no limit
+  #   @param limit [Integer] an Integer limiting the number of bytes returned in
+  #     each line or `nil` to indicate no limit
   #   @param chomp [Boolean] when `true` trailing newlines and carriage returns
   #     will be removed from each line
   #
@@ -316,12 +316,19 @@ class Like < LikeHelpers::DuplexedIO
   #   @return [self]
   #
   # @raise [IOError] if the stream is not open for reading
-  def each_line(*args, chomp: false)
+  def each_line(sep_string = $/, limit = nil, chomp: false)
     unless block_given?
-      return to_enum(:each_line, *args, chomp: chomp)
+      return to_enum(:each_line, sep_string, limit, chomp: chomp)
     end
 
-    sep_string, limit = parse_readline_args(args)
+    begin
+      sep_string = String.new(sep_string) unless sep_string.nil?
+      limit = limit.to_int unless limit.nil?
+    rescue TypeError
+      limit = sep_string.to_int
+      sep_string = $/
+    end
+
     raise ArgumentError, 'invalid limit: 0 for each_line' if limit == 0
 
     while (line = gets(sep_string, limit, chomp: chomp)) do
@@ -417,8 +424,8 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @overload gets(limit, chomp: false)
   #
-  #   @param limit [Integer, nil] an Integer limiting the number of bytes
-  #     returned in each line or `nil` to indicate no limit
+  #   @param limit [Integer] an Integer limiting the number of bytes returned in
+  #     each line or `nil` to indicate no limit
   #   @param chomp [Boolean] when `true` trailing newlines and carriage returns
   #     will be removed from each line
   #
@@ -426,8 +433,8 @@ class Like < LikeHelpers::DuplexedIO
   #   @return [nil] if the end of the stream has been reached
   #
   # @raise [IOError] if the stream is not open for reading
-  def gets(*args, chomp: false)
-    readline(*args, chomp: chomp)
+  def gets(sep_string = $/, limit = nil, chomp: false)
+    readline(sep_string, limit, chomp: chomp)
   rescue EOFError
     $_ = nil
     nil
@@ -810,6 +817,9 @@ class Like < LikeHelpers::DuplexedIO
     char
   end
 
+  ##
+  # Returns the next line from the stream.
+  #
   # @overload readline(separator = $/, limit = nil, chomp: false)
   #
   #   @param separator [String, nil] a non-empty String that separates each
@@ -821,22 +831,26 @@ class Like < LikeHelpers::DuplexedIO
   #     will be removed from each line
   #
   #   @return [String] the next line in the stream
-  #   @return [nil] if the end of the stream has been reached
   #
   # @overload readline(limit, chomp: false)
   #
-  #   @param limit [Integer, nil] an Integer limiting the number of bytes
-  #     returned in each line or `nil` to indicate no limit
+  #   @param limit [Integer] an Integer limiting the number of bytes returned in
+  #     each line or `nil` to indicate no limit
   #   @param chomp [Boolean] when `true` trailing newlines and carriage returns
   #     will be removed from each line
   #
   #   @return [String] the next line in the stream where the separator is `$/`
-  #   @return [nil] if the end of the stream has been reached
   #
   # @raise [EOFError] if reading begins at the end of the stream
   # @raise [IOError] if the stream is not open for reading
-  def readline(*args, chomp: false)
-    sep_string, limit = parse_readline_args(args)
+  def readline(sep_string = $/, limit = nil, chomp: false)
+    begin
+      sep_string = String.new(sep_string) unless sep_string.nil?
+      limit = limit.to_int unless limit.nil?
+    rescue TypeError
+      limit = sep_string.to_int
+      sep_string = $/
+    end
 
     assert_readable
 
@@ -885,6 +899,7 @@ class Like < LikeHelpers::DuplexedIO
     $_ = buffer
   end
 
+  ##
   # @overload readlines(separator = $/, limit = nil, chomp: false)
   #
   #   @param separator [String, nil] a non-empty String that separates each
@@ -899,8 +914,8 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @overload readlines(limit, chomp: false)
   #
-  #   @param limit [Integer, nil] an Integer limiting the number of bytes
-  #     returned in each line or `nil` to indicate no limit
+  #   @param limit [Integer] an Integer limiting the number of bytes returned in
+  #     each line or `nil` to indicate no limit
   #   @param chomp [Boolean] when `true` trailing newlines and carriage returns
   #     will be removed from each line
   #
@@ -908,8 +923,8 @@ class Like < LikeHelpers::DuplexedIO
   #     separator is `$/`
   #
   # @raise [IOError] if the stream is not open for reading
-  def readlines(*args, chomp: false)
-    each_line(*args, chomp: chomp).to_a
+  def readlines(sep_string = $/, limit = nil, chomp: false)
+    each_line(sep_string, limit, chomp: chomp).to_a
   end
 
   ##
@@ -1720,39 +1735,6 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     buffers.join('')
-  end
-
-  ##
-  # @api private
-  #
-  # Parse `args` into the separator and limit arguments needed by `#readline`
-  # and `#each_line`.
-  #
-  # @param args [Array] the arguments to parse
-  #
-  # @return [[String, Integer]] the separator string and limit
-  def parse_readline_args(args)
-    if args.length == 0
-      sep_string = $/
-      limit = nil
-    elsif args.length == 1
-      return [nil, nil] if args[0].nil?
-
-      begin
-        sep_string = String.new(args[0])
-        limit = nil
-      rescue
-        limit = args[0].to_int
-        sep_string = $/
-      end
-    elsif args.length == 2
-      sep_string = String.new(args[0]) unless args[0].nil?
-      limit = args[1].to_int unless args[1].nil?
-    else
-      raise ArgumentError, "wrong number of arguments (given #{args.length}, expected 0..2)"
-    end
-
-    [sep_string, limit]
   end
 
   ##
