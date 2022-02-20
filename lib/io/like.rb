@@ -1568,8 +1568,7 @@ class Like < LikeHelpers::DuplexedIO
         rescue Encoding::UndefinedConversionError
         end
       end
-      string = string.b unless string.encoding == Encoding::ASCII_8BIT
-      string
+      string.b
     end.join('')
 
     flush if sync
