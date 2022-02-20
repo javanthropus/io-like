@@ -4,7 +4,7 @@ require_relative '../../../spec_helper'
 describe "IO::LikeHelpers::AbstractIO#fcntl" do
   it "raises NotImplementedError" do
     io = IO::LikeHelpers::AbstractIO.new
-    -> { io.fcntl(:foo) }.should raise_error(NotImplementedError)
+    -> { io.fcntl(0, 0) }.should raise_error(NotImplementedError)
   end
 end
 

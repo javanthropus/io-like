@@ -44,8 +44,8 @@ class AbstractIO
     @closed = false
   end
 
-  def advise(advice, offset, len)
-    raise NotImplementedError
+  def advise(advice, offset = 0, len = 0)
+    nil
   end
 
   def close
@@ -65,7 +65,7 @@ class AbstractIO
     raise NotImplementedError
   end
 
-  def fcntl(*args)
+  def fcntl(integer_cmd, arg)
     raise NotImplementedError
   end
 
