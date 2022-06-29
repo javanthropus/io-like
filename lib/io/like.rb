@@ -17,6 +17,10 @@ class Like < LikeHelpers::DuplexedIO
   include Enumerable
 
   ##
+  # This is used by #puts as the separator between all arguments.
+  ORS = "\n".freeze
+
+  ##
   # Creates a new instance of this class.
   #
   # @param delegate_r [LikeHelpers::BufferedIO] delegate for read operations
@@ -28,11 +32,9 @@ class Like < LikeHelpers::DuplexedIO
   #   specified
   # @param internal_encoding [Encoding, String] the internal encoding
   # @param external_encoding [Encoding, String] the external encoding
+  # @param encoding_opts [Hash] options to be passed to String#encode
   # @param sync [Boolean] when `true` causes write operations to bypass internal
   #   buffering
-  # @param newline [Symbol] one of `:lf`, `:cr`, or `:crlf` to indicate the
-  #   output record separator (line feed, carriage return, or carriage return +
-  #   line feed, respectively), used only by #puts
   # @param pid [Integer] the return value for {#pid}
   def initialize(
     delegate_r,
@@ -41,8 +43,8 @@ class Like < LikeHelpers::DuplexedIO
     binmode: false,
     internal_encoding: nil,
     external_encoding: nil,
+    encoding_opts: {},
     sync: false,
-    newline: :lf,
     pid: nil
   )
     super(delegate_r, delegate_w, autoclose: autoclose)
@@ -56,17 +58,16 @@ class Like < LikeHelpers::DuplexedIO
     unless binmode && external_encoding.nil? && internal_encoding.nil?
       if ! RBVER_LT_2_7 && ! (Encoding === external_encoding) && external_encoding =~ /^bom\|/i
         if set_encoding_by_bom.nil?
-          set_encoding(external_encoding.to_s[4..-1], internal_encoding)
+          set_encoding(external_encoding.to_s[4..-1], internal_encoding, encoding_opts)
         end
       else
-        set_encoding(external_encoding, internal_encoding)
+        set_encoding(external_encoding, internal_encoding, encoding_opts)
       end
     end
 
     @pid = pid
 
     self.sync = sync
-    self.ors = newline
 
     @skip_duplexed_check = false
   end
@@ -663,7 +664,7 @@ class Like < LikeHelpers::DuplexedIO
   def puts(*args)
     # Write only the record separator if no arguments are given.
     if args.length == 0
-      write(ors)
+      write(ORS)
       return
     end
 
@@ -1598,12 +1599,14 @@ class Like < LikeHelpers::DuplexedIO
 
     buffer = strings.map do |string|
       string = string.to_s
-      unless external_encoding.nil?
-        # Convert to the external encoding if possible.
-        begin
-          string = string.encode(external_encoding)
-        rescue Encoding::UndefinedConversionError
+      begin
+        if external_encoding.nil?
+          string = string.encode(**@encoding_opts.select { |k, v| k != :universal_newline })
+        else
+          # Convert to the external encoding if possible.
+          string = string.encode(external_encoding, **@encoding_opts.select { |k, v| k != :universal_newline })
         end
+      rescue Encoding::UndefinedConversionError
       end
       string.b
     end.join('')
@@ -1744,7 +1747,7 @@ class Like < LikeHelpers::DuplexedIO
   def flatten_puts(item, seen = [])
     if seen.include?(item.object_id)
       write('[...]')
-      write(ors)
+      write(ORS)
       return
     end
 
@@ -1767,7 +1770,7 @@ class Like < LikeHelpers::DuplexedIO
           Object.new.method(:inspect).unbind.bind(item)[].split(' ')[0] + '>'
       end
       write(string)
-      write(ors) unless string.end_with?(ors)
+      write(ORS) unless string.end_with?(ORS)
     else
       array.each { |i| flatten_puts(i, seen) }
     end
@@ -1796,38 +1799,6 @@ class Like < LikeHelpers::DuplexedIO
     else
       raise ArgumentError, "Invalid type: #{type}"
     end
-  end
-
-  ##
-  # @return [String] the output record separator configured for this stream.
-  attr_reader :ors
-
-  ##
-  # Sets the output record separator for this stream based on the `Symbol` given
-  # in `newline`.
-  #
-  # `newline` values:
-  # * `:cr` => `"\r"`
-  # * `:crlf` => `"\r\n"`
-  # * `:lf` => `"\n"`
-  #
-  # @param newline [Symbol] a `Symbol` that maps to an output record separator
-  #   `String`
-  #
-  # @return [String] the `String` represented by the given `Symbol`
-  def ors=(newline)
-    @ors =
-      case newline
-      when :cr
-        "\r"
-      when :crlf
-        "\r\n"
-      when :lf
-        "\n"
-      else
-        raise ArgumentError,
-              "unexpected value for newline option: #{newline.inspect}"
-      end
   end
 
   ##

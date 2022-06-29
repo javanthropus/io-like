@@ -34,7 +34,10 @@ class Object
     end
 
     result[:internal_encoding] = nil if result[:internal_encoding] == '-'
-    result[:newline] = kwargs[:newline] if kwargs.key?(:newline)
+
+    result[:encoding_opts] = kwargs.select do |k, v|
+      ! %i{mode flags external_encoding internal_encoding encoding textmode binmode autoclose}.include?(k)
+    end
 
     result
   end

@@ -2,11 +2,6 @@
 require_relative '../../spec_helper'
 
 describe "IO::Like.new" do
-  it "raises ArgumentError when newline is invalid" do
-    obj = mock("io")
-    -> { IO::Like.new(obj, newline: :foo) }.should raise_error(ArgumentError)
-  end
-
   ruby_version_is '2.7' do
     it "sets the external encoding using a BOM when external_encoding starts with \"bom|\"" do
       r, w = IO.pipe
