@@ -1129,6 +1129,8 @@ class Like < LikeHelpers::DuplexedIO
 
     # Pull out the last argument if it's an options hash.
     @encoding_opts = args.last.kind_of?(Hash) ? args.pop : {}
+    # Ruby ignores :universal_newline for writing for some reason.
+    @encoding_opts_w = @encoding_opts.select { |k, v| k != :universal_newline }
 
     # Check for the correct number of arguments.
     if args.size < 1
@@ -1599,14 +1601,15 @@ class Like < LikeHelpers::DuplexedIO
 
     buffer = strings.map do |string|
       string = string.to_s
-      begin
-        if external_encoding.nil?
-          string = string.encode(**@encoding_opts.select { |k, v| k != :universal_newline })
-        else
-          # Convert to the external encoding if possible.
-          string = string.encode(external_encoding, **@encoding_opts.select { |k, v| k != :universal_newline })
+      unless binmode?
+        # Convert to the external encoding if possible, ignoring errors.
+        begin
+          string = string.encode(
+            external_encoding || string.encoding,
+            **@encoding_opts_w
+          )
+        rescue Encoding::UndefinedConversionError
         end
-      rescue Encoding::UndefinedConversionError
       end
       string.b
     end.join('')
