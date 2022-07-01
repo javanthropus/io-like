@@ -1128,9 +1128,7 @@ class Like < LikeHelpers::DuplexedIO
     assert_open
 
     # Pull out the last argument if it's an options hash.
-    @encoding_opts = args.last.kind_of?(Hash) ? args.pop : {}
-    # Ruby ignores :universal_newline for writing for some reason.
-    @encoding_opts_w = @encoding_opts.select { |k, v| k != :universal_newline }
+    opts = args.last.kind_of?(Hash) ? args.pop : {}
 
     # Check for the correct number of arguments.
     if args.size < 1
@@ -1171,6 +1169,9 @@ class Like < LikeHelpers::DuplexedIO
 
     @external_encoding = ext_enc
     @internal_encoding = int_enc
+    @encoding_opts = opts
+    # Ruby ignores :universal_newline for writing for some reason.
+    @encoding_opts_w = opts.select { |k, v| k != :universal_newline }
 
     self
   end
