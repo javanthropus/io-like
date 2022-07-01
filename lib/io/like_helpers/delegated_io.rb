@@ -32,8 +32,6 @@ class DelegatedIO < AbstractIO
     methods.map do |method|
       args = if /[^\]]=$/.match?(method)
                'arg'
-             elsif RubyFacts::RBVER_LT_2_7
-               '*args, &b'
              else
                '*args, **kwargs, &b'
              end

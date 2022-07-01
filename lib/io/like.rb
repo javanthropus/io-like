@@ -56,7 +56,7 @@ class Like < LikeHelpers::DuplexedIO
     @binmode = false
     self.binmode if binmode
     unless binmode && external_encoding.nil? && internal_encoding.nil?
-      if ! RBVER_LT_2_7 && ! (Encoding === external_encoding) && external_encoding =~ /^bom\|/i
+      if ! (Encoding === external_encoding) && external_encoding =~ /^bom\|/i
         if set_encoding_by_bom.nil?
           set_encoding(external_encoding.to_s[4..-1], internal_encoding, encoding_opts)
         end
@@ -1176,7 +1176,6 @@ class Like < LikeHelpers::DuplexedIO
     self
   end
 
-  unless RBVER_LT_2_7
   ##
   # Sets the external encoding of the stream based on a byte order mark (BOM)
   # in the next bytes of the stream if found or to `nil` if not found.
@@ -1266,7 +1265,6 @@ class Like < LikeHelpers::DuplexedIO
     ungetbyte(b1)
 
     return nil
-  end
   end
 
   ##
