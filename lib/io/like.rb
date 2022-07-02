@@ -1171,7 +1171,9 @@ class Like < LikeHelpers::DuplexedIO
     @internal_encoding = int_enc
     @encoding_opts = opts
     # Ruby ignores :universal_newline for writing for some reason.
-    @encoding_opts_w = opts.select { |k, v| k != :universal_newline }
+    @encoding_opts_w = opts.select do |k, v|
+      k != :universal_newline || k == :newline && v = :universal
+    end
 
     self
   end
