@@ -725,7 +725,7 @@ class Like < LikeHelpers::DuplexedIO
       # content from a non-binary stream.
       content.force_encoding(external_encoding || Encoding.default_external)
       unless internal_encoding.nil?
-        content.encode!(internal_encoding, **@encoding_opts)
+        content.encode!(internal_encoding, **@encoding_opts_r)
       end
     end
 
@@ -828,7 +828,7 @@ class Like < LikeHelpers::DuplexedIO
     ungetbyte(buffer[1..-1].b)
 
     unless internal_encoding.nil?
-      char.encode!(internal_encoding, **@encoding_opts)
+      char.encode!(internal_encoding, **@encoding_opts_r)
     end
 
     char
@@ -901,7 +901,7 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     unless internal_encoding.nil?
-      buffer.encode!(internal_encoding, **@encoding_opts)
+      buffer.encode!(internal_encoding, **@encoding_opts_r)
     end
 
     buffer.chomp! if chomp
@@ -1170,7 +1170,7 @@ class Like < LikeHelpers::DuplexedIO
     @external_encoding = ext_enc
     @internal_encoding = int_enc
     # Ruby obeys only the universal newline decoration for reading.
-    @encoding_opts = opts.select do |k, v|
+    @encoding_opts_r = opts.select do |k, v|
       k != :cr_newline &&
       k != :crlf_newline &&
       k != :newline || (k == :newline && (v != :cr || v != :crlf))
