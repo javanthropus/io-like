@@ -1169,10 +1169,15 @@ class Like < LikeHelpers::DuplexedIO
 
     @external_encoding = ext_enc
     @internal_encoding = int_enc
-    @encoding_opts = opts
-    # Ruby ignores :universal_newline for writing for some reason.
+    # Ruby obeys only the universal newline decoration for reading.
+    @encoding_opts = opts.select do |k, v|
+      k != :cr_newline &&
+      k != :crlf_newline &&
+      k != :newline || (k == :newline && (v != :cr || v != :crlf))
+    end
+    # Ruby ignores the universal newline decoration for writing.
     @encoding_opts_w = opts.select do |k, v|
-      k != :universal_newline || k == :newline && v = :universal
+      k != :universal_newline && (k != :newline || v != :universal)
     end
 
     self
