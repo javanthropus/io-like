@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'io/like_helpers/abstract_io'
 require 'io/like_helpers/ruby_facts.rb'
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'io/like_helpers/delegated_io'
 require 'io/like_helpers/io'
 
@@ -23,7 +25,7 @@ class BufferedIO < DelegatedIO
     super(delegate, autoclose: autoclose)
 
     @buffer_size = buffer_size
-    @buffer = "\0".b * @buffer_size
+    @buffer = String.new("\0".b * @buffer_size)
     @start_idx = @end_idx = 0
     @mode = nil
   end

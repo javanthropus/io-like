@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'io/like_helpers/buffered_io'
 require 'io/like_helpers/duplexed_io'
 require 'io/like_helpers/io'
@@ -765,7 +767,7 @@ class Like < LikeHelpers::DuplexedIO
 
     assert_readable
 
-    return (buffer || ''.force_encoding(Encoding::ASCII_8BIT)) if length == 0
+    return (buffer || String.new(''.b)) if length == 0
 
     self.nonblock = true
     result = ensure_buffer(length, buffer) do |binary_buffer|
@@ -814,7 +816,7 @@ class Like < LikeHelpers::DuplexedIO
     assert_readable
 
     ext_enc = external_encoding || Encoding.default_external
-    buffer = ''.force_encoding(ext_enc)
+    buffer = String.new('', encoding: ext_enc)
 
     begin
       loop do
@@ -872,7 +874,7 @@ class Like < LikeHelpers::DuplexedIO
     assert_readable
 
     ext_enc = external_encoding || Encoding.default_external
-    buffer = ''.force_encoding(ext_enc)
+    buffer = String.new('', encoding: int_enc)
 
     newline = "\n".freeze
     paragraph_requested = ! sep_string.nil? && sep_string.empty?
@@ -966,7 +968,7 @@ class Like < LikeHelpers::DuplexedIO
     assert_readable
 
     if RBVER_LT_3_1 && length == 0
-      return (buffer || ''.force_encoding(Encoding::ASCII_8BIT))
+      return (buffer || String.new(''.b))
     end
 
     result = ensure_buffer(length, buffer) do |binary_buffer|
@@ -1037,7 +1039,7 @@ class Like < LikeHelpers::DuplexedIO
         assert_open
         io = io.dup
       rescue NoMethodError
-        mode = readable? ? 'r' : 'w'
+        mode = String.new(readable? ? 'r' : 'w')
         mode << '+' if readable? && writable?
         mode << 'b'
         io = File.open(args[0], mode)
@@ -1324,7 +1326,7 @@ class Like < LikeHelpers::DuplexedIO
     raise ArgumentError, "negative length #{length} given" if length < 0
     buffer = buffer.to_str unless buffer.nil?
 
-    return (buffer || ''.force_encoding(Encoding::ASCII_8BIT)) if length == 0
+    return (buffer || String.new(''.b)) if length == 0
 
     assert_readable
 

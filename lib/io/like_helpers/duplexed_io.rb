@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'io/like_helpers/delegated_io'
 
 class IO; module LikeHelpers

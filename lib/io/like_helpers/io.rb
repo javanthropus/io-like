@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class IO
   unless const_defined?(:PRIORITY)
     ##
