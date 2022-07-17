@@ -1,4 +1,6 @@
 # -*- encoding: utf-8 -*-
+require 'fcntl'
+
 require_relative '../../../spec_helper'
 
 describe "IO::LikeHelpers::IOWrapper#fcntl" do

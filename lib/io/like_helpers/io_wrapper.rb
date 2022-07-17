@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'fcntl'
 require 'io/nonblock'
 require 'io/wait'
 
