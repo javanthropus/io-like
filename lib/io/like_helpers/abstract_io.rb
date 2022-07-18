@@ -233,6 +233,16 @@ class AbstractIO
   end
 
   ##
+  # @return [Integer] the number of bytes that can be read without blocking or
+  #   `0` if unknown
+  #
+  # @raise [IOError] if the stream is not open for reading
+  def nread
+    assert_readable
+    0
+  end
+
+  ##
   # Returns the path of the file associated with this stream.
   #
   # @return [String]

@@ -164,6 +164,11 @@ class DelegatedIO < AbstractIO
   delegate :read, assert: :readable
 
   ##
+  # @method nread(*args, **kwargs, &b)
+  # Calls `delegate.nread(*args, **kwargs, &b)` after asserting that the stream is readable.
+  delegate :nread, assert: :readable
+
+  ##
   # @method write(*args, **kwargs, &b)
   # Calls `delegate.write(*args, **kwargs, &b)` after asserting that the stream is writable.
   delegate :write, assert: :writable

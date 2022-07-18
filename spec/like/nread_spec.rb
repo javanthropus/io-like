@@ -19,10 +19,20 @@ describe "IO::Like#nread" do
 
   it "raises IOError if the stream is closed" do
     obj = mock("io")
-    io = IO::Like.new(obj, autoclose: false)
     obj.should_receive(:writable?).and_return(false)
+    io = IO::Like.new(obj, autoclose: false)
     io.close
     -> { io.nread }.should raise_error(IOError, 'closed stream')
+  end
+
+  it "blocks even when the delegate does not" do
+    obj = mock("io")
+    obj.should_receive(:writable?).and_return(true)
+    obj.should_receive(:readable?).and_return(true).exactly(2)
+    obj.should_receive(:nread).and_return(:wait_writable, :wait_readable, 0)
+    obj.should_receive(:wait).and_return(true, true)
+    io = IO::Like.new(obj)
+    io.nread.should == 0
   end
 end
 

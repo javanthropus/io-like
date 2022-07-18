@@ -522,7 +522,7 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [IOError] if the stream is not open for reading
   def nread
     assert_readable
-    delegate_r.nread
+    ensure_blocking { delegate_r.nread }
   end
 
   ##
