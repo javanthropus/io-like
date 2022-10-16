@@ -51,6 +51,9 @@ class Like < LikeHelpers::DuplexedIO
   )
     super(delegate_r, delegate_w, autoclose: autoclose)
 
+    @encoding_opts_r = {}
+    @encoding_opts_w = {}
+
     # NOTE:
     # Binary mode must be set before the encoding in order to allow any
     # explicitly set external encoding to override the implicit ASCII-8BIT
@@ -722,12 +725,11 @@ class Like < LikeHelpers::DuplexedIO
       buffer.force_encoding(orig_encoding)
       content = buffer
     end
-    if length.nil? && external_encoding != Encoding::ASCII_8BIT
-      # Convert to the stream's internal encoding setting when reading all
-      # content from a non-binary stream.
+    if length.nil?
+      # Encode and transcode the content if necessary.
       content.force_encoding(external_encoding || Encoding.default_external)
       unless internal_encoding.nil?
-        content.encode!(internal_encoding, **@encoding_opts_r)
+        content.encode!(internal_encoding, **encoding_opts_r)
       end
     end
 
@@ -830,7 +832,7 @@ class Like < LikeHelpers::DuplexedIO
     ungetbyte(buffer[1..-1].b)
 
     unless internal_encoding.nil?
-      char.encode!(internal_encoding, **@encoding_opts_r)
+      char.encode!(internal_encoding, **encoding_opts_r)
     end
 
     char
@@ -1130,7 +1132,7 @@ class Like < LikeHelpers::DuplexedIO
     assert_open
 
     # Pull out the last argument if it's an options hash.
-    opts = args.last.kind_of?(Hash) ? args.pop : {}
+    opts = Hash === args.last ? args.pop : {}
 
     # Check for the correct number of arguments.
     if args.size < 1
@@ -1139,10 +1141,36 @@ class Like < LikeHelpers::DuplexedIO
       raise ArgumentError, "wrong number of arguments (#{args.size} for 2)"
     end
 
+    # Check that any given newline option is valid.
+    if opts.key?(:newline) &&
+      ! %i{cr lf crlf universal}.include?(opts[:newline])
+      message = 'unexpected value for newline option'
+      message += ": #{opts[:newline]}" if Symbol === opts[:newline]
+      raise ArgumentError, message
+    end
+
+    # Newline handling is not allowed in binary mode.
+    if binmode? &&
+      (opts.key?(:newline) ||
+       opts[:cr_newline] || opts[:crlf_newline] || opts[:universal])
+      raise ArgumentError, 'newline decorator with binary mode'
+    end
+
     # Convert the argument(s) into Encoding objects.
-    if (args.size == 1 || args[1].nil?) &&
-       ! (args[0].nil? || args[0].kind_of?(Encoding))
-      args = String.new(args[0]).split(':', 2)
+    if ! (args[0].nil? || Encoding === args[0]) && args[1].nil?
+      string_arg = String.new(args[0])
+      begin
+        split_idx = string_arg.rindex(':')
+        unless split_idx.nil? || split_idx == 0
+          args[0] = string_arg[0...split_idx]
+          args[1] = string_arg[(split_idx + 1)..-1]
+          # Special case: No conversion.
+          args.pop if args[1] == '-'
+        end
+      rescue Encoding::CompatibilityError
+        # This is caused by failure to split on colon when the string argument
+        # is not ASCII compatible.  Ignore it and use the argument as is.
+      end
     end
     ext_enc, int_enc = args
 
@@ -1161,6 +1189,7 @@ class Like < LikeHelpers::DuplexedIO
       end
     else
       ext_enc = Encoding.find(ext_enc)
+
       if ! int_enc.nil?
         int_enc = Encoding.find(int_enc)
       elsif ext_enc != Encoding::BINARY
@@ -1171,16 +1200,8 @@ class Like < LikeHelpers::DuplexedIO
 
     @external_encoding = ext_enc
     @internal_encoding = int_enc
-    # Ruby obeys only the universal newline decoration for reading.
-    @encoding_opts_r = opts.select do |k, v|
-      k != :cr_newline &&
-      k != :crlf_newline &&
-      k != :newline || (k == :newline && (v != :cr || v != :crlf))
-    end
-    # Ruby ignores the universal newline decoration for writing.
-    @encoding_opts_w = opts.select do |k, v|
-      k != :universal_newline && (k != :newline || v != :universal)
-    end
+    self.encoding_opts_r = opts
+    self.encoding_opts_w = opts
 
     self
   end
@@ -1614,7 +1635,7 @@ class Like < LikeHelpers::DuplexedIO
         begin
           string = string.encode(
             external_encoding || string.encoding,
-            **@encoding_opts_w
+            **encoding_opts_w
           )
         rescue Encoding::UndefinedConversionError
         end
@@ -1678,6 +1699,45 @@ class Like < LikeHelpers::DuplexedIO
   private :readable?, :writable?
 
   private
+
+  ##
+  # Sets the encoding options for reading.
+  #
+  # @return _opts_
+  def encoding_opts_r=(opts)
+    # Ruby obeys only the universal newline decoration for reading.
+    @encoding_opts_r.merge!(
+      opts.reject do |k, v|
+        k == :crlf_newline || k == :cr_newline ||
+          (k == :newline && (v == :crlf || v == :cr || v == :lf))
+      end
+    )
+
+    opts
+  end
+
+  ##
+  # The encoding options for reading.
+  attr_reader :encoding_opts_r
+
+  ##
+  # Sets the encoding options for writing.
+  #
+  # @return _opts_
+  def encoding_opts_w=(opts)
+    # Ruby ignores the universal newline decoration for writing.
+    @encoding_opts_w.merge!(
+      opts.reject do |k, v|
+        k == :universal_newline || (k == :newline && v == :universal)
+      end
+    )
+
+    opts
+  end
+
+  ##
+  # The encoding options for writing.
+  attr_reader :encoding_opts_w
 
   ##
   # Runs the given block in a wait loop that exits only when the block returns a
