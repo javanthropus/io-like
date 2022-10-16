@@ -45,7 +45,9 @@ class MSpecScript
     # Cannot set $? from Ruby code, so we cannot comply with anything depending
     # on $?.
     /^IO#close on an IO\.popen stream sets \$?/,
-    /^IO#close on an IO\.popen stream waits for the child to exit/
+    /^IO#close on an IO\.popen stream waits for the child to exit/,
+    # Invalid test.  See https://github.com/ruby/spec/pull/960.
+    /^IO#read in binary mode does not transcode file contents when an internal encoding is specified$/,
   ]
 
   # Exclude IO specs not relevant to IO::Like.
