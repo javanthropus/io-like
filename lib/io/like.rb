@@ -330,9 +330,9 @@ class Like < LikeHelpers::DuplexedIO
 
     begin
       sep_string = String.new(sep_string) unless sep_string.nil?
-      limit = limit.to_int unless limit.nil?
+      limit = Integer(limit) unless limit.nil?
     rescue TypeError
-      limit = sep_string.to_int
+      limit = Integer(sep_string)
       sep_string = $/
     end
 
@@ -867,48 +867,55 @@ class Like < LikeHelpers::DuplexedIO
   def readline(sep_string = $/, limit = nil, chomp: false)
     begin
       sep_string = String.new(sep_string) unless sep_string.nil?
-      limit = limit.to_int unless limit.nil?
+      limit = Integer(limit) unless limit.nil?
     rescue TypeError
-      limit = sep_string.to_int
+      limit = Integer(sep_string)
       sep_string = $/
     end
 
     assert_readable
 
     ext_enc = external_encoding || Encoding.default_external
+    int_enc = internal_encoding || ext_enc
     buffer = String.new('', encoding: int_enc)
 
-    newline = "\n".freeze
-    paragraph_requested = ! sep_string.nil? && sep_string.empty?
-    sep_string = "\n\n" if paragraph_requested
-    sep_string = sep_string.encode(ext_enc) unless sep_string.nil?
+    if ! sep_string.nil? && sep_string.empty?
+      paragraph_requested = true
+      newline = "\n".encode(int_enc)
+      sep_string = newline * 2 if paragraph_requested
+    elsif sep_string.object_id == $/.object_id
+      sep_string = sep_string.encode(int_enc)
+    end
 
     begin
       if paragraph_requested
-        while (byte = ensure_blocking { delegate_r.read(1) }) == newline do; end
-        ungetbyte(byte)
+        while (char = readchar) == newline do; end
+        ungetc(char)
       end
 
       until (! sep_string.nil? && buffer.end_with?(sep_string)) ||
             (! limit.nil? &&
              (buffer.bytesize >= limit + 16 ||
               (buffer.bytesize >= limit && buffer.valid_encoding?)))
-        buffer << ensure_blocking { delegate_r.read(1) }.force_encoding(ext_enc)
+        buffer << readchar
       end
 
       if paragraph_requested
-        while (byte = ensure_blocking { delegate_r.read(1) }) == newline do; end
-        ungetbyte(byte)
+        while (char = readchar) == newline do; end
+        ungetc(char)
       end
     rescue EOFError
       raise if buffer.empty?
     end
 
-    unless internal_encoding.nil?
-      buffer.encode!(internal_encoding, **@encoding_opts_r)
+    if chomp
+      if sep_string.nil? && limit.nil? && RBVER_LT_3_2
+        buffer.chomp!
+      else
+        buffer.chomp!(sep_string)
+      end
     end
 
-    buffer.chomp! if chomp
     # Increment the number of times this method has returned a "line".
     self.lineno += 1
     # Set the last line number in the global.
