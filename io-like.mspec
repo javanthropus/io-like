@@ -46,6 +46,11 @@ class MSpecScript
     # on $?.
     /^IO#close on an IO\.popen stream sets \$?/,
     /^IO#close on an IO\.popen stream waits for the child to exit/,
+    # This is too implementation specific to be worth emulating.
+    /^IO#close does not call the #flush method but flushes the stream internally/,
+    # This library does not replace the IO associated with STDOUT, so skip
+    # methods related to it.
+    /^IO#write on STDOUT/,
     # Invalid test.  See https://github.com/ruby/spec/pull/960.
     /^IO#read in binary mode does not transcode file contents when an internal encoding is specified$/,
   ]
