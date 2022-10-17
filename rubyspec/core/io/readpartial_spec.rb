@@ -93,20 +93,10 @@ describe "IO#readpartial" do
     @rd.readpartial(0).should == ""
   end
 
-  ruby_version_is ''...'3.1' do
-    it "immediately returns the given buffer if the length argument is 0" do
-      buffer = "existing content"
-      @rd.readpartial(0, buffer).should == buffer
-      buffer.should == "existing content"
-    end
-  end
-
-  ruby_version_is '3.1' do
-    it "clears and returns the given buffer if the length argument is 0" do
-      buffer = "existing content"
-      @rd.readpartial(0, buffer).should == buffer
-      buffer.should == ""
-    end
+  it "clears and returns the given buffer if the length argument is 0" do
+    buffer = "existing content"
+    @rd.readpartial(0, buffer).should == buffer
+    buffer.should == ""
   end
 
   it "preserves the encoding of the given buffer" do

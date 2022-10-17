@@ -57,10 +57,23 @@ describe "IO#read_nonblock" do
 
   it "reads after ungetc with data in the buffer" do
     @write.write("foobar")
+    @read.set_encoding(
+      'utf-8', universal_newline: false
+    )
     c = @read.getc
     @read.ungetc(c)
     @read.read_nonblock(3).should == "foo"
     @read.read_nonblock(3).should == "bar"
+  end
+
+  it "raises an exception after ungetc with data in the buffer and character conversion enabled" do
+    @write.write("foobar")
+    @read.set_encoding(
+      'utf-8', universal_newline: true
+    )
+    c = @read.getc
+    @read.ungetc(c)
+    -> { @read.read_nonblock(3).should == "foo" }.should raise_error(IOError)
   end
 
   it "returns less data if that is all that is available" do
