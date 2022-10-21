@@ -1632,8 +1632,12 @@ class Like < LikeHelpers::DuplexedIO
 
     assert_writable
 
-    buffer = strings.map do |string|
-      string = string.to_s
+    strings.map!(&:to_s)
+
+    total_bytes_written = 0
+
+    flush if sync
+    strings.each do |string|
       unless binmode?
         # Convert to the external encoding if possible, ignoring errors.
         begin
@@ -1644,20 +1648,20 @@ class Like < LikeHelpers::DuplexedIO
         rescue Encoding::UndefinedConversionError
         end
       end
-      string.b
-    end.join('')
 
-    flush if sync
-    bytes_written = 0
-    while bytes_written < buffer.bytesize do
-      bytes_written += ensure_blocking do
-        sync ?
-          delegate_w.unbuffered_write(buffer[bytes_written..-1]) :
-          delegate_w.write(buffer[bytes_written..-1])
+      buffer = string.b
+      bytes_written = 0
+      while bytes_written < buffer.bytesize do
+        bytes_written += ensure_blocking do
+          sync ?
+            delegate_w.unbuffered_write(buffer[bytes_written..-1]) :
+            delegate_w.write(buffer[bytes_written..-1])
+        end
       end
+      total_bytes_written += bytes_written
     end
 
-    bytes_written
+    total_bytes_written
   end
 
   ##
