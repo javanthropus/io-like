@@ -879,10 +879,15 @@ class Like < LikeHelpers::DuplexedIO
     int_enc = internal_encoding || ext_enc
     buffer = String.new('', encoding: int_enc)
 
-    newline = "\n".encode(int_enc)
-    paragraph_requested = ! sep_string.nil? && sep_string.empty?
-    sep_string = "\n\n" if paragraph_requested
-    sep_string = sep_string.encode(int_enc) unless sep_string.nil?
+    unless sep_string.nil?
+      if sep_string.empty?
+        paragraph_requested = true
+        newline = "\n".encode(int_enc)
+        sep_string = newline * 2
+      else
+        sep_string = sep_string.encode(int_enc)
+      end
+    end
 
     begin
       if paragraph_requested
