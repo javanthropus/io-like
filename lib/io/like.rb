@@ -1160,7 +1160,7 @@ class Like < LikeHelpers::DuplexedIO
 
     # Newline handling is not allowed in binary mode.
     if binmode? &&
-      (opts.key?(:newline) ||
+      (opts.key?(:newline) && opts[:newline] != :lf ||
        opts[:cr_newline] || opts[:crlf_newline] || opts[:universal])
       raise ArgumentError, 'newline decorator with binary mode'
     end
