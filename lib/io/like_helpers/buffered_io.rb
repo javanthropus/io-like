@@ -165,7 +165,7 @@ class BufferedIO < DelegatedIO
   end
 
   ##
-  # Returns `true` if the read buffer it empty and `false` otherwise.
+  # Returns `true` if the read buffer is empty and `false` otherwise.
   #
   # @return [Boolean]
   def read_buffer_empty?
