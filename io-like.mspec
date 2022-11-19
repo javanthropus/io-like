@@ -51,8 +51,6 @@ class MSpecScript
     # This library does not replace the IO associated with STDOUT, so skip
     # methods related to it.
     /^IO#write on STDOUT/,
-    # Invalid test.  See https://github.com/ruby/spec/pull/960.
-    /^IO#read in binary mode does not transcode file contents when an internal encoding is specified$/,
   ]
 
   # Exclude IO specs not relevant to IO::Like.
