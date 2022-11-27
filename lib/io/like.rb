@@ -1173,8 +1173,6 @@ class Like < LikeHelpers::DuplexedIO
         unless split_idx.nil? || split_idx == 0
           args[0] = string_arg[0...split_idx]
           args[1] = string_arg[(split_idx + 1)..-1]
-          # Special case: No conversion.
-          args.pop if args[1] == '-'
         end
       rescue Encoding::CompatibilityError
         # This is caused by failure to split on colon when the string argument
@@ -1198,12 +1196,16 @@ class Like < LikeHelpers::DuplexedIO
       end
     else
       ext_enc = Encoding.find(ext_enc)
-
-      if ! int_enc.nil?
-        int_enc = Encoding.find(int_enc)
-      elsif ext_enc != Encoding::BINARY
-        int_enc = Encoding.default_internal
-      end
+      int_enc = case int_enc
+                when nil
+                  Encoding.default_internal
+                when '-'
+                  # Allows explicit request of no conversion when
+                  # Encoding.default_internal is set.
+                  nil
+                else
+                  Encoding.find(int_enc)
+                end
     end
     # Ignore the chosen internal encoding when no conversion will be performed.
     int_enc = nil if int_enc == ext_enc || ext_enc == Encoding::BINARY
