@@ -1127,10 +1127,15 @@ class Like < LikeHelpers::DuplexedIO
   # encoding.
   #
   # When the given external encoding is `nil` and the internal encoding is either
-  # not given or nil, the current values of `Encoding.default_external` and
+  # not given or `nil`, the current values of `Encoding.default_external` and
   # `Encoding.default_internal` are used, respectively, unless
   # `Encoding.default_external` is `Encoding::BINARY` or an equivalent **or**
   # `Encoding.default_internal` is `nil`, in which case `nil` is used for both.
+  #
+  # Setting the given internal encoding to `"-"` indicates no character
+  # conversion should be performed.  The internal encoding of the stream will be
+  # set to `nil`.  This is needed in cases where `Encoding.default_internal` is
+  # not `nil` but character conversion is not desired.
   #
   # @return [self]
   #
