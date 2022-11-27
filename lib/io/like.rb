@@ -1205,7 +1205,8 @@ class Like < LikeHelpers::DuplexedIO
         int_enc = Encoding.default_internal
       end
     end
-    int_enc = nil if int_enc == ext_enc
+    # Ignore the chosen internal encoding when no conversion will be performed.
+    int_enc = nil if int_enc == ext_enc || ext_enc == Encoding::BINARY
 
     @external_encoding = ext_enc
     @internal_encoding = int_enc
