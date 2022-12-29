@@ -17,5 +17,9 @@ module RubyFacts
   ##
   # Set to `true` if the runtime Ruby version is less than 3.0.
   RBVER_LT_3_0 = Gem::Version.new(RUBY_VERSION) < Gem::Version.new('3.0')
+
+  ##
+  # Set to `true` if the platform is Windows.
+  RBPLAT_IS_WINDOWS = RUBY_PLATFORM =~ /mswin|mingw/
 end
 end; end

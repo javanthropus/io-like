@@ -1428,8 +1428,18 @@ class Like < LikeHelpers::DuplexedIO
       warn('warning: syswrite for buffered IO')
     end
 
-    delegate_w.flush
-    delegate_w.unbuffered_write(string.to_s.b)
+    if RBVER_LT_3_2
+      result = delegate_w.flush || delegate_w.unbuffered_write(string.to_s.b)
+      if Symbol === result
+        raise Errno::EWOULDBLOCK if RBPLAT_IS_WINDOWS
+        raise Errno::EAGAIN
+      end
+      result
+    else
+      ensure_blocking do
+        delegate_w.flush || delegate_w.unbuffered_write(string.to_s.b)
+      end
+    end
   end
 
   ##
