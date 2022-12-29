@@ -18,9 +18,8 @@ class IOWrapper < DelegatedIO
   ##
   # Reads bytes from the stream.
   #
-  # Note that a partial read will occur if reading starts at the end of the
-  # stream or if reading more bytes would block while the stream is in
-  # non-blocking mode.
+  # Note that a partial read will occur if the stream is in non-blocking mode
+  # and reading more bytes would block.
   #
   # @param length [Integer] the number of bytes to read
   # @param buffer [String] the buffer into which bytes will be read (encoding
@@ -176,8 +175,8 @@ class IOWrapper < DelegatedIO
   ##
   # Reads bytes from the stream without blocking.
   #
-  # Note that a partial read will occur if reading starts at the end of the
-  # stream or if reading more bytes would block.
+  # Note that a partial read will occur if the stream is in non-blocking mode
+  # and reading more bytes would block.
   #
   # @param length [Integer] the number of bytes to read
   #
@@ -196,7 +195,8 @@ class IOWrapper < DelegatedIO
   ##
   # Writes bytes to the stream without blocking.
   #
-  # Note that a partial write will occur if writing more bytes would block.
+  # Note that a partial write will occur if the stream is in non-blocking mode
+  # and writing more bytes would block.
   #
   # @param buffer [String] the bytes to write (encoding assumed to be binary)
   #
