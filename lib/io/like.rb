@@ -771,12 +771,12 @@ class Like < LikeHelpers::DuplexedIO
 
     return (buffer || String.new(''.b)) if length == 0
 
-    self.nonblock = true
     result = ensure_buffer(length, buffer) do |binary_buffer|
       unless delegate_r.read_buffer_empty?
         break delegate_r.read(length, buffer: binary_buffer)
       end
 
+      self.nonblock = true
       delegate_r.unbuffered_read(length, buffer: binary_buffer)
     end
 
