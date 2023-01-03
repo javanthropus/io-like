@@ -6,7 +6,6 @@ require 'mspec/helpers/io'
 require 'mspec/matchers/output_to_fd'
 
 require 'io/like'
-require 'io/like_helpers/buffered_io'
 require 'io/like_helpers/io_wrapper'
 
 class Object
@@ -77,9 +76,7 @@ class Object
     settings[:sync] = io.sync
     settings[:autoclose] = kwargs.fetch(:autoclose, true)
     IO::Like.open(
-      IO::LikeHelpers::BufferedIO.new(
-        IO::LikeHelpers::IOWrapper.new(io), autoclose: settings[:autoclose]
-      ),
+      IO::LikeHelpers::IOWrapper.new(io),
       **settings,
       &block
     )
@@ -183,16 +180,10 @@ class IO
       r_child.close unless r_child.nil?
       w_child.close unless w_child.nil?
       unless r_parent.nil?
-        args <<
-          IO::LikeHelpers::BufferedIO.new(
-            IO::LikeHelpers::IOWrapper.new(r_parent)
-          )
+        args << IO::LikeHelpers::IOWrapper.new(r_parent)
       end
       unless w_parent.nil?
-        args <<
-          IO::LikeHelpers::BufferedIO.new(
-            IO::LikeHelpers::IOWrapper.new(w_parent)
-          )
+        args << IO::LikeHelpers::IOWrapper.new(w_parent)
       end
 
       IO::Like.open(*args, pid: pid, sync: true, &block)

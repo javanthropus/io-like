@@ -114,7 +114,8 @@ class DelegatedIO < AbstractIO
   # @return [Boolean]
   def readable?
     return false if closed?
-    delegate.readable?
+    return @readable if defined?(@readable) && ! @readable.nil?
+    @readable = delegate.readable?
   end
 
 
@@ -124,7 +125,8 @@ class DelegatedIO < AbstractIO
   # @return [Boolean]
   def writable?
     return false if closed?
-    delegate.writable?
+    return @writable if defined?(@writable) && ! @writable.nil?
+    @writable = delegate.writable?
   end
 
   ##
@@ -173,6 +175,12 @@ class DelegatedIO < AbstractIO
   # Calls `delegate.write(*args, **kwargs, &b)` after asserting that the stream is writable.
   delegate :write, assert: :writable
 
+  protected
+
+  ##
+  # The delegate that receives delegated method calls.
+  attr_reader :delegate
+
   private
 
   ##
@@ -193,10 +201,6 @@ class DelegatedIO < AbstractIO
 
     nil
   end
-
-  ##
-  # The delegate that receives delegated method calls.
-  attr_reader :delegate
 end
 end; end
 

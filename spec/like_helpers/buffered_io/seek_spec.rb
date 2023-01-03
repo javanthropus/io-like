@@ -40,7 +40,7 @@ describe "IO::LikeHelpers::BufferedIO#seek" do
   it "flushes the internal read buffer when not performing a seek relative to the current location" do
     buffer = 'foo'.b
     obj = mock("io")
-    obj.should_receive(:readable?).and_return(true).exactly(2)
+    obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(3).exactly(2)
     obj.should_receive(:seek).with(0, IO::SEEK_SET).and_return(0)
     io = IO::LikeHelpers::BufferedIO.new(obj)

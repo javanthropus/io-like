@@ -111,10 +111,7 @@ class BufferedIO < DelegatedIO
   def nread
     assert_readable
 
-    result = set_read_mode
-    return result if Symbol === result
-
-    return delegate.nread if read_buffer_empty?
+    return 0 if read_buffer_empty?
     return @end_idx - @start_idx
   end
 

@@ -2,10 +2,11 @@
 require_relative '../../../spec_helper'
 
 describe "IO::LikeHelpers::DelegatedIO#readable?" do
-  it "delegates to its delegate" do
+  it "delegates to its delegate exactly once" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     io = IO::LikeHelpers::DelegatedIO.new(obj)
+    io.readable?.should be_true
     io.readable?.should be_true
   end
 

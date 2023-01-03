@@ -37,7 +37,7 @@ describe "IO::LikeHelpers::BufferedIO#write" do
   it "delegates to its delegate when the internal buffer is full" do
     buffer = 'foo'.b
     obj = mock("io")
-    obj.should_receive(:writable?).and_return(true).exactly(2)
+    obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(buffer.size)
     io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: 3)
     io.write(buffer).should == buffer.size
@@ -47,7 +47,7 @@ describe "IO::LikeHelpers::BufferedIO#write" do
   it "returns a Symbol when the delegate does so" do
     buffer = 'foo'.b
     obj = mock("io")
-    obj.should_receive(:writable?).and_return(true).exactly(2)
+    obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(:wait_writable)
     io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: 3)
     io.write(buffer).should == buffer.size

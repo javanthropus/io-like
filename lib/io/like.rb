@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'io/like_helpers/buffered_io'
 require 'io/like_helpers/duplexed_io'
 require 'io/like_helpers/io'
 require 'io/like_helpers/io_wrapper'
+require 'io/like_helpers/pipeline'
 require 'io/like_helpers/ruby_facts'
 
 ##
@@ -25,8 +25,8 @@ class Like < LikeHelpers::DuplexedIO
   ##
   # Creates a new instance of this class.
   #
-  # @param delegate_r [LikeHelpers::BufferedIO] delegate for read operations
-  # @param delegate_w [LikeHelpers::BufferedIO] delegate for write operations
+  # @param delegate_r [LikeHelpers::AbstractIO] delegate for read operations
+  # @param delegate_w [LikeHelpers::AbstractIO] delegate for write operations
   # @param autoclose [Boolean] when `true` close the delegate(s) when this
   #   stream is closed
   # @param binmode [Boolean] when `true` suppresses EOL <-> CRLF conversion on
@@ -49,7 +49,12 @@ class Like < LikeHelpers::DuplexedIO
     sync: false,
     pid: nil
   )
-    super(delegate_r, delegate_w, autoclose: autoclose)
+    pipeline_r = LikeHelpers::Pipeline.new(delegate_r, autoclose: autoclose)
+    pipeline_w = delegate_r == delegate_w ?
+      pipeline_r :
+      LikeHelpers::Pipeline.new(delegate_w, autoclose: autoclose)
+
+    super(pipeline_r, pipeline_w)
 
     @encoding_opts_r = {}
     @encoding_opts_w = {}
@@ -146,7 +151,7 @@ class Like < LikeHelpers::DuplexedIO
   # @return [nil]
   def close
     @skip_duplexed_check = true
-    ensure_blocking { super }
+    super
 
     nil
   ensure
@@ -167,7 +172,7 @@ class Like < LikeHelpers::DuplexedIO
       raise IOError, 'closing non-duplex IO for reading'
     end
 
-    ensure_blocking { super }
+    super
 
     nil
   end
@@ -187,7 +192,7 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     flush if writable?
-    ensure_blocking { super }
+    super
 
     nil
   end
@@ -393,7 +398,7 @@ class Like < LikeHelpers::DuplexedIO
   def flush
     assert_open
 
-    ensure_blocking { delegate_w.flush }
+    delegate_w.buffered_io.flush
 
     self
   end
@@ -525,7 +530,7 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [IOError] if the stream is not open for reading
   def nread
     assert_readable
-    ensure_blocking { delegate_r.nread }
+    delegate_r.nread
   end
 
   ##
@@ -772,12 +777,12 @@ class Like < LikeHelpers::DuplexedIO
     return (buffer || String.new(''.b)) if length == 0
 
     result = ensure_buffer(length, buffer) do |binary_buffer|
-      unless delegate_r.read_buffer_empty?
+      unless delegate_r.buffered_io.read_buffer_empty?
         break delegate_r.read(length, buffer: binary_buffer)
       end
 
       self.nonblock = true
-      delegate_r.unbuffered_read(length, buffer: binary_buffer)
+      delegate_r.concrete_io.read(length, buffer: binary_buffer)
     end
 
     case result
@@ -805,7 +810,7 @@ class Like < LikeHelpers::DuplexedIO
   def readbyte
     assert_readable
 
-    byte = ensure_blocking { delegate_r.read(1) }
+    byte = delegate_r.read(1)
     byte[0].ord
   end
 
@@ -822,7 +827,7 @@ class Like < LikeHelpers::DuplexedIO
 
     begin
       loop do
-        buffer << ensure_blocking { delegate_r.read(1) }.force_encoding(ext_enc)
+        buffer << delegate_r.read(1).force_encoding(ext_enc)
         break if buffer.valid_encoding? || buffer.bytesize >= 16
       end
     rescue EOFError
@@ -983,13 +988,11 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     result = ensure_buffer(length, buffer) do |binary_buffer|
-      unless delegate_r.read_buffer_empty?
+      unless delegate_r.buffered_io.read_buffer_empty?
         break delegate_r.read(length, buffer: binary_buffer)
       end
 
-      ensure_blocking do
-        delegate_r.unbuffered_read(length, buffer: binary_buffer)
-      end
+      delegate_r.blocking_io.read(length, buffer: binary_buffer)
     end
 
     # The delegate returns the read content unless a buffer is given.
@@ -1035,10 +1038,19 @@ class Like < LikeHelpers::DuplexedIO
 
         if IO::Like === io
           assert_open
+          delegate_r = io.delegate_r.concrete_io.dup
+          delegate_w = io.duplexed? ? io.delegate_w.concrete_io.dup : delegate_r
           close
-          @delegate = io.delegate_r.dup
-          @delegate_w = io.duplexed? ? io.delegate_w.dup : delegate_r
-          @closed = @closed_write = false
+          @readable = @writable = nil
+          initialize(
+            delegate_r,
+            delegate_w,
+            binmode: io.binmode?,
+            internal_encoding: @internal_encoding,
+            external_encoding: @external_encoding,
+            sync: io.sync,
+            pid: io.pid
+          )
           return self
         end
 
@@ -1059,10 +1071,16 @@ class Like < LikeHelpers::DuplexedIO
       io = File.open(*args, **opts)
     end
 
-    io = IO::LikeHelpers::BufferedIO.new(IO::LikeHelpers::IOWrapper.new(io))
     close
-    @delegate = @delegate_w = io
-    @closed = @closed_write = false
+    @readable = @writable = nil
+    initialize(
+      IO::LikeHelpers::IOWrapper.new(io),
+      binmode: io.binmode?,
+      internal_encoding: @internal_encoding,
+      external_encoding: @external_encoding,
+      sync: io.sync,
+      pid: io.pid
+    )
 
     self
   end
@@ -1368,14 +1386,12 @@ class Like < LikeHelpers::DuplexedIO
 
     assert_readable
 
-    unless delegate_r.read_buffer_empty?
+    unless delegate_r.buffered_io.read_buffer_empty?
       raise IOError, 'sysread for buffered IO'
     end
 
     result = ensure_buffer(length, buffer) do |binary_buffer|
-      ensure_blocking do
-        delegate_r.unbuffered_read(length, buffer: binary_buffer)
-      end
+      delegate_r.blocking_io.read(length, buffer: binary_buffer)
     end
 
     # The delegate returns the read content unless a buffer is given.
@@ -1403,14 +1419,14 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [Errno::ESPIPE] if the stream is not seekable
   def sysseek(offset, whence = IO::SEEK_SET)
     assert_open
-    unless delegate_r.read_buffer_empty?
+    unless delegate_r.buffered_io.read_buffer_empty?
       raise IOError, 'sysseek for buffered IO'
     end
-    unless delegate_w.write_buffer_empty?
+    unless delegate_w.buffered_io.write_buffer_empty?
       warn('warning: sysseek for buffered IO')
     end
 
-    delegate.unbuffered_seek(offset, whence)
+    delegate.blocking_io.seek(offset, whence)
   end
 
   ##
@@ -1424,22 +1440,11 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [IOError] if the stream is not open for writing
   def syswrite(string)
     assert_writable
-    unless delegate_w.write_buffer_empty?
+    unless delegate_w.buffered_io.write_buffer_empty?
       warn('warning: syswrite for buffered IO')
     end
 
-    if RBVER_LT_3_2
-      result = delegate_w.flush || delegate_w.unbuffered_write(string.to_s.b)
-      if Symbol === result
-        raise Errno::EWOULDBLOCK if RBPLAT_IS_WINDOWS
-        raise Errno::EAGAIN
-      end
-      result
-    else
-      ensure_blocking do
-        delegate_w.flush || delegate_w.unbuffered_write(string.to_s.b)
-      end
-    end
+    delegate_w.buffered_io.flush || delegate_w.blocking_io.write(string.to_s.b)
   end
 
   ##
@@ -1475,7 +1480,7 @@ class Like < LikeHelpers::DuplexedIO
              else
                String.new(obj)
              end
-    result = delegate.unread(string.b)
+    result = delegate.buffered_io.unread(string.b)
     result
   end
 
@@ -1503,14 +1508,17 @@ class Like < LikeHelpers::DuplexedIO
 
     string = case string
              when String
-               string
+               string.dup
              when Integer
                string.chr(external_encoding)
              else
                String.new(string)
              end
-    result = delegate.unread(string.b)
-    result
+
+    # TODO: Use a character buffer here if read conversion is needed.
+    delegate.buffered_io.unread(string.b)
+
+    nil
   end
 
   ##
@@ -1675,11 +1683,9 @@ class Like < LikeHelpers::DuplexedIO
       buffer = string.b
       bytes_written = 0
       while bytes_written < buffer.bytesize do
-        bytes_written += ensure_blocking do
-          sync ?
-            delegate_w.unbuffered_write(buffer[bytes_written..-1]) :
-            delegate_w.write(buffer[bytes_written..-1])
-        end
+        bytes_written += sync ?
+          delegate_w.blocking_io.write(buffer[bytes_written..-1]) :
+          delegate_w.write(buffer[bytes_written..-1])
       end
       total_bytes_written += bytes_written
     end
@@ -1714,7 +1720,7 @@ class Like < LikeHelpers::DuplexedIO
     string = string.to_s
 
     self.nonblock = true
-    result = delegate_w.flush || delegate_w.unbuffered_write(string.b)
+    result = delegate_w.buffered_io.flush || delegate_w.concrete_io.write(string.b)
     case result
     when Integer
       return result
@@ -1769,39 +1775,6 @@ class Like < LikeHelpers::DuplexedIO
   ##
   # The encoding options for writing.
   attr_reader :encoding_opts_w
-
-  ##
-  # Runs the given block in a wait loop that exits only when the block returns a
-  # non-Symbol value.
-  #
-  # This method is intended to wrap an IO operation that may be non-blocking and
-  # effectively turn it into a blocking operation without changing underlying
-  # settings of the stream itself.
-  #
-  # @return the return value of the block if not a Symbol
-  #
-  # @raise [RuntimeError] if the Symbol returned by the block is neither
-  #   `:wait_readable` nor `:wait_writable`
-  def ensure_blocking
-    begin
-      while Symbol === (result = yield) do
-        # A wait timeout is used in order to allow a retry in case the stream was
-        # closed in another thread while waiting.
-        case result
-        when :wait_readable
-          wait_readable(1)
-        when :wait_writable
-          wait_writable(1)
-        else
-          raise "Unexpected result: #{result}"
-        end
-      end
-    rescue Errno::EINTR
-      retry
-    end
-
-    result
-  end
 
   ##
   # Ensures that a buffer, if provided, is large enough to hold the requested
@@ -1916,15 +1889,15 @@ class Like < LikeHelpers::DuplexedIO
     buffers = []
     remaining = length.nil? ? 8192 : length
 
-    unless delegate_r.read_buffer_empty?
+    unless delegate_r.buffered_io.read_buffer_empty?
       buffers << delegate_r.read(remaining)
       remaining -= buffers[0].bytesize unless length.nil?
     end
 
     begin
-      delegate_r.flush
+      delegate_r.buffered_io.flush
       while remaining > 0 do
-        bytes = ensure_blocking { delegate_r.unbuffered_read(remaining) }
+        bytes = delegate_r.blocking_io.read(remaining)
         buffers << bytes
         remaining -= bytes.bytesize unless length.nil?
       end

@@ -2,10 +2,11 @@
 require_relative '../../../spec_helper'
 
 describe "IO::LikeHelpers::DuplexedIO#writable?" do
-  it "delegates to its delegate" do
+  it "delegates to its delegate exactly once" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     io = IO::LikeHelpers::DuplexedIO.new(obj)
+    io.writable?.should be_true
     io.writable?.should be_true
   end
 

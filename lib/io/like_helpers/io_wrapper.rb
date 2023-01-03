@@ -50,7 +50,8 @@ class IOWrapper < DelegatedIO
   # @return [true] if the stream is readable
   # @return [false] if the stream is not readable
   def readable?
-    return @readable if defined? @readable
+    return false if closed?
+    return @readable if defined?(@readable) && ! @readable.nil?
 
     @readable =
       begin
@@ -159,7 +160,8 @@ class IOWrapper < DelegatedIO
   # @return [true] if the stream is writable
   # @return [false] if the stream is not writable
   def writable?
-    return @writable if defined? @writable
+    return false if closed?
+    return @writable if defined?(@writable) && ! @writable.nil?
 
     @writable =
       begin

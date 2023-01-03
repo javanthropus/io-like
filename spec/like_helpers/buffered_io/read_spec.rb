@@ -29,6 +29,7 @@ describe "IO::LikeHelpers::BufferedIO#read" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(:wait_writable)
+    obj.should_receive(:readable?).and_return(true)
     io = IO::LikeHelpers::BufferedIO.new(obj)
     io.write(buffer).should == buffer.size
     io.read(1).should == :wait_writable

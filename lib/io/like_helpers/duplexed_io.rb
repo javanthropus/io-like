@@ -152,7 +152,8 @@ class DuplexedIO < DelegatedIO
   # @return [Boolean]
   def readable?
     return false if closed_read?
-    delegate_r.readable?
+    return @readable if defined?(@readable) && ! @readable.nil?
+    @readable = delegate_r.readable?
   end
 
   delegate :write, to: :delegate_w, assert: :writable
@@ -163,7 +164,8 @@ class DuplexedIO < DelegatedIO
   # @return [Boolean]
   def writable?
     return false if closed_write?
-    delegate_w.writable?
+    return @writable if defined?(@writable) && ! @writable.nil?
+    @writable = delegate_w.writable?
   end
 
   protected
