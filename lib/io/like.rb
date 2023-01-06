@@ -68,10 +68,14 @@ class Like < LikeHelpers::DuplexedIO
     unless binmode && external_encoding.nil? && internal_encoding.nil?
       if ! (Encoding === external_encoding) && external_encoding =~ /^bom\|/i
         if set_encoding_by_bom.nil?
-          set_encoding(external_encoding.to_s[4..-1], internal_encoding, encoding_opts)
+          set_encoding(
+            external_encoding.to_s[4..-1],
+            internal_encoding,
+            **encoding_opts
+          )
         end
       else
-        set_encoding(external_encoding, internal_encoding, encoding_opts)
+        set_encoding(external_encoding, internal_encoding, **encoding_opts)
       end
     end
 
@@ -1147,18 +1151,8 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [TypeError] if the given external encoding is `nil` and the internal
   #   encoding is given and **not** `nil`
   # @raise [ArgumentError] if an encoding given as a string is invalid
-  def set_encoding(*args)
+  def set_encoding(ext_enc, int_enc = nil, **opts)
     assert_open
-
-    # Pull out the last argument if it's an options hash.
-    opts = Hash === args.last ? args.pop : {}
-
-    # Check for the correct number of arguments.
-    if args.size < 1
-      raise ArgumentError, "wrong number of arguments (#{args.size} for 1)"
-    elsif args.size > 2
-      raise ArgumentError, "wrong number of arguments (#{args.size} for 2)"
-    end
 
     # Check that any given newline option is valid.
     if opts.key?(:newline) &&
@@ -1176,20 +1170,19 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     # Convert the argument(s) into Encoding objects.
-    if ! (args[0].nil? || Encoding === args[0]) && args[1].nil?
-      string_arg = String.new(args[0])
+    if ! (ext_enc.nil? || Encoding === ext_enc) && int_enc.nil?
+      string_arg = String.new(ext_enc)
       begin
         split_idx = string_arg.rindex(':')
         unless split_idx.nil? || split_idx == 0
-          args[0] = string_arg[0...split_idx]
-          args[1] = string_arg[(split_idx + 1)..-1]
+          ext_enc = string_arg[0...split_idx]
+          int_enc = string_arg[(split_idx + 1)..-1]
         end
       rescue Encoding::CompatibilityError
         # This is caused by failure to split on colon when the string argument
         # is not ASCII compatible.  Ignore it and use the argument as is.
       end
     end
-    ext_enc, int_enc = args
 
     # Potential values:
     # ext_enc        int_enc
