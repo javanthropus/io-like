@@ -47,12 +47,13 @@ class Like < LikeHelpers::DuplexedIO
     external_encoding: nil,
     encoding_opts: {},
     sync: false,
-    pid: nil
+    pid: nil,
+    pipeline_class: LikeHelpers::Pipeline
   )
-    pipeline_r = LikeHelpers::Pipeline.new(delegate_r, autoclose: autoclose)
+    pipeline_r = pipeline_class.new(delegate_r, autoclose: autoclose)
     pipeline_w = delegate_r == delegate_w ?
       pipeline_r :
-      LikeHelpers::Pipeline.new(delegate_w, autoclose: autoclose)
+      pipeline_class.new(delegate_w, autoclose: autoclose)
 
     super(pipeline_r, pipeline_w)
 
