@@ -20,7 +20,7 @@ class Like < LikeHelpers::DuplexedIO
 
   ##
   # This is used by #puts as the separator between all arguments.
-  ORS = "\n".freeze
+  ORS = "\n"
 
   ##
   # Creates a new instance of this class.
