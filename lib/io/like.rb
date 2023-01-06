@@ -328,22 +328,15 @@ class Like < LikeHelpers::DuplexedIO
   #   @return [self]
   #
   # @raise [IOError] if the stream is not open for reading
-  def each_line(sep_string = $/, limit = nil, chomp: false)
+  def each_line(*args, chomp: false)
     unless block_given?
-      return to_enum(:each_line, sep_string, limit, chomp: chomp)
+      return to_enum(:each_line, *args, chomp: chomp)
     end
 
-    begin
-      sep_string = String.new(sep_string) unless sep_string.nil?
-      limit = Integer(limit) unless limit.nil?
-    rescue TypeError
-      limit = Integer(sep_string)
-      sep_string = $/
-    end
-
+    sep_string, limit = parse_readline_args(*args)
     raise ArgumentError, 'invalid limit: 0 for each_line' if limit == 0
 
-    while (line = gets(sep_string, limit, chomp: chomp)) do
+    while (line = gets(*args, chomp: chomp)) do
       yield(line)
     end
     self
@@ -456,8 +449,8 @@ class Like < LikeHelpers::DuplexedIO
   #   @return [nil] if the end of the stream has been reached
   #
   # @raise [IOError] if the stream is not open for reading
-  def gets(sep_string = $/, limit = nil, chomp: false)
-    readline(sep_string, limit, chomp: chomp)
+  def gets(*args, chomp: false)
+    readline(*args, chomp: chomp)
   rescue EOFError
     $_ = nil
     nil
@@ -869,14 +862,8 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [EOFError] if reading begins at the end of the stream
   # @raise [IOError] if the stream is not open for reading
-  def readline(sep_string = $/, limit = nil, chomp: false)
-    begin
-      sep_string = String.new(sep_string) unless sep_string.nil?
-      limit = Integer(limit) unless limit.nil?
-    rescue TypeError
-      limit = Integer(sep_string)
-      sep_string = $/
-    end
+  def readline(*args, chomp: false)
+    sep_string, limit = parse_readline_args(*args)
 
     assert_readable
 
@@ -958,8 +945,8 @@ class Like < LikeHelpers::DuplexedIO
   #     separator is `$/`
   #
   # @raise [IOError] if the stream is not open for reading
-  def readlines(sep_string = $/, limit = nil, chomp: false)
-    each_line(sep_string, limit, chomp: chomp).to_a
+  def readlines(*args, chomp: false)
+    each_line(*args, chomp: chomp).to_a
   end
 
   ##
@@ -1874,6 +1861,34 @@ class Like < LikeHelpers::DuplexedIO
     else
       raise ArgumentError, "Invalid type: #{type}"
     end
+  end
+
+  ##
+  # Parses the positional arguments for #readline, #gets, and related methods.
+  #
+  # @return [[String, Integer]] an array containing the separator string and the
+  #   maximum length
+  def parse_readline_args(*args)
+    if args.size > 2
+      raise ArgumentError,
+        "wrong number of arguments (given #{args.size}, expected 0..2)"
+    elsif args.size == 2
+      sep_string = args[0].nil? ? nil : String.new(args[0])
+      limit = args[1].nil? ? nil : Integer(args[1])
+    elsif args.size == 1
+      begin
+        sep_string = args[0].nil? ? nil : String.new(args[0])
+        limit = nil
+      rescue TypeError
+        limit = Integer(args[0])
+        sep_string = $/
+      end
+    else
+      sep_string = $/
+      limit = nil
+    end
+
+    return [sep_string, limit]
   end
 
   ##
