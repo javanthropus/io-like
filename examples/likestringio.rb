@@ -1,21 +1,32 @@
 require 'io/like'
 require 'io/like_helpers/abstract_io'
+require 'io/like_helpers/delegated_io'
 
 class LikeStringIO < IO::Like
   class StringWrapper < IO::LikeHelpers::AbstractIO
-    def initialize(string, **opt)
+    def initialize(
+      string,
+      append: false,
+      readable: false,
+      truncate: false,
+      writable: false
+    )
       super()
 
       @string = string
-      @append = opt.fetch(:append, false)
-      @readable = opt.fetch(:readable, false)
-      @truncate = opt.fetch(:truncate, false)
-      @writable = opt.fetch(:writable, false)
+      @append = append
+      @readable = readable
+      @truncate = truncate
+      @writable = writable
       @pos = 0
 
       raise Errno::EACCES if writable? && string.frozen?
 
       @string.clear if @truncate
+    end
+
+    def append?
+      @append
     end
 
     def dup
@@ -62,7 +73,6 @@ class LikeStringIO < IO::Like
       buffer[0, content.bytesize] = content
       return content.bytesize
     end
-    alias_method :unbuffered_read, :read
 
     def readable?
       @readable
@@ -90,7 +100,6 @@ class LikeStringIO < IO::Like
 
       @pos = new_pos
     end
-    alias_method :unbuffered_seek, :seek
 
     attr_reader :string
 
@@ -113,7 +122,7 @@ class LikeStringIO < IO::Like
       end
       string.force_encoding(encoding)
 
-      length
+      0
     end
 
     def unread(buffer, length: buffer.bytesize)
@@ -156,7 +165,6 @@ class LikeStringIO < IO::Like
     rescue FrozenError
       raise IOError, 'not modifiable string'
     end
-    alias_method :unbuffered_write, :write
 
     def writable?
       @writable
@@ -181,6 +189,20 @@ class LikeStringIO < IO::Like
     end
   end
 
+  class StringPipeline < IO::LikeHelpers::DelegatedIO
+    def initialize(delegate, autoclose: true)
+      raise ArgumentError, 'delegate cannot be nil' if delegate.nil?
+
+      super(delegate)
+    end
+
+    alias_method :buffered_io, :delegate
+    public :buffered_io
+
+    alias_method :blocking_io, :delegate
+    alias_method :concrete_io, :delegate
+  end
+
   def initialize(string = '', mode = nil, **opt)
     if block_given?
       warn("#{self.class.name}::new() does not take block; use #{self.class.name}::open() instead")
@@ -193,16 +215,32 @@ class LikeStringIO < IO::Like
     super(
       StringWrapper.new(string, **opt),
       binmode: binmode,
-      external_encoding: encoding
+      external_encoding: encoding,
+      pipeline_class: StringPipeline
     )
+  end
+
+  def fcntl(*args)
+    raise NotImplementedError
   end
 
   def reopen(*args)
     assert_thawed
+    close
+    @readable = @writable = nil
 
     if args.size == 1 && LikeStringIO === args[0]
-      @delegate = args[0].delegate_r
-      @delegate_w = @delegate
+      io = args[0]
+
+      initialize(
+        io.string,
+        append: io.delegate.concrete_io.append?,
+        binmode: io.binmode?,
+        external_encoding: @external_encoding,
+        readable: io.delegate.concrete_io.readable?,
+        writable: io.delegate.concrete_io.writable?
+      )
+      self.pos = io.pos
     else
       initialize(*args)
     end
@@ -210,9 +248,24 @@ class LikeStringIO < IO::Like
     self
   end
 
-  def set_encoding(*args)
-    result = super
-    delegate.encoding = external_encoding
+  def set_encoding(ext_enc, int_enc = nil, **opts)
+    assert_thawed
+
+    if ! (ext_enc.nil? || Encoding === ext_enc)
+      string_arg = String.new(ext_enc)
+      begin
+        split_idx = string_arg.rindex(':')
+        unless split_idx.nil? || split_idx == 0
+          ext_enc = string_arg[0...split_idx]
+        end
+      rescue Encoding::CompatibilityError
+        # This is caused by failure to split on colon when the string argument
+        # is not ASCII compatible.  Ignore it and use the argument as is.
+      end
+    end
+    result = super(ext_enc)
+
+    delegate.concrete_io.encoding = external_encoding
 
     result
   end
@@ -226,19 +279,19 @@ class LikeStringIO < IO::Like
   def size
     assert_thawed
 
-    delegate.string.bytesize
+    delegate.concrete_io.string.bytesize
   end
 
   def string
     assert_thawed
 
-    delegate.string
+    delegate.concrete_io.string
   end
 
   def string=(string)
     assert_thawed
 
-    delegate.string = string
+    delegate.concrete_io.string = string
   end
 
   def sync
@@ -266,7 +319,7 @@ class LikeStringIO < IO::Like
   def truncate(length)
     assert_writable
 
-    delegate.truncate(length)
+    delegate.concrete_io.truncate(length)
   end
 
   protected
@@ -413,25 +466,22 @@ class LikeStringIO < IO::Like
   ##
   # This overrides the handling of any buffer given to read operations to always
   # leave it in binary encoding, contrary to the behavior of real IO objects.
-  def handle_buffer(length, buffer)
+  def ensure_buffer(length, buffer)
     unless buffer.nil?
       buffer.force_encoding(Encoding::ASCII_8BIT)
 
       # Ensure the given buffer is large enough to hold the requested number of
-      # bytes because the delegate will not read more than the buffer given to
-      # it can hold.
+      # bytes.
       buffer << "\0".b * (length - buffer.bytesize) if length > buffer.bytesize
     end
 
-    result = yield
-
+    result = yield(buffer)
+  ensure
     unless buffer.nil?
       # A buffer was given to fill, so the delegate returned the number of bytes
       # read.  Truncate the buffer if necessary.
-      buffer.slice!(result..-1)
+      buffer.slice!((result || 0)..-1)
     end
-
-    result
   end
 end
 
