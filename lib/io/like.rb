@@ -1652,14 +1652,10 @@ class Like < LikeHelpers::DuplexedIO
     flush if sync
     strings.each do |string|
       unless binmode?
-        # Convert to the external encoding if possible, ignoring errors.
-        begin
-          string = string.encode(
-            external_encoding || string.encoding,
-            **encoding_opts_w
-          )
-        rescue Encoding::UndefinedConversionError
-        end
+        string = string.encode(
+          external_encoding || string.encoding,
+          **encoding_opts_w
+        )
       end
 
       buffer = string.b
