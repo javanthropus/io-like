@@ -771,7 +771,9 @@ class Like < LikeHelpers::DuplexedIO
 
     assert_readable
 
-    return (buffer || String.new(''.b)) if length == 0
+    if RBVER_LT_3_1 && length == 0
+      return (buffer || String.new(''.b))
+    end
 
     result = ensure_buffer(length, buffer) do |binary_buffer|
       unless delegate_r.buffered_io.read_buffer_empty?
