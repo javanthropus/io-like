@@ -27,8 +27,8 @@ class Pipeline < DelegatedIO
   end
 
   ##
-  # A better name for the delegate of this stream the correctly identifies it as
-  # a BufferedIO instance.
+  # A better name for the delegate of this stream that correctly identifies it
+  # as a BufferedIO instance.
   alias_method :buffered_io, :delegate
   public :buffered_io
 
