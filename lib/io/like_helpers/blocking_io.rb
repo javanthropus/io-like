@@ -11,6 +11,10 @@ class BlockingIO < DelegatedIO
   ##
   # Reads bytes from the stream.
   #
+  # Note that a partial read will occur if the stream is in non-blocking mode
+  # and reading more bytes would block.  If no bytes can be read, however, the
+  # read will block until at least 1 byte can be read.
+  #
   # @param length [Integer] the number of bytes to read
   # @param buffer [String] the buffer into which bytes will be read (encoding
   #   assumed to be binary)
@@ -26,6 +30,10 @@ class BlockingIO < DelegatedIO
 
   ##
   # Writes bytes to the stream.
+  #
+  # Note that a partial write will occur if the stream is in non-blocking mode
+  # and writing more bytes would block.  If no bytes can be written, however,
+  # the write will block until at least 1 byte can be written.
   #
   # @param buffer [String] the bytes to write (encoding assumed to be binary)
   # @param length [Integer] the number of bytes to write from `buffer`
