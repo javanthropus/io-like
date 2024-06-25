@@ -118,7 +118,6 @@ class DelegatedIO < AbstractIO
     @readable = delegate.readable?
   end
 
-
   ##
   # Returns `true` if the stream is writable and `false` otherwise.
   #
