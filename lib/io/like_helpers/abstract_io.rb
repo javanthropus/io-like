@@ -284,10 +284,9 @@ class AbstractIO
   end
 
   ##
-  # Returns whether or not the stream is readable.
+  # Returns `true` if the stream is readable and `false` otherwise.
   #
-  # @return [true] if the stream is readable
-  # @return [false] if the stream is not readable
+  # @return [Boolean]
   def readable?
     false
   end
@@ -386,10 +385,9 @@ class AbstractIO
   end
 
   ##
-  # Returns whether or not the stream is writable.
+  # Returns `true` if the stream is writable and `false` otherwise.
   #
-  # @return [true] if the stream is writable
-  # @return [false] if the stream is not writable
+  # @return [Boolean]
   def writable?
     false
   end
