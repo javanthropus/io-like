@@ -183,6 +183,18 @@ class DelegatedIO < AbstractIO
   private
 
   ##
+  # Raises an exception if the stream is closed or not correctly initialized.
+  #
+  # @return [nil]
+  #
+  # @raise IOError if the stream is closed
+  # @raise IOError if the delegate is not initialized
+  def assert_open
+    raise IOError, 'uninitialized stream' if delegate.nil?
+    super
+  end
+
+  ##
   # Creates an instance of this class that copies state from `other`.
   #
   # The delegate of `other` is `dup`'d.
