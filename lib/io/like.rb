@@ -341,7 +341,7 @@ class Like < LikeHelpers::DuplexedIO
     sep_string, limit = parse_readline_args(*args)
     raise ArgumentError, 'invalid limit: 0 for each_line' if limit == 0
 
-    while (line = gets(*args, chomp: chomp)) do
+    while (line = gets(sep_string, limit, chomp: chomp)) do
       yield(line)
     end
     self
