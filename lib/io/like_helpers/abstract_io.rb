@@ -401,6 +401,7 @@ class AbstractIO
   #
   # @raise IOError if the stream is closed
   def assert_open
+    raise IOError, 'uninitialized stream' unless defined? @closed
     raise IOError, 'closed stream' if closed?
   end
 
