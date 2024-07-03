@@ -83,7 +83,7 @@ class Object
   end
 
   def __called_by_spec?
-    caller.any? %r{_spec\.rb:\d+:in }
+    caller.any? %r{rubyspec/core/io/.*_spec\.rb:\d+:in }
   end
 
   # Replace mspec's new_io helper method to return an IO::Like wrapped IO.
