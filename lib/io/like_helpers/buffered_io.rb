@@ -74,6 +74,8 @@ class BufferedIO < DelegatedIO
   # @return [nil] on success
   # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
   #   the operation would block
+  #
+  # @raise [IOError] if the stream is closed
   def flush
     assert_open
 
@@ -95,6 +97,8 @@ class BufferedIO < DelegatedIO
   # @return [0, nil] on success
   # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
   #   the operation would block
+  #
+  # @raise [IOError] if the stream is closed
   def fsync
     result = flush
     return result if Symbol === result
