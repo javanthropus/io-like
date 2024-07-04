@@ -147,6 +147,11 @@ class DuplexedIO < DelegatedIO
   end
 
   ##
+  # @method pwrite(*args, **kwargs, &b)
+  # Calls `delegate_w.write(*args, **kwargs, &b)` after asserting that the stream is writable.
+  delegate :pwrite, to: :delegate_w, assert: :writable
+
+  ##
   # Returns `true` if the stream is readable and `false` otherwise.
   #
   # @return [Boolean]
@@ -156,6 +161,9 @@ class DuplexedIO < DelegatedIO
     @readable = delegate_r.readable?
   end
 
+  ##
+  # @method write(*args, **kwargs, &b)
+  # Calls `delegate_w.write(*args, **kwargs, &b)` after asserting that the stream is writable.
   delegate :write, to: :delegate_w, assert: :writable
 
   ##

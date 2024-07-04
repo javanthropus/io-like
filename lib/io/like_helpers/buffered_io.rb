@@ -116,6 +116,76 @@ class BufferedIO < DelegatedIO
   end
 
   ##
+  # Reads at most `length` bytes from the stream starting at `offset` without
+  # modifying the read position in the stream.
+  #
+  # Note that a partial read will occur if the stream is in non-blocking mode
+  # and reading more bytes would block.
+  #
+  # @note This method is not thread safe.  Override it and add a mutex if thread
+  #   safety is desired.
+  #
+  # @param length [Integer] the maximum number of bytes to read
+  # @param offset [Integer] the offset from the beginning of the stream at which
+  #   to begin reading
+  # @param buffer [String] if provided, a buffer into which the bytes should be
+  #   placed
+  #
+  # @return [String] a new String containing the bytes read if `buffer` is `nil`
+  #   or `buffer` if provided
+  # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
+  #   the operation would block
+  #
+  # @raise [EOFError] when reading at the end of the stream
+  # @raise [IOError] if the stream is not readable
+  def pread(length, offset, buffer: nil)
+    offset = Integer(offset)
+    raise ArgumentError, 'offset must be at least 0' if offset < 0
+    length = Integer(length)
+    raise ArgumentError, 'length must be at least 0' if length < 0
+
+    assert_readable
+
+    result = set_read_mode
+    return result if Symbol === result
+
+    super
+  end
+
+  ##
+  # Writes at most `length` bytes to the stream starting at `offset` without
+  # modifying the write position in the stream.
+  #
+  # Note that a partial write will occur if the stream is in non-blocking mode
+  # and writing more bytes would block.
+  #
+  # @note This method is not thread safe.  Override it and add a mutex if thread
+  #   safety is desired.
+  #
+  # @param buffer [String] the bytes to write (encoding assumed to be binary)
+  # @param offset [Integer] the offset from the beginning of the stream at which
+  #   to begin writing
+  # @param length [Integer] the number of bytes to write from `buffer`
+  #
+  # @return [Integer] the number of bytes written
+  # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
+  #   the operation would block
+  #
+  # @raise [IOError] if the stream is not writable
+  def pwrite(buffer, offset, length: buffer.bytesize)
+    offset = Integer(offset)
+    raise ArgumentError, 'offset must be at least 0' if offset < 0
+    length = Integer(length)
+    raise ArgumentError, 'length must be at least 0' if length < 0
+
+    assert_writable
+
+    set_write_mode
+
+    super
+  end
+
+  ##
   # Reads bytes from the stream.
   #
   # Note that a partial read will occur if the stream is in non-blocking mode

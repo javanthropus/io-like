@@ -16,6 +16,59 @@ class IOWrapper < DelegatedIO
   include RubyFacts
 
   ##
+  # Reads at most `length` bytes from the stream starting at `offset` without
+  # modifying the read position in the stream.
+  #
+  # Note that a partial read will occur if the stream is in non-blocking mode
+  # and reading more bytes would block.
+  #
+  # @param length [Integer] the maximum number of bytes to read
+  # @param offset [Integer] the offset from the beginning of the stream at which
+  #   to begin reading
+  # @param buffer [String] if provided, a buffer into which the bytes should be
+  #   placed
+  #
+  # @return [String] a new String containing the bytes read if `buffer` is `nil`
+  #   or `buffer` if provided
+  # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
+  #   the operation would block
+  #
+  # @raise [EOFError] when reading at the end of the stream
+  # @raise [IOError] if the stream is not readable
+  def pread(length, offset, buffer: nil)
+    assert_readable
+
+    content = delegate.pread(length, offset)
+    return content if Symbol === content || buffer.nil?
+
+    buffer[0, content.bytesize] = content
+    return content.bytesize
+  end
+
+  ##
+  # Writes at most `length` bytes to the stream starting at `offset` without
+  # modifying the write position in the stream.
+  #
+  # Note that a partial write will occur if the stream is in non-blocking mode
+  # and writing more bytes would block.
+  #
+  # @param buffer [String] the bytes to write (encoding assumed to be binary)
+  # @param offset [Integer] the offset from the beginning of the stream at which
+  #   to begin writing
+  # @param length [Integer] the number of bytes to write from `buffer`
+  #
+  # @return [Integer] the number of bytes written
+  # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
+  #   the operation would block
+  #
+  # @raise [IOError] if the stream is not writable
+  def pwrite(buffer, offset, length: buffer.bytesize)
+    assert_writable
+
+    delegate.pwrite(buffer[0, length], offset)
+  end
+
+  ##
   # Reads bytes from the stream.
   #
   # Note that a partial read will occur if the stream is in non-blocking mode

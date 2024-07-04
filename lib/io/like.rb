@@ -576,11 +576,34 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # @note This method only exists for interface compatibility with IO#pread.
+  # Reads at most `maxlen` bytes from the stream starting at `offset` without
+  # modifying the read position in the stream.
   #
-  # @raise [NotImplementedError]
+  # @param maxlen [Integer] the maximum number of bytes to read
+  # @param offset [Integer] the offset from the beginning of the stream at which
+  #   to begin reading
+  # @param buffer [String] if provided, a buffer into which the bytes should be
+  #   placed
+  #
+  # @return [String] a new String containing the bytes read if `buffer` is `nil`
+  #   or `buffer` if provided
+  #
+  # @raise [EOFError] when reading at the end of the stream
+  # @raise [IOError] if the stream is not readable
   def pread(maxlen, offset, buffer = nil)
-    raise NotImplementedError
+    maxlen = Integer(maxlen)
+    raise ArgumentError, 'maxlen must be at least 0' if maxlen < 0
+    buffer = buffer.nil? ? "".b : buffer.to_str
+
+    return buffer if maxlen == 0
+
+    offset = Integer(offset)
+    raise Errno::EINVAL if offset < 0
+
+    assert_readable
+
+    delegate_r.pread(maxlen, offset, buffer: buffer)
+    buffer
   end
 
   ##
@@ -681,11 +704,25 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # @note This method only exists for interface compatibility with IO#pwrite.
+  # Writes at most `object.to_s.length` bytes to the stream starting at `offset`
+  # without modifying the write position in the stream.
   #
-  # @raise [NotImplementedError]
+  # @param object [String] the bytes to write (encoding assumed to be binary)
+  # @param offset [Integer] the offset from the beginning of the stream at which
+  #   to begin writing
+  #
+  # @return [Integer] the number of bytes written
+  #
+  # @raise [IOError] if the stream is not writable
   def pwrite(string, offset)
-    raise NotImplementedError
+    string = string.to_s
+
+    offset = Integer(offset)
+    raise Errno::EINVAL if offset < 0
+
+    assert_writable
+
+    delegate_w.pwrite(string, offset)
   end
 
   ##

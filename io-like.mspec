@@ -26,9 +26,6 @@ class MSpecScript
 
   # Ignore some intentionally non-compliant methods.
   non_compliant = [
-    # These are low level methods that cannot be emulated with the same
-    # concurrency guarantees as real implementations.
-    /^IO#pread/, /^IO#pwrite/,
     # Cannot change object class from Ruby code, so we cannot comply with some
     # aspects of IO#reopen.
     /^IO#reopen changes the class of the instance to the class of the object returned by #to_io/,
