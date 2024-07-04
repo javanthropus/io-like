@@ -5,7 +5,6 @@ describe "IO::LikeHelpers::BufferedIO#write" do
   it "raises ArgumentError if length is invalid" do
     buffer = 'foo'.b
     obj = mock("io")
-    obj.should_receive(:writable?).and_return(true)
     io = IO::LikeHelpers::BufferedIO.new(obj)
     -> { io.write(buffer, length: -1) }.should raise_error(ArgumentError)
   end

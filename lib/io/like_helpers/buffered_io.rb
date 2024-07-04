@@ -288,10 +288,10 @@ class BufferedIO < DelegatedIO
   #   insufficient to contain the given data
   # @raise [IOError] if the stream is not readable
   def unread(buffer, length: buffer.bytesize)
-    assert_readable
-
     length = Integer(length)
     raise ArgumentError, 'length must be at least 0' if length < 0
+
+    assert_readable
 
     result = set_read_mode
     return result if Symbol === result
@@ -350,10 +350,10 @@ class BufferedIO < DelegatedIO
   #
   # @raise [IOError] if the stream is not writable
   def write(buffer, length: buffer.bytesize)
-    assert_writable
-
     length = Integer(length)
     raise ArgumentError, 'length must be at least 0' if length < 0
+
+    assert_writable
 
     set_write_mode
 
