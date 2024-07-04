@@ -102,7 +102,7 @@ describe "IO::LikeHelpers::BufferedIO#read" do
     end
   end
 
-  it "raises EOF error if reading begins at end of file" do
+  it "raises EOFError if reading begins at end of file" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_raise(EOFError.new)
