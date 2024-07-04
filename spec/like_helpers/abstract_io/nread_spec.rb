@@ -2,6 +2,14 @@
 require_relative '../../../spec_helper'
 
 describe "IO::LikeHelpers::AbstractIO#nread" do
+  it "returns 0" do
+    io = IO::LikeHelpers::AbstractIO.new
+    def io.readable?
+      true
+    end
+    io.nread.should == 0
+  end
+
   it "raises IOError if the stream is not readable" do
     io = IO::LikeHelpers::AbstractIO.new
     -> { io.nread }.should raise_error(IOError, 'not opened for reading')
