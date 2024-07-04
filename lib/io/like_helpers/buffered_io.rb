@@ -96,8 +96,6 @@ class BufferedIO < DelegatedIO
   # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
   #   the operation would block
   def fsync
-    assert_open
-
     result = flush
     return result if Symbol === result
     super
