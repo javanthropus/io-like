@@ -809,7 +809,7 @@ class Like < LikeHelpers::DuplexedIO
 
     assert_readable
 
-    if RBVER_LT_3_1 && length == 0
+    if RBVER_LT_3_0_4 && length == 0
       return (buffer || String.new(''.b))
     end
 
@@ -1014,7 +1014,7 @@ class Like < LikeHelpers::DuplexedIO
 
     assert_readable
 
-    if RBVER_LT_3_1 && length == 0
+    if RBVER_LT_3_0_4 && length == 0
       return (buffer || String.new(''.b))
     end
 
