@@ -17,6 +17,15 @@ describe "IO::LikeHelpers::IOWrapper#readable?" do
     io = IO::LikeHelpers::IOWrapper.new(@pipe_w)
     io.readable?.should be_false
   end
+
+  it "returns false if the stream is closed" do
+    io = IO::LikeHelpers::IOWrapper.new(@pipe_r)
+    io.close
+    io.readable?.should be_false
+    io = IO::LikeHelpers::IOWrapper.new(@pipe_w)
+    io.close
+    io.readable?.should be_false
+  end
 end
 
 # vim: ts=2 sw=2 et
