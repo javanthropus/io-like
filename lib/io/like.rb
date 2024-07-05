@@ -1253,6 +1253,14 @@ class Like < LikeHelpers::DuplexedIO
     # Ignore the chosen internal encoding when no conversion will be performed.
     int_enc = nil if int_enc == ext_enc || ext_enc == Encoding::BINARY
 
+    # Ascii incompatible external encoding without conversion when reading
+    # requires binmode.
+    unless binmode? || ! readable? ||
+      ext_enc.nil? || ext_enc.ascii_compatible? ||
+      ! int_enc.nil?
+      raise ArgumentError, 'ASCII incompatible encoding needs binmode'
+    end
+
     @external_encoding = ext_enc
     @internal_encoding = int_enc
     self.encoding_opts_r = opts
