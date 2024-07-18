@@ -83,9 +83,9 @@ class BufferedIO < DelegatedIO
 
     while @start_idx < @end_idx do
       remaining = @end_idx - @start_idx
-      written = delegate.write(@buffer[@start_idx, remaining])
-      return written if Symbol === written
-      @start_idx += written
+      result = delegate.write(@buffer[@start_idx, remaining])
+      return result if Symbol === result
+      @start_idx += result
     end
     nil
   end
