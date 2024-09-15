@@ -9,7 +9,7 @@ describe "IO::Like.new" do
       w.close
 
       IO::Like.open(
-        IO::LikeHelpers::BufferedIO.new(IO::LikeHelpers::IOWrapper.new(r)),
+        IO::LikeHelpers::IOWrapper.new(r),
         binmode: true, external_encoding: 'bom|us-ascii'
       ) do |io|
         io.external_encoding.should == Encoding::UTF_16BE
@@ -22,7 +22,7 @@ describe "IO::Like.new" do
       w.close
 
       IO::Like.open(
-        IO::LikeHelpers::BufferedIO.new(IO::LikeHelpers::IOWrapper.new(r)),
+        IO::LikeHelpers::IOWrapper.new(r),
         binmode: true, external_encoding: 'bom|us-ascii'
       ) do |io|
         io.external_encoding.should == Encoding::US_ASCII
