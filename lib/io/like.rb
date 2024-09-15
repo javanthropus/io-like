@@ -1255,9 +1255,8 @@ class Like < LikeHelpers::DuplexedIO
 
     # Ascii incompatible external encoding without conversion when reading
     # requires binmode.
-    unless binmode? || ! readable? ||
-      ext_enc.nil? || ext_enc.ascii_compatible? ||
-      ! int_enc.nil?
+    if ! binmode? && readable? && int_enc.nil? &&
+      ! (ext_enc || Encoding.default_external).ascii_compatible?
       raise ArgumentError, 'ASCII incompatible encoding needs binmode'
     end
 
