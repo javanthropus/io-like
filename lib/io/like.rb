@@ -1508,8 +1508,10 @@ class Like < LikeHelpers::DuplexedIO
              else
                String.new(obj)
              end
-    result = delegate.buffered_io.unread(string.b)
-    result
+
+    delegate.buffered_io.unread(string.b)
+
+    nil
   end
 
   ##
