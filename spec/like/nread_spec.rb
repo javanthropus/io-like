@@ -18,6 +18,7 @@ describe "IO::Like#nread" do
 
   it "raises IOError if the stream is closed" do
     obj = mock("io")
+    obj.should_receive(:readable?).and_return(false)
     obj.should_receive(:writable?).and_return(false)
     io = IO::Like.new(obj, autoclose: false)
     io.close
