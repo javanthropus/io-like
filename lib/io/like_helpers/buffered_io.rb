@@ -106,7 +106,7 @@ class BufferedIO < DelegatedIO
   end
 
   ##
-  # @return [Integer] the number of bytes availble to read from the internal
+  # @return [Integer] the number of bytes available to read from the internal
   #   buffer
   #
   # @raise [IOError] if the stream is not readable
