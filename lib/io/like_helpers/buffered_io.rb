@@ -305,9 +305,9 @@ class BufferedIO < DelegatedIO
 
     if length > @start_idx
       # Shift the available buffer content to the end of the buffer
-      @new_start_idx = @buffer_size - used
-      @buffer[@new_start_idx, used] = @buffer[@start_idx, used]
-      @start_idx = @new_start_idx
+      new_start_idx = @buffer_size - used
+      @buffer[new_start_idx, used] = @buffer[@start_idx, used]
+      @start_idx = new_start_idx
       @end_idx = @buffer_size
     end
 
