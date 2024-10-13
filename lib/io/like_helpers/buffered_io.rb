@@ -295,11 +295,11 @@ class BufferedIO < DelegatedIO
     return result if Symbol === result
 
     remaining = @end_idx - @start_idx
-    available = @buffer_size - remaining
+    available = buffer_size - remaining
     if available == 0
       # The read buffer is already full.
       return 0
-    elsif available < @buffer_size
+    elsif available < buffer_size
       if @start_idx > 0
         # Shift the remaining buffer content to the beginning of the buffer.
         @buffer[0, remaining] = @buffer[@start_idx, remaining]
@@ -312,7 +312,7 @@ class BufferedIO < DelegatedIO
     end
 
     result =
-      delegate.read(buffer_size, buffer: @buffer, buffer_offset: @end_idx)
+      delegate.read(available, buffer: @buffer, buffer_offset: @end_idx)
 
     # Return non-integer results from the delegate.
     return result if Symbol === result
