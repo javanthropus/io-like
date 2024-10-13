@@ -13,17 +13,30 @@ describe "IO::LikeHelpers::IOWrapper#pread" do
     rm_r(@filename)
   end
 
-  it "delegates to its delegate" do
+  it "delegates to its delegate and returns count of bytes read" do
     buffer = 'foo'.b
     io = IO::LikeHelpers::IOWrapper.new(@file)
-    io.pread(1, 2, buffer: buffer).should == 1
-    buffer[0].should == 'l'.b
-    buffer[1].should == 'o'.b
+    io.pread(1, 2, buffer: buffer, buffer_offset: 1).should == 1
+    buffer.should == 'flo'.b
   end
 
   it "defaults the buffer to nil and returns bytes read" do
     io = IO::LikeHelpers::IOWrapper.new(@file)
     io.pread(1, 2).should == 'l'.b
+  end
+
+  it "raises Argument error when the buffer offset is not a valid buffer index" do
+    buffer = 'foo'.b
+    io = IO::LikeHelpers::IOWrapper.new(@file)
+    -> { io.pread(1, 2, buffer: buffer, buffer_offset: -1) }.should raise_error(ArgumentError)
+    -> { io.pread(1, 2, buffer: buffer, buffer_offset: 100) }.should raise_error(ArgumentError)
+  end
+
+  it "raises Argument error when the amount to read would not fit into the given buffer" do
+    buffer = 'foo'.b
+    io = IO::LikeHelpers::IOWrapper.new(@file)
+    -> { io.pread(20, 2, buffer: buffer, buffer_offset: 1) }.should raise_error(ArgumentError)
+    -> { io.pread(20, 2, buffer: buffer) }.should raise_error(ArgumentError)
   end
 
   it "raises EOFError at end of file when in blocking mode" do

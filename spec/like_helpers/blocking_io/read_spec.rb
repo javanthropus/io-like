@@ -5,10 +5,11 @@ describe "IO::LikeHelpers::BlockingIO#read" do
   it "returns a short read if the delegate does" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
-    obj.should_receive(:read).and_return("\0" * 5, 5)
+    obj.should_receive(:read).and_return("\0" * 5, 5, 5)
     io = IO::LikeHelpers::BlockingIO.new(obj)
     io.read(10).should == "\0" * 5
-    io.read(10, buffer: "\0").should == 5
+    io.read(10, buffer: "\0" * 10).should == 5
+    io.read(10, buffer: "\0" * 11, buffer_offset: 1).should == 5
   end
 
   it "blocks if the delegate would block" do
@@ -18,7 +19,7 @@ describe "IO::LikeHelpers::BlockingIO#read" do
     obj.should_receive(:wait).with(IO::READABLE, 1).and_return(nil).exactly(2)
     io = IO::LikeHelpers::BlockingIO.new(obj)
     io.read(10).should == "\0" * 10
-    io.read(10, buffer: "\0").should == 10
+    io.read(10, buffer: "\0" * 10).should == 10
   end
 
   it "returns a short read if end of file is reached after reading some data" do
@@ -66,7 +67,7 @@ describe "IO::LikeHelpers::BlockingIO#read" do
     # Mspec mocks do not seem able to define a method that intermixes
     # returning results and raising exceptions.  Define such a method here and
     # a way to check that it was called enough times.
-    def obj.read(length, buffer: nil)
+    def obj.read(length, buffer: nil, buffer_offset: 0)
       @times ||= 0
       @times += 1
       if @times == 1

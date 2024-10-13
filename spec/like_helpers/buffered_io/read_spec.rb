@@ -13,13 +13,23 @@ describe "IO::LikeHelpers::BufferedIO#read" do
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(100)
     io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: 100)
-    io.read(1, buffer: '').should == 1
+    io.read(1, buffer: "\0").should == 1
+  end
+
+  it "inserts bytes at the index specified by the buffer_offset argument" do
+    buffer = 'foo'.b
+    obj = mock("io")
+    obj.should_receive(:readable?).and_return(true)
+    obj.should_receive(:read).and_return(100)
+    io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: 100)
+    io.read(1, buffer: buffer, buffer_offset: 1).should == 1
+    buffer.should == "f\0o".b
   end
 
   it "defaults the buffer argument to nil and returns a new buffer" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
-    obj.should_receive(:read).with(100, buffer: "\0".b * 100).and_return(100)
+    obj.should_receive(:read).with(100, buffer: "\0".b * 100, buffer_offset: 0).and_return(100)
     io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: 100)
     io.read(1).should == "\0"
   end
@@ -54,15 +64,6 @@ describe "IO::LikeHelpers::BufferedIO#read" do
     obj.should_receive(:read).and_return(:wait_readable)
     io = IO::LikeHelpers::BufferedIO.new(obj)
     io.read(1).should == :wait_readable
-  end
-
-  it "delegates to its delegate" do
-    buffer = 'foo'.b
-    obj = mock("io")
-    obj.should_receive(:readable?).and_return(true)
-    obj.should_receive(:read).and_return(1)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
-    io.read(1, buffer: buffer).should == 1
   end
 
   it "fills the internal buffer from its delegate" do
@@ -100,6 +101,22 @@ describe "IO::LikeHelpers::BufferedIO#read" do
       io = IO::LikeHelpers::BufferedIO.new(IO::LikeHelpers::IOWrapper.new(r))
       io.read(100).should == 'bar' * 3
     end
+  end
+
+  it "raises Argument error when the buffer offset is not a valid buffer index" do
+    buffer = 'foo'.b
+    obj = mock("io")
+    io = IO::LikeHelpers::BufferedIO.new(obj)
+    -> { io.read(1, buffer: buffer, buffer_offset: -1) }.should raise_error(ArgumentError)
+    -> { io.read(1, buffer: buffer, buffer_offset: 100) }.should raise_error(ArgumentError)
+  end
+
+  it "raises Argument error when the amount to read would not fit into the given buffer" do
+    buffer = 'foo'.b
+    obj = mock("io")
+    io = IO::LikeHelpers::BufferedIO.new(obj)
+    -> { io.read(20, buffer: buffer, buffer_offset: 1) }.should raise_error(ArgumentError)
+    -> { io.read(20, buffer: buffer) }.should raise_error(ArgumentError)
   end
 
   it "raises EOFError if reading begins at end of file" do

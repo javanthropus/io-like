@@ -16,14 +16,27 @@ describe "IO::LikeHelpers::IOWrapper#read" do
   it "delegates to its delegate and returns count of bytes read" do
     buffer = 'foo'.b
     io = IO::LikeHelpers::IOWrapper.new(@file)
-    io.read(1, buffer: buffer).should == 1
-    buffer[0].should == 'h'
-    buffer[1].should == 'o'
+    io.read(1, buffer: buffer, buffer_offset: 1).should == 1
+    buffer.should == 'fho'.b
   end
 
   it "defaults the buffer to nil and returns bytes read" do
     io = IO::LikeHelpers::IOWrapper.new(@file)
     io.read(1).should == 'h'
+  end
+
+  it "raises Argument error when the buffer offset is not a valid buffer index" do
+    buffer = 'foo'.b
+    io = IO::LikeHelpers::IOWrapper.new(@file)
+    -> { io.read(1, buffer: buffer, buffer_offset: -1) }.should raise_error(ArgumentError)
+    -> { io.read(1, buffer: buffer, buffer_offset: 100) }.should raise_error(ArgumentError)
+  end
+
+  it "raises Argument error when the amount to read would not fit into the given buffer" do
+    buffer = 'foo'.b
+    io = IO::LikeHelpers::IOWrapper.new(@file)
+    -> { io.read(20, buffer: buffer, buffer_offset: 1) }.should raise_error(ArgumentError)
+    -> { io.read(20, buffer: buffer) }.should raise_error(ArgumentError)
   end
 
   it "raises EOFError at end of file when in blocking mode" do

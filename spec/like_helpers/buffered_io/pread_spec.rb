@@ -18,9 +18,9 @@ describe "IO::LikeHelpers::BufferedIO#pread" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
-    obj.should_receive(:pread).with(1, 2, buffer: buffer).and_return(:result)
+    obj.should_receive(:pread).with(1, 2, buffer: buffer, buffer_offset: 1).and_return(:result)
     io = IO::LikeHelpers::BufferedIO.new(obj)
-    io.pread(1, 2, buffer: buffer).should == :result
+    io.pread(1, 2, buffer: buffer, buffer_offset: 1).should == :result
   end
 
   it "returns a Symbol if switching to read mode does so" do
@@ -55,8 +55,8 @@ describe "IO::LikeHelpers::BufferedIO#pread" do
     # Emulate peforming a short read.  The checks on the results of the read
     # operations on the BufferedIO instance will serve as validation that the
     # method was called.
-    def obj.read(length, buffer: nil)
-      buffer[0, 10] = '0123456789'.b
+    def obj.read(length, buffer: nil, buffer_offset: 0)
+      buffer[buffer_offset, 10] = '0123456789'.b
       10
     end
     obj.should_receive(:readable?).and_return(true)
@@ -65,6 +65,22 @@ describe "IO::LikeHelpers::BufferedIO#pread" do
     io.read(1).should == '0'.b
     io.pread(1, 2).should == 'a'.b
     io.read(1).should == '1'.b
+  end
+
+  it "raises Argument error when the buffer offset is not a valid buffer index" do
+    buffer = 'foo'.b
+    obj = mock("io")
+    io = IO::LikeHelpers::BufferedIO.new(obj)
+    -> { io.pread(1, 2, buffer: buffer, buffer_offset: -1) }.should raise_error(ArgumentError)
+    -> { io.pread(1, 2, buffer: buffer, buffer_offset: 100) }.should raise_error(ArgumentError)
+  end
+
+  it "raises Argument error when the amount to read would not fit into the given buffer" do
+    buffer = 'foo'.b
+    obj = mock("io")
+    io = IO::LikeHelpers::BufferedIO.new(obj)
+    -> { io.pread(20, 2, buffer: buffer, buffer_offset: 1) }.should raise_error(ArgumentError)
+    -> { io.pread(20, 2, buffer: buffer) }.should raise_error(ArgumentError)
   end
 
   it "raises IOError if its delegate is not readable" do

@@ -274,6 +274,8 @@ class AbstractIO
   #   to begin reading
   # @param buffer [String] if provided, a buffer into which the bytes should be
   #   placed
+  # @param buffer_offset [Integer] the index at which to insert bytes into
+  #   `buffer`
   #
   # @return [String] a new String containing the bytes read if `buffer` is `nil`
   #   or `buffer` if provided
@@ -282,12 +284,12 @@ class AbstractIO
   #
   # @raise [EOFError] when reading at the end of the stream
   # @raise [IOError] if the stream is not readable
-  def pread(length, offset, buffer: nil)
+  def pread(length, offset, buffer: nil, buffer_offset: 0)
     position = seek(0, IO::SEEK_CUR)
 
     seek(offset, IO::SEEK_SET)
     begin
-      read(length, buffer: buffer)
+      read(length, buffer: buffer, buffer_offset: buffer_offset)
     ensure
       seek(position, IO::SEEK_SET)
     end
@@ -330,6 +332,8 @@ class AbstractIO
   # @param length [Integer] the number of bytes to read
   # @param buffer [String] the buffer into which bytes will be read (encoding
   #   assumed to be binary)
+  # @param buffer_offset [Integer] the index at which to insert bytes into
+  #   `buffer`
   #
   # @return [Integer] the number of bytes read if `buffer` is not `nil`
   # @return [String] a buffer containing the bytes read if `buffer` is `nil`
@@ -338,7 +342,7 @@ class AbstractIO
   #
   # @raise [EOFError] when reading at the end of the stream
   # @raise [IOError] if the stream is not readable
-  def read(length, buffer: nil)
+  def read(length, buffer: nil, buffer_offset: 0)
     assert_readable
   end
 

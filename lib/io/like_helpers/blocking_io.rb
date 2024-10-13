@@ -18,13 +18,15 @@ class BlockingIO < DelegatedIO
   # @param length [Integer] the number of bytes to read
   # @param buffer [String] the buffer into which bytes will be read (encoding
   #   assumed to be binary)
+  # @param buffer_offset [Integer] the index at which to insert bytes into
+  #   `buffer`
   #
   # @return [Integer] the number of bytes read if `buffer` is not `nil`
   # @return [String] a buffer containing the bytes read if `buffer` is `nil`
   #
   # @raise [EOFError] when reading at the end of the stream
   # @raise [IOError] if the stream is not readable
-  def read(length, buffer: nil)
+  def read(length, buffer: nil, buffer_offset: 0)
     ensure_blocking { super }
   end
 

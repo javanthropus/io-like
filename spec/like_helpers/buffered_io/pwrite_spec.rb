@@ -39,7 +39,7 @@ describe "IO::LikeHelpers::BufferedIO#pwrite" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
-    obj.should_receive(:read).with(100, buffer: read_buffer).and_return(read_buffer.size).twice
+    obj.should_receive(:read).with(100, buffer: read_buffer, buffer_offset: 0).and_return(read_buffer.size).twice
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:pwrite).with(buffer, 2, length: buffer.size).and_return(buffer.size)
     io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: read_buffer.size)

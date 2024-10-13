@@ -27,6 +27,8 @@ class IOWrapper < DelegatedIO
   #   to begin reading
   # @param buffer [String] if provided, a buffer into which the bytes should be
   #   placed
+  # @param buffer_offset [Integer] the index at which to insert bytes into
+  #   `buffer`
   #
   # @return [String] a new String containing the bytes read if `buffer` is `nil`
   #   or `buffer` if provided
@@ -35,13 +37,22 @@ class IOWrapper < DelegatedIO
   #
   # @raise [EOFError] when reading at the end of the stream
   # @raise [IOError] if the stream is not readable
-  def pread(length, offset, buffer: nil)
+  def pread(length, offset, buffer: nil, buffer_offset: 0)
+    if ! buffer.nil?
+      if buffer_offset < 0 || buffer_offset >= buffer.bytesize
+        raise ArgumentError, 'buffer_offset is not a valid buffer index'
+      end
+      if buffer.bytesize - buffer_offset < length
+        raise ArgumentError, 'length is greater than available buffer space'
+      end
+    end
+
     assert_readable
 
     content = delegate.pread(length, offset)
     return content if Symbol === content || buffer.nil?
 
-    buffer[0, content.bytesize] = content
+    buffer[buffer_offset, content.bytesize] = content
     return content.bytesize
   end
 
@@ -77,6 +88,8 @@ class IOWrapper < DelegatedIO
   # @param length [Integer] the number of bytes to read
   # @param buffer [String] the buffer into which bytes will be read (encoding
   #   assumed to be binary)
+  # @param buffer_offset [Integer] the index at which to insert bytes into
+  #   `buffer`
   #
   # @return [Integer] the number of bytes read if `buffer` is not `nil`
   # @return [String] a buffer containing the bytes read if `buffer` is `nil`
@@ -85,7 +98,16 @@ class IOWrapper < DelegatedIO
   #
   # @raise [EOFError] when reading at the end of the stream
   # @raise [IOError] if the stream is not readable
-  def read(length, buffer: nil)
+  def read(length, buffer: nil, buffer_offset: 0)
+    if ! buffer.nil?
+      if buffer_offset < 0 || buffer_offset >= buffer.bytesize
+        raise ArgumentError, 'buffer_offset is not a valid buffer index'
+      end
+      if buffer.bytesize - buffer_offset < length
+        raise ArgumentError, 'length is greater than available buffer space'
+      end
+    end
+
     assert_readable
     content = nonblock? ?
       read_nonblock(length) :
@@ -93,7 +115,7 @@ class IOWrapper < DelegatedIO
 
     return content if Symbol === content || buffer.nil?
 
-    buffer[0, content.bytesize] = content
+    buffer[buffer_offset, content.bytesize] = content
     return content.bytesize
   end
 

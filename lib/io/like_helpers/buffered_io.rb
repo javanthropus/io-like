@@ -118,6 +118,33 @@ class BufferedIO < DelegatedIO
   end
 
   ##
+  # Reads up to _length_ bytes from the read buffer but does not advance the
+  # stream position.
+  #
+  # @param length [Integer, nil] the number of bytes to read or `nil` for all
+  #   bytes
+  #
+  # @return [String] a buffer containing the bytes read
+  #
+  # @raise [IOError] if the stream is not readable
+  def peek(length = nil)
+    if length.nil?
+      length = nread
+    else
+      length = Integer(length)
+      raise ArgumentError, 'length must be at least 0' if length < 0
+    end
+
+    assert_readable
+
+    return ''.b unless @mode == :read
+
+    available = @end_idx - @start_idx
+    length = available if available < length
+    return @buffer[@start_idx, length]
+  end
+
+  ##
   # Reads at most `length` bytes from the stream starting at `offset` without
   # modifying the read position in the stream.
   #
@@ -132,6 +159,8 @@ class BufferedIO < DelegatedIO
   #   to begin reading
   # @param buffer [String] if provided, a buffer into which the bytes should be
   #   placed
+  # @param buffer_offset [Integer] the index at which to insert bytes into
+  #   `buffer`
   #
   # @return [String] a new String containing the bytes read if `buffer` is `nil`
   #   or `buffer` if provided
@@ -140,11 +169,19 @@ class BufferedIO < DelegatedIO
   #
   # @raise [EOFError] when reading at the end of the stream
   # @raise [IOError] if the stream is not readable
-  def pread(length, offset, buffer: nil)
+  def pread(length, offset, buffer: nil, buffer_offset: 0)
     offset = Integer(offset)
     raise ArgumentError, 'offset must be at least 0' if offset < 0
     length = Integer(length)
     raise ArgumentError, 'length must be at least 0' if length < 0
+    if ! buffer.nil?
+      if buffer_offset < 0 || buffer_offset >= buffer.bytesize
+        raise ArgumentError, 'buffer_offset is not a valid buffer index'
+      end
+      if buffer.bytesize - buffer_offset < length
+        raise ArgumentError, 'length is greater than available buffer space'
+      end
+    end
 
     assert_readable
 
@@ -196,6 +233,8 @@ class BufferedIO < DelegatedIO
   # @param length [Integer] the number of bytes to read
   # @param buffer [String] the buffer into which bytes will be read (encoding
   #   assumed to be binary)
+  # @param buffer_offset [Integer] the index at which to insert bytes into
+  #   `buffer`
   #
   # @return [Integer] the number of bytes read if `buffer` is not `nil`
   # @return [String] a buffer containing the bytes read if `buffer` is `nil`
@@ -204,22 +243,22 @@ class BufferedIO < DelegatedIO
   #
   # @raise [EOFError] when reading at the end of the stream
   # @raise [IOError] if the stream is not readable
-  def read(length, buffer: nil)
+  def read(length, buffer: nil, buffer_offset: 0)
     length = Integer(length)
     raise ArgumentError, 'length must be at least 0' if length < 0
-
-    result = set_read_mode
-    return result if Symbol === result
+    if ! buffer.nil?
+      if buffer_offset < 0 || buffer_offset >= buffer.bytesize
+        raise ArgumentError, 'buffer_offset is not a valid buffer index'
+      end
+      if buffer.bytesize - buffer_offset < length
+        raise ArgumentError, 'length is greater than available buffer space'
+      end
+    end
 
     # Reload the internal buffer when empty.
-    if @start_idx >= @end_idx
-      @start_idx = @end_idx = 0
-      result = super(@buffer_size, buffer: @buffer)
-
-      # Return non-integer results from the delegate.
+    if read_buffer_empty?
+      result = refill
       return result if Symbol === result
-
-      @end_idx = result
     end
 
     available = @end_idx - @start_idx
@@ -228,7 +267,7 @@ class BufferedIO < DelegatedIO
     @start_idx += length
     return content if buffer.nil?
 
-    buffer[0, length] = content
+    buffer[buffer_offset, length] = content
     return length
   end
 
@@ -238,6 +277,49 @@ class BufferedIO < DelegatedIO
   # @return [Boolean]
   def read_buffer_empty?
     @mode != :read || @start_idx >= @end_idx
+  end
+
+  ##
+  # Refills the read buffer.
+  #
+  # @return [Integer] the number of bytes added to the read buffer
+  # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
+  #   the operation would block
+  #
+  # @raise [EOFError] when reading at the end of the stream
+  # @raise [IOError] if the stream is not readable
+  def refill
+    assert_readable
+
+    result = set_read_mode
+    return result if Symbol === result
+
+    remaining = @end_idx - @start_idx
+    available = @buffer_size - remaining
+    if available == 0
+      # The read buffer is already full.
+      return 0
+    elsif available < @buffer_size
+      if @start_idx > 0
+        # Shift the remaining buffer content to the beginning of the buffer.
+        @buffer[0, remaining] = @buffer[@start_idx, remaining]
+        @start_idx = 0
+        @end_idx = remaining
+      end
+    else
+      # The read buffer is empty, so prepare to fill it at the beginning.
+      @start_idx = @end_idx = 0
+    end
+
+    result =
+      delegate.read(buffer_size, buffer: @buffer, buffer_offset: @end_idx)
+
+    # Return non-integer results from the delegate.
+    return result if Symbol === result
+
+    @end_idx += result
+
+    result
   end
 
   ##
@@ -275,6 +357,34 @@ class BufferedIO < DelegatedIO
     # Clear the buffer only if the seek was successful.
     @start_idx = @end_idx = 0
     result
+  end
+
+  ##
+  # Advances forward in the read buffer up to _length_ bytes.
+  #
+  # @param length [Integer, nil] the number of bytes to skip or `nil` for all
+  #   bytes
+  #
+  # @return [Integer] the number of bytes actually skipped
+  #
+  # @raise [IOError] if the stream is not readable
+  def skip(length = nil)
+    if length.nil?
+      length = nread
+    else
+      length = Integer(length)
+      raise ArgumentError, 'length must be at least 0' if length < 0
+    end
+
+    assert_readable
+
+    return 0 unless @mode == :read
+
+    remaining = @end_idx - @start_idx
+    length = remaining if length > remaining
+    @start_idx += length
+
+    length
   end
 
   ##
