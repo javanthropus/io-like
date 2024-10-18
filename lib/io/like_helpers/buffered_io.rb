@@ -118,7 +118,7 @@ class BufferedIO < DelegatedIO
   end
 
   ##
-  # Reads up to _length_ bytes from the read buffer but does not advance the
+  # Reads up to `length` bytes from the read buffer but does not advance the
   # stream position.
   #
   # @param length [Integer, nil] the number of bytes to read or `nil` for all
@@ -162,6 +162,7 @@ class BufferedIO < DelegatedIO
   # @param buffer_offset [Integer] the index at which to insert bytes into
   #   `buffer`
   #
+  # @return [Integer] the number of bytes read if `buffer` is not `nil`
   # @return [String] a new String containing the bytes read if `buffer` is `nil`
   #   or `buffer` if provided
   # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
