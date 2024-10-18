@@ -48,6 +48,9 @@ class MSpecScript
     # This library does not replace the IO associated with STDOUT, so skip
     # methods related to it.
     /^IO#write on STDOUT/,
+    # This test verifies buggy behavior on Ruby 3.1 and below that is not worth
+    # supporting.
+    /^IO#syswrite on a pipe raises Errno::E(AGAIN|WOULDBLOCK) when the write would block/,
   ]
 
   # Exclude IO specs not relevant to IO::Like.
