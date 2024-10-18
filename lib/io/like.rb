@@ -32,9 +32,9 @@ class Like < LikeHelpers::DuplexedIO
   # @param binmode [Boolean] when `true` suppresses EOL <-> CRLF conversion on
   #   Windows and sets external encoding to ASCII-8BIT unless explicitly
   #   specified
+  # @param encoding_opts [Hash] options to be passed to String#encode
   # @param internal_encoding [Encoding, String] the internal encoding
   # @param external_encoding [Encoding, String] the external encoding
-  # @param encoding_opts [Hash] options to be passed to String#encode
   # @param sync [Boolean] when `true` causes write operations to bypass internal
   #   buffering
   # @param pid [Integer] the return value for {#pid}
@@ -457,6 +457,9 @@ class Like < LikeHelpers::DuplexedIO
   def gets(*args, chomp: false)
     readline(*args, chomp: chomp)
   rescue EOFError
+    # NOTE:
+    # Through Ruby 3.3, assigning to $_ has no effect outside of a method that
+    # does it.  This assignment is kept in case that ever changes.
     $_ = nil
     nil
   end
@@ -656,7 +659,7 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # If _obj_ is a String, write the first character; otherwise, convert _obj_ to
+  # If `obj` is a String, write the first character; otherwise, convert `obj` to
   # an Integer using the `Integer` method and write the low order byte.
   #
   # @param obj [String, Numeric] the character to be written
@@ -704,10 +707,10 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # Writes at most `object.to_s.length` bytes to the stream starting at `offset`
+  # Writes at most `string.to_s.length` bytes to the stream starting at `offset`
   # without modifying the write position in the stream.
   #
-  # @param object [String] the bytes to write (encoding assumed to be binary)
+  # @param string [String] the bytes to write (encoding assumed to be binary)
   # @param offset [Integer] the offset from the beginning of the stream at which
   #   to begin writing
   #
@@ -728,17 +731,17 @@ class Like < LikeHelpers::DuplexedIO
   ##
   # Reads data from the stream.
   #
-  # If _length_ is specified as a positive integer, at most _length_ bytes are
+  # If `length` is specified as a positive integer, at most `length` bytes are
   # returned.  Truncated data will occur if there is insufficient data left to
   # fulfill the request.  If the read starts at the end of data, `nil` is
   # returned.
   #
-  # If _length_ is unspecified or `nil`, an attempt to return all remaining data
+  # If `length` is unspecified or `nil`, an attempt to return all remaining data
   # is made.  Partial data will be returned if a low-level error is raised after
   # some data is retrieved.  If no data would be returned at all, an empty
   # String is returned.
   #
-  # If _buffer_ is specified, it will be converted to a String using its
+  # If `buffer` is specified, it will be converted to a String using its
   # `to_str` method if necessary and will be filled with the returned data if
   # any.
   #
@@ -746,9 +749,9 @@ class Like < LikeHelpers::DuplexedIO
   # @param buffer [String] the location into which data will be stored
   #
   # @return [String] the data read from the stream
-  # @return [nil] if _length_ is non-zero but no data is left in the stream
+  # @return [nil] if `length` is non-zero but no data is left in the stream
   #
-  # @raise [ArgumentError] if _length_ is less than 0
+  # @raise [ArgumentError] if `length` is less than 0
   # @raise [IOError] if the stream is not open for reading
   def read(length = nil, buffer = nil)
     unless length.nil? || length >= 0
@@ -778,10 +781,10 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # Reads and returns at most _length_ bytes from the stream.
+  # Reads and returns at most `length` bytes from the stream.
   #
   # If the internal read buffer is **not** empty, only the buffer is used, even
-  # if less than _length_ bytes are available.  If the internal buffer **is**
+  # if less than `length` bytes are available.  If the internal buffer **is**
   # empty, sets non-blocking mode via {#nonblock=} and then reads from the
   # underlying stream.
   #
@@ -791,15 +794,15 @@ class Like < LikeHelpers::DuplexedIO
   #   exceptions when no data is available; otherwise, symbols are returned
   #
   # @return [String] the data read from the stream
-  # @return [:wait_readable, :wait_writable] if _exception_ is `false` and no
+  # @return [:wait_readable, :wait_writable] if `exception` is `false` and no
   #   data is available
-  # @return [nil] if _exception_ is `false` and reading begins at the end of the
+  # @return [nil] if `exception` is `false` and reading begins at the end of the
   #   stream
   #
   # @raise [EOFError] if reading begins at the end of the stream
   # @raise [IOError] if the stream is not open for reading
   # @raise [IO::EWOULDBLOCKWaitReadable, IO::EWOULDBLOCKWaitWritable] if
-  #   _exception_ is `true` and no data is available
+  #   `exception` is `true` and no data is available
   # @raise [Errno::EBADF] if non-blocking mode is not supported
   # @raise [SystemCallError] if there are low level errors
   def read_nonblock(length, buffer = nil, exception: true)
@@ -960,7 +963,7 @@ class Like < LikeHelpers::DuplexedIO
     $. = lineno
     # Set the last read line in the global and return it.
     # NOTE:
-    # Through Ruby 3.1, assigning to $_ has no effect outside of a method that
+    # Through Ruby 3.3, assigning to $_ has no effect outside of a method that
     # does it.  This assignment is kept in case that ever changes.
     $_ = buffer
   end
@@ -994,10 +997,10 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # Reads and returns at most _length_ bytes from the stream.
+  # Reads and returns at most `length` bytes from the stream.
   #
   # If the internal read buffer is **not** empty, only the buffer is used, even
-  # if less than _length_ bytes are available.  If the internal buffer **is**
+  # if less than `length` bytes are available.  If the internal buffer **is**
   # empty, reads from the underlying stream.
   #
   # @param length [Integer] the number of bytes to read
@@ -1016,6 +1019,10 @@ class Like < LikeHelpers::DuplexedIO
 
     if RBVER_LT_3_0_4 && length == 0
       return (buffer || String.new(''.b))
+    end
+
+    unless delegate_r.character_io.buffer_empty?
+      raise IOError, 'byte oriented read for character buffered IO'
     end
 
     result = ensure_buffer(length, buffer) do |binary_buffer|
@@ -1041,7 +1048,7 @@ class Like < LikeHelpers::DuplexedIO
   #   @param io [IO, #to_io] an IO instance that will be dup'd and used as this
   #     stream's delegate
   #
-  #   @raise [IOError] if this instance or _io_ are closed
+  #   @raise [IOError] if this instance or `io` are closed
   #
   # @overload reopen(path, mode, **opt)
   #   @param path [String] path to a file to open and use as a delegate for this
@@ -1133,18 +1140,18 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # Sets the current stream position to _amount_ based on the setting of
-  # _whence_.
+  # Sets the current stream position to `amount` based on the setting of
+  # `whence`.
   #
-  # | _whence_ | _amount_ Interpretation |
+  # | `whence` | `amount` Interpretation |
   # | -------- | ----------------------- |
-  # | `:CUR` or `IO::SEEK_CUR` | _amount_ added to current stream position |
-  # | `:END` or `IO::SEEK_END` | _amount_ added to end of stream position (_amount_ will usually be negative here) |
-  # | `:SET` or `IO::SEEK_SET` | _amount_ used as absolute position |
+  # | `:CUR` or `IO::SEEK_CUR` | `amount` added to current stream position |
+  # | `:END` or `IO::SEEK_END` | `amount` added to end of stream position (`amount` will usually be negative here) |
+  # | `:SET` or `IO::SEEK_SET` | `amount` used as absolute position |
   #
   # @param amount [Integer] the amount to move the position in bytes
   # @param whence [Integer, Symbol] the position alias from which to consider
-  #   _amount_
+  #   `amount`
   #
   # @return [0]
   #
@@ -1253,7 +1260,7 @@ class Like < LikeHelpers::DuplexedIO
     # Ignore the chosen internal encoding when no conversion will be performed.
     int_enc = nil if int_enc == ext_enc || ext_enc == Encoding::BINARY
 
-    # Ascii incompatible external encoding without conversion when reading
+    # ASCII incompatible external encoding without conversion when reading
     # requires binmode.
     if ! binmode? && readable? && int_enc.nil? &&
       ! (ext_enc || Encoding.default_external).ascii_compatible?
@@ -1378,7 +1385,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @param sync [Boolean] the sync mode
   #
-  # @return [Boolean] the given value for _sync_
+  # @return [Boolean] the given value for `sync`
   #
   # @raise [IOError] if the stream is closed
   def sync=(sync)
@@ -1387,13 +1394,13 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # Reads and returns up to _length_ bytes directly from the data stream,
+  # Reads and returns up to `length` bytes directly from the data stream,
   # bypassing the internal read buffer.
   #
-  # If _buffer_ is given, it is used to store the bytes that are read;
+  # If `buffer` is given, it is used to store the bytes that are read;
   # otherwise, a new buffer is created.
   #
-  # Returns an empty String if _length_ is `0` regardless of the status of the
+  # Returns an empty String if `length` is `0` regardless of the status of the
   # data stream.  This is for compatibility with `IO#sysread`.
   #
   # @param length [Integer] the number of bytes to read
@@ -1426,18 +1433,18 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # Sets the current, unbuffered stream position to _amount_ based on the
-  # setting of _whence_.
+  # Sets the current, unbuffered stream position to `amount` based on the
+  # setting of `whence`.
   #
-  # | _whence_ | _amount_ Interpretation |
+  # | `whence` | `amount` Interpretation |
   # | -------- | ----------------------- |
-  # | `:CUR` or `IO::SEEK_CUR` | _amount_ added to current stream position |
-  # | `:END` or `IO::SEEK_END` | _amount_ added to end of stream position (_amount_ will usually be negative here) |
-  # | `:SET` or `IO::SEEK_SET` | _amount_ used as absolute position |
+  # | `:CUR` or `IO::SEEK_CUR` | `amount` added to current stream position |
+  # | `:END` or `IO::SEEK_END` | `amount` added to end of stream position (`amount` will usually be negative here) |
+  # | `:SET` or `IO::SEEK_SET` | `amount` used as absolute position |
   #
   # @param offset [Integer] the amount to move the position in bytes
   # @param whence [Integer, Symbol] the position alias from which to consider
-  #   _amount_
+  #   `amount`
   #
   # @return [Integer] the new stream position
   #
@@ -1457,7 +1464,7 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
-  # Writes _string_ directly to the data stream, bypassing the internal
+  # Writes `string` directly to the data stream, bypassing the internal
   # write buffer.
   #
   # @param string [String] a string of bytes to be written
@@ -1720,10 +1727,10 @@ class Like < LikeHelpers::DuplexedIO
 
   ##
   # Enables blocking mode on the stream (via #nonblock=), flushes any buffered
-  # data, and then directly writes _string_, bypassing the internal buffer.
+  # data, and then directly writes `string`, bypassing the internal buffer.
   #
-  # If _string_ is not a `String`, its `to_s` method is used to convert it into
-  # one.  If any of _string_ is written, this method returns the number of bytes
+  # If `string` is not a `String`, its `to_s` method is used to convert it into
+  # one.  If any of `string` is written, this method returns the number of bytes
   # written, which may be less than all requested bytes (partial write).
   #
   # @param string [Object] bytes to write to the stream
@@ -1731,12 +1738,12 @@ class Like < LikeHelpers::DuplexedIO
   #   exceptions when writing would block; otherwise, symbols are returned
   #
   # @return [Integer] the total number of bytes written
-  # @return [:wait_readable, :wait_writable] if _exception_ is `false` and
+  # @return [:wait_readable, :wait_writable] if `exception` is `false` and
   #   writing to the stream would block
   #
   # @raise [IOError] if the stream is not open for writing
   # @raise [IO::EWOULDBLOCKWaitReadable, IO::EWOULDBLOCKWaitWritable] if
-  #   _exception_ is `true` and writing to the stream would block
+  #   `exception` is `true` and writing to the stream would block
   # @raise [Errno::EBADF] if non-blocking mode is not supported
   # @raise [SystemCallError] if there are low level errors
   def write_nonblock(string, exception: true)

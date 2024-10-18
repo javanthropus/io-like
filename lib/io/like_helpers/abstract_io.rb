@@ -46,7 +46,7 @@ class AbstractIO
   #
   # @param kwargs [Hash] only provided for compatibility with .open on Ruby 2.6
   #
-  # @todo Remove explicit _kwargs_ parameter when Ruby 2.6 support is dropped.
+  # @todo Remove explicit `kwargs` parameter when Ruby 2.6 support is dropped.
   def initialize(**kwargs)
     @closed = false
   end
@@ -57,7 +57,7 @@ class AbstractIO
   # This method is a no-op if not implemented.  If `offset` and `len` are both
   # `0`, then the entire stream is affected.
   #
-  # | _advice_ | Meaning |
+  # | `advice` | Meaning |
   # | -------- | ------- |
   # | `:normal` | No advice given; default assumption for the stream. |
   # | `:sequential` | The data will be read sequentially from lower offsets to higher ones. |
@@ -277,6 +277,7 @@ class AbstractIO
   # @param buffer_offset [Integer] the index at which to insert bytes into
   #   `buffer`
   #
+  # @return [Integer] the number of bytes read if `buffer` is not `nil`
   # @return [String] a new String containing the bytes read if `buffer` is `nil`
   #   or `buffer` if provided
   # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
@@ -365,18 +366,18 @@ class AbstractIO
   end
 
   ##
-  # Sets the current stream position to _amount_ based on the setting of
-  # _whence_.
+  # Sets the current stream position to `amount` based on the setting of
+  # `whence`.
   #
-  # | _whence_ | _amount_ Interpretation |
+  # | `whence` | `amount` Interpretation |
   # | -------- | ----------------------- |
-  # | `:CUR` or `IO::SEEK_CUR` | _amount_ added to current stream position |
-  # | `:END` or `IO::SEEK_END` | _amount_ added to end of stream position (_amount_ will usually be negative here) |
-  # | `:SET` or `IO::SEEK_SET` | _amount_ used as absolute position |
+  # | `:CUR` or `IO::SEEK_CUR` | `amount` added to current stream position |
+  # | `:END` or `IO::SEEK_END` | `amount` added to end of stream position (`amount` will usually be negative here) |
+  # | `:SET` or `IO::SEEK_SET` | `amount` used as absolute position |
   #
   # @param amount [Integer] the amount to move the position in bytes
   # @param whence [Integer, Symbol] the position alias from which to consider
-  #   _amount_
+  #   `amount`
   #
   # @return [Integer] the new stream position
   #

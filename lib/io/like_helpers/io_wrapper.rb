@@ -30,6 +30,7 @@ class IOWrapper < DelegatedIO
   # @param buffer_offset [Integer] the index at which to insert bytes into
   #   `buffer`
   #
+  # @return [Integer] the number of bytes read if `buffer` is not `nil`
   # @return [String] a new String containing the bytes read if `buffer` is `nil`
   #   or `buffer` if provided
   # @return [:wait_readable, :wait_writable] if the stream is non-blocking and
@@ -148,18 +149,18 @@ class IOWrapper < DelegatedIO
   end
 
   ##
-  # Sets the current, unbuffered stream position to _amount_ based on the
-  # setting of _whence_.
+  # Sets the current, unbuffered stream position to `amount` based on the
+  # setting of `whence`.
   #
-  # | _whence_ | _amount_ Interpretation |
+  # | `whence` | `amount` Interpretation |
   # | -------- | ----------------------- |
-  # | `:CUR` or `IO::SEEK_CUR` | _amount_ added to current stream position |
-  # | `:END` or `IO::SEEK_END` | _amount_ added to end of stream position (_amount_ will usually be negative here) |
-  # | `:SET` or `IO::SEEK_SET` | _amount_ used as absolute position |
+  # | `:CUR` or `IO::SEEK_CUR` | `amount` added to current stream position |
+  # | `:END` or `IO::SEEK_END` | `amount` added to end of stream position (`amount` will usually be negative here) |
+  # | `:SET` or `IO::SEEK_SET` | `amount` used as absolute position |
   #
   # @param amount [Integer] the amount to move the position in bytes
   # @param whence [Integer, Symbol] the position alias from which to consider
-  #   _amount_
+  #   `amount`
   #
   # @return [Integer] the new stream position
   #

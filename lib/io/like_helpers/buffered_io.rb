@@ -324,18 +324,18 @@ class BufferedIO < DelegatedIO
   end
 
   ##
-  # Sets the current stream position to _amount_ based on the setting of
-  # _whence_.
+  # Sets the current stream position to `amount` based on the setting of
+  # `whence`.
   #
-  # | _whence_ | _amount_ Interpretation |
+  # | `whence` | `amount` Interpretation |
   # | -------- | ----------------------- |
-  # | `:CUR` or `IO::SEEK_CUR` | _amount_ added to current stream position |
-  # | `:END` or `IO::SEEK_END` | _amount_ added to end of stream position (_amount_ will usually be negative here) |
-  # | `:SET` or `IO::SEEK_SET` | _amount_ used as absolute position |
+  # | `:CUR` or `IO::SEEK_CUR` | `amount` added to current stream position |
+  # | `:END` or `IO::SEEK_END` | `amount` added to end of stream position (`amount` will usually be negative here) |
+  # | `:SET` or `IO::SEEK_SET` | `amount` used as absolute position |
   #
   # @param amount [Integer] the amount to move the position in bytes
   # @param whence [Integer, Symbol] the position alias from which to consider
-  #   _amount_
+  #   `amount`
   #
   # @return [Integer] the new stream position
   #
@@ -361,7 +361,7 @@ class BufferedIO < DelegatedIO
   end
 
   ##
-  # Advances forward in the read buffer up to _length_ bytes.
+  # Advances forward in the read buffer up to `length` bytes.
   #
   # @param length [Integer, nil] the number of bytes to skip or `nil` for all
   #   bytes
