@@ -15,7 +15,7 @@ class ROT13Filter < DelegatedIO
     )
   end
 
-  def read(length, buffer: nil)
+  def read(length, buffer: nil, buffer_offset: 0)
     result = super
     if buffer.nil?
       encode_rot13(result)

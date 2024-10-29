@@ -29,9 +29,17 @@ class RunLengthEncoder < DelegatedIO
     super
   end
 
-  def read(length, buffer: nil)
+  def read(length, buffer: nil, buffer_offset: 0)
     length = Integer(length)
     raise ArgumentError 'length must be at least 0' if length < 0
+    if ! buffer.nil?
+      if buffer_offset < 0 || buffer_offset >= buffer.bytesize
+        raise ArgumentError, 'buffer_offset is not a valid buffer index'
+      end
+      if buffer.bytesize - buffer_offset < length
+        raise ArgumentError, 'length is greater than available buffer space'
+      end
+    end
 
     raise IOError, 'closed stream' if closed?
     raise IOError, 'not opened for reading' unless readable?
