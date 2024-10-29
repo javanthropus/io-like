@@ -55,12 +55,34 @@ class LikeStringIO < IO::Like
 
     def nread
       assert_readable
-      0
+      [0, string.bytesize - @pos].max
     end
 
-    def read(length, buffer: nil)
+    def peek(length = nil)
+      if length.nil?
+        length = string.bytesize - @pos
+      else
+        length = Integer(length)
+        raise ArgumentError, 'length must be at least 0' if length < 0
+      end
+
+      assert_readable
+
+      return String.new(encoding: Encoding::BINARY) if @pos > string.bytesize
+      return string.b[@pos, length]
+    end
+
+    def read(length, buffer: nil, buffer_offset: 0)
       length = Integer(length)
       raise ArgumentError, 'length must be at least 0' if length < 0
+      if ! buffer.nil?
+        if buffer_offset < 0 || buffer_offset >= buffer.bytesize
+          raise ArgumentError, 'buffer_offset is not a valid buffer index'
+        end
+        if buffer.bytesize - buffer_offset < length
+          raise ArgumentError, 'length is greater than available buffer space'
+        end
+      end
 
       assert_readable
 
@@ -70,16 +92,21 @@ class LikeStringIO < IO::Like
       @pos += content.bytesize
       return content if buffer.nil?
 
-      buffer[0, content.bytesize] = content
+      buffer[buffer_offset, content.bytesize] = content
       return content.bytesize
+    end
+
+    def read_buffer_empty?
+      @pos >= string.bytesize
     end
 
     def readable?
       @readable
     end
 
-    def read_buffer_empty?
-      true
+    def refill
+      assert_readable
+      raise EOFError, 'end of file reached'
     end
 
     def seek(amount, whence)
@@ -101,6 +128,23 @@ class LikeStringIO < IO::Like
       @pos = new_pos
     end
 
+    def skip(length = nil)
+      if length.nil?
+        length = string.bytesize - @pos
+      else
+        length = Integer(length)
+        raise ArgumentError, 'length must be at least 0' if length < 0
+      end
+
+      assert_readable
+
+      remaining = string.bytesize - @pos
+      length = remaining if length > remaining
+      @pos += length
+
+      length
+    end
+
     attr_reader :string
 
     def string=(string)
@@ -114,7 +158,7 @@ class LikeStringIO < IO::Like
 
       assert_writable
 
-      string.force_encoding(Encoding::ASCII_8BIT)
+      string.force_encoding(Encoding::BINARY)
       if length < string.bytesize
         string.slice!(length..-1)
       elsif length > string.bytesize
@@ -140,7 +184,7 @@ class LikeStringIO < IO::Like
         @pos = 0
       end
 
-      string.force_encoding(Encoding::ASCII_8BIT)
+      string.force_encoding(Encoding::BINARY)
       pad_for_position
       string[@pos, replace_length] = buffer[0, length]
       string.force_encoding(encoding)
@@ -150,18 +194,63 @@ class LikeStringIO < IO::Like
       raise IOError, 'not modifiable string'
     end
 
-    def write(buffer, length: buffer.bytesize)
+    def write_orig(buffer, length: buffer.bytesize)
       assert_writable
 
       @pos = string.bytesize if @append
-
-      string.force_encoding(Encoding::ASCII_8BIT)
+      string.force_encoding(Encoding::BINARY)
       pad_for_position
       string[@pos, length] = buffer[0, length]
       string.force_encoding(encoding)
       @pos += length
 
       length
+    rescue FrozenError
+      raise IOError, 'not modifiable string'
+    end
+
+    def write(buffer)
+      assert_writable
+
+      if string.encoding != buffer.encoding &&
+         string.encoding != Encoding::BINARY &&
+         string.encoding != Encoding::ASCII
+        if string.encoding.ascii_compatible? && buffer.ascii_only?
+          buffer = buffer.dup
+          buffer.force_encoding(Encoding::BINARY)
+        elsif buffer.encoding != Encoding::BINARY &&
+              buffer.encoding != Encoding::ASCII
+          begin
+            buffer = buffer.encode(string.encoding)
+          rescue Encoding::UndefinedConversionError
+            raise Encoding::CompatibilityError,
+              'incompatible character encodings: %s and %s' %
+              [string.encoding, buffer.encoding]
+          end
+        end
+      end
+
+      @pos = string.bytesize if @append
+      pad_for_position
+      if @pos == string.bytesize
+        if string.encoding == Encoding::BINARY ||
+           buffer.encoding == Encoding::BINARY
+          string.force_encoding(Encoding::BINARY)
+          string[@pos, buffer.bytesize] = buffer.b
+          string.force_encoding(encoding)
+          @pos += buffer.bytesize
+        else
+          string.concat(buffer)
+          @pos = string.bytesize
+        end
+      else
+        string.force_encoding(Encoding::BINARY)
+        string[@pos, buffer.bytesize] = buffer.b
+        string.force_encoding(encoding)
+        @pos += buffer.bytesize
+      end
+
+      buffer.bytesize
     rescue FrozenError
       raise IOError, 'not modifiable string'
     end
@@ -189,19 +278,76 @@ class LikeStringIO < IO::Like
     end
   end
 
+  class StringCharacterIO < IO::LikeHelpers::CharacterIO
+    def set_encoding(ext_enc, int_enc, **opts)
+      super
+      buffered_io.encoding = external_encoding
+      nil
+    end
+
+    ##
+    # Override in order to provide special paragraph handling compatible with
+    # StringIO.
+    def read_line(separator: $/, limit: nil, chomp: false, discard_newlines: false)
+      if separator == "\n\n" && discard_newlines
+        # Paragraph mode is special:
+        # 1. Leading runs of _linefeed_ characters are discarded as usual
+        # 2. The separator is /(\r?\n){2,}/
+        # 3. Chomping consumes all bytes from the line matching the separator as
+        #    usual
+        separator = Regexp.new("(\r?\n){2,}".b)
+      end
+      super
+    end
+
+    def write(buffer)
+      buffered_io.write(buffer)
+    end
+  end
+
   class StringPipeline < IO::LikeHelpers::DelegatedIO
-    def initialize(delegate, autoclose: true)
+    def initialize(
+      delegate,
+      autoclose: true,
+      encoding_opts: {},
+      external_encoding: nil,
+      internal_encoding: nil,
+      sync: false
+    )
+
       raise ArgumentError, 'delegate cannot be nil' if delegate.nil?
 
       super(delegate)
+
+      @character_io = StringCharacterIO.new(
+        buffered_io,
+        blocking_io,
+        encoding_opts: encoding_opts,
+        external_encoding: external_encoding,
+        internal_encoding: internal_encoding,
+        sync: sync
+      )
     end
 
     alias_method :buffered_io, :delegate
     public :buffered_io
 
     alias_method :blocking_io, :delegate
+    attr_reader :character_io
     alias_method :concrete_io, :delegate
+
+    private
+
+    def initialize_copy(other)
+      super
+
+      @character_io = @character_io.dup
+      @character_io.buffered_io = buffered_io
+      @character_io.blocking_io = blocking_io
+    end
   end
+
+  VERSION = '0.0.1'
 
   def initialize(string = '', mode = nil, **opt)
     if block_given?
@@ -209,6 +355,7 @@ class LikeStringIO < IO::Like
     end
 
     string, opt = parse_init_args(string, mode, **opt)
+    string_encoding = string.encoding
     binmode = opt.delete(:binmode)
     encoding = opt.delete(:encoding)
 
@@ -218,6 +365,11 @@ class LikeStringIO < IO::Like
       external_encoding: encoding,
       pipeline_class: StringPipeline
     )
+
+    if encoding.nil?
+      self.binmode unless string_encoding.ascii_compatible?
+      set_encoding(string_encoding)
+    end
   end
 
   def fcntl(*args)
@@ -236,7 +388,7 @@ class LikeStringIO < IO::Like
         io.string,
         append: io.delegate.concrete_io.append?,
         binmode: io.binmode?,
-        external_encoding: @external_encoding,
+        external_encoding: io.external_encoding,
         readable: io.delegate.concrete_io.readable?,
         writable: io.delegate.concrete_io.writable?
       )
@@ -263,11 +415,8 @@ class LikeStringIO < IO::Like
         # is not ASCII compatible.  Ignore it and use the argument as is.
       end
     end
-    result = super(ext_enc)
 
-    delegate.concrete_io.encoding = external_encoding
-
-    result
+    super(ext_enc)
   end
 
   def set_encoding_by_bom
@@ -449,16 +598,12 @@ class LikeStringIO < IO::Like
     if opt_encodings_count > 1
       raise ArgumentError, 'encoding specified twice'
     end
-    # Even though StringIO will complain if explicit encoding options are
-    # included along with encodings set via the mode string, it always ignores
-    # those explicit encoding options even if the mode string doesn't include
-    # encodings itself.
-    opt.delete(:encoding)
-    opt.delete(:external_encoding)
-    opt.delete(:internal_encoding)
 
-    # The encoding defaults to the string's encoding if unspecified otherwise.
-    decoded_mode[:encoding] ||= string.encoding
+    if opt.key?(:external_encoding)
+      opt[:encoding] = opt.delete(:external_encoding)
+    end
+    # This is not actually used.
+    opt.delete(:internal_encoding)
 
     return [string, opt.merge!(decoded_mode)]
   end
@@ -467,25 +612,9 @@ class LikeStringIO < IO::Like
   # This overrides the handling of any buffer given to read operations to always
   # leave it in binary encoding, contrary to the behavior of real IO objects.
   def ensure_buffer(length, buffer)
-    unless buffer.nil?
-      buffer.force_encoding(Encoding::ASCII_8BIT)
-
-      # Ensure the given buffer is large enough to hold the requested number of
-      # bytes.
-      buffer << "\0".b * (length - buffer.bytesize) if length > buffer.bytesize
-    end
-
-    result = yield(buffer)
-  ensure
-    unless buffer.nil?
-      # A buffer was given to fill, so the delegate returned the number of bytes
-      # read.  Truncate the buffer if necessary.
-      buffer.slice!((result || 0)..-1)
-    end
+    buffer.force_encoding(Encoding::BINARY) unless buffer.nil?
+    super(length, buffer)
   end
-end
-
-if $0 == __FILE__
 end
 
 # vim: ts=2 sw=2 et

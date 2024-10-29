@@ -7,6 +7,14 @@ class IO; module LikeHelpers
 # runtime.
 module RubyFacts
   ##
+  # Set to `true` if the runtime Ruby version is less than 3.4.
+  RBVER_LT_3_4 = Gem::Version.new(RUBY_VERSION) < Gem::Version.new('3.4')
+
+  ##
+  # Set to `true` if the runtime Ruby version is less than 3.3.
+  RBVER_LT_3_3 = Gem::Version.new(RUBY_VERSION) < Gem::Version.new('3.3')
+
+  ##
   # Set to `true` if the runtime Ruby version is less than 3.2.
   RBVER_LT_3_2 = Gem::Version.new(RUBY_VERSION) < Gem::Version.new('3.2')
 
