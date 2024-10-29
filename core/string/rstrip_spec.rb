@@ -1,3 +1,4 @@
+# frozen_string_literal: false
 require_relative '../../spec_helper'
 require_relative 'fixtures/classes'
 require_relative 'shared/strip'
@@ -51,12 +52,10 @@ describe "String#rstrip!" do
     "  ".rstrip.should == ""
   end
 
-  ruby_version_is '3.0' do
-    it "removes trailing NULL bytes and whitespace" do
-      a = "\000 goodbye \000"
-      a.rstrip!
-      a.should == "\000 goodbye"
-    end
+  it "removes trailing NULL bytes and whitespace" do
+    a = "\000 goodbye \000"
+    a.rstrip!
+    a.should == "\000 goodbye"
   end
 
   it "raises a FrozenError on a frozen instance that is modified" do
@@ -69,13 +68,27 @@ describe "String#rstrip!" do
     -> { "".freeze.rstrip!      }.should raise_error(FrozenError)
   end
 
-  it "raises an ArgumentError if the last non-space codepoint is invalid" do
-    s = "abc\xDF".force_encoding(Encoding::UTF_8)
-    s.valid_encoding?.should be_false
-    -> { s.rstrip! }.should raise_error(ArgumentError)
+  ruby_version_is "3.2" do
+    it "raises an Encoding::CompatibilityError if the last non-space codepoint is invalid" do
+      s = "abc\xDF".force_encoding(Encoding::UTF_8)
+      s.valid_encoding?.should be_false
+      -> { s.rstrip! }.should raise_error(Encoding::CompatibilityError)
 
-    s = "abc\xDF   ".force_encoding(Encoding::UTF_8)
-    s.valid_encoding?.should be_false
-    -> { s.rstrip! }.should raise_error(ArgumentError)
+      s = "abc\xDF   ".force_encoding(Encoding::UTF_8)
+      s.valid_encoding?.should be_false
+      -> { s.rstrip! }.should raise_error(Encoding::CompatibilityError)
+    end
+  end
+
+  ruby_version_is ""..."3.2" do
+    it "raises an ArgumentError if the last non-space codepoint is invalid" do
+      s = "abc\xDF".force_encoding(Encoding::UTF_8)
+      s.valid_encoding?.should be_false
+      -> { s.rstrip! }.should raise_error(ArgumentError)
+
+      s = "abc\xDF   ".force_encoding(Encoding::UTF_8)
+      s.valid_encoding?.should be_false
+      -> { s.rstrip! }.should raise_error(ArgumentError)
+    end
   end
 end

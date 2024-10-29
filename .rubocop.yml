@@ -1,12 +1,16 @@
 inherit_from: .rubocop_todo.yml
 
 AllCops:
-  TargetRubyVersion: 2.7
+  TargetRubyVersion: 3.1
   DisplayCopNames: true
   Exclude:
     - command_line/fixtures/bad_syntax.rb
+    - core/exception/fixtures/syntax_error.rb
   DisabledByDefault: true
   NewCops: disable
+
+Layout/IndentationConsistency:
+  Enabled: true
 
 Layout/TrailingWhitespace:
   Enabled: true
@@ -33,14 +37,26 @@ Lint/AssignmentInCondition:
 Lint/BooleanSymbol:
   Enabled: false
 
+Lint/DeprecatedOpenSSLConstant:
+  Exclude:
+    - library/openssl/digest/**/*.rb
+
 Lint/InterpolationCheck:
   Enabled: false
 
 Lint/LiteralAsCondition:
   Enabled: false
 
+# Required to support Ruby 3.0
 Lint/RedundantRequireStatement:
-  Enabled: false
+  Exclude:
+    - core/fiber/**/*.rb
+    - library/fiber/**/*.rb
+    - optional/capi/fiber_spec.rb
+
+Lint/RedundantSafeNavigation:
+  Exclude:
+    - language/safe_navigator_spec.rb
 
 Lint/RedundantSplatExpansion:
   Enabled: false
@@ -100,6 +116,9 @@ Lint/OutOfRangeRegexpRef:
   Enabled: false
 
 Lint/InheritException:
+  Enabled: false
+
+Lint/SafeNavigationChain:
   Enabled: false
 
 Lint/ElseLayout:

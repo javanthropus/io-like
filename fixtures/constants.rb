@@ -10,7 +10,7 @@
 # variety in class and module configurations, including hierarchy,
 # containment, inclusion, singletons and toplevel.
 #
-# Constants are numbered for for uniqueness. The CS_ prefix is uniformly used
+# Constants are numbered for uniqueness. The CS_ prefix is uniformly used
 # and is to minimize clashes with other toplevel constants (see e.g. ModuleA
 # which is included in Object). Constant values are symbols. A numbered suffix
 # is used to distinguish constants with the same name defined in different
@@ -44,6 +44,7 @@ module ConstantSpecs
 
   # Included in ParentA
   module ModuleB
+    LINE = __LINE__ - 1
     CS_CONST10 = :const10_9
     CS_CONST11 = :const11_2
     CS_CONST12 = :const12_1
@@ -87,7 +88,7 @@ module ConstantSpecs
   # are run.
 
   class ClassA
-    CS_CLASS_A_LINE = __LINE__ - 1
+    LINE = __LINE__ - 1
     CS_CONST10 = :const10_10
     CS_CONST10_LINE = __LINE__ - 1
     CS_CONST16 = :const16
