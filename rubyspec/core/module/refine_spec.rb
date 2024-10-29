@@ -71,7 +71,7 @@ describe "Module#refine" do
       Module.new do
         refine("foo") {}
       end
-    end.should raise_error(TypeError)
+    end.should raise_error(TypeError, "wrong argument type String (expected Class or Module)")
   end
 
   it "accepts a module as argument" do
@@ -245,7 +245,7 @@ describe "Module#refine" do
 
     ruby_version_is ""..."3.2" do
       it "looks in the included modules for builtin methods" do
-          result = ruby_exe(<<-RUBY)
+        result = ruby_exe(<<-RUBY)
           a = Module.new do
             def /(other) quo(other) end
           end

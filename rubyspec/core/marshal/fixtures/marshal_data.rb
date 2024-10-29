@@ -1,4 +1,7 @@
 # -*- encoding: binary -*-
+
+require_relative 'marshal_multibyte_data'
+
 class UserDefined
   class Nested
     def ==(other)
@@ -38,7 +41,7 @@ class UserDefinedWithIvar
   attr_reader :a, :b, :c
 
   def initialize
-    @a = 'stuff'
+    @a = +'stuff'
     @a.instance_variable_set :@foo, :UserDefinedWithIvar
     @b = 'more'
     @c = @b
@@ -75,6 +78,22 @@ class UserDefinedImmediate
 
   def self._load(data)
     nil
+  end
+end
+
+class UserDefinedString
+  attr_reader :string
+
+  def initialize(string)
+    @string = string
+  end
+
+  def _dump(depth)
+    @string
+  end
+
+  def self._load(data)
+    new(data)
   end
 end
 
@@ -167,10 +186,15 @@ module MarshalSpec
     end
   end
 
+  StructToDump = Struct.new(:a, :b)
+
   class BasicObjectSubWithRespondToFalse < BasicObject
     def respond_to?(method_name, include_all=false)
       false
     end
+  end
+
+  module ModuleToExtendBy
   end
 
   def self.random_data
@@ -190,6 +214,70 @@ module MarshalSpec
 
   def self.reset_swapped_class
     set_swapped_class(nil)
+  end
+
+  class ClassWithOverriddenName
+    def self.name
+      "Foo"
+    end
+  end
+
+  class ModuleWithOverriddenName
+    def self.name
+      "Foo"
+    end
+  end
+
+  class TimeWithOverriddenName < Time
+    def self.name
+      "Foo"
+    end
+  end
+
+  class StructWithOverriddenName < Struct.new(:a)
+    def self.name
+      "Foo"
+    end
+  end
+
+  class UserDefinedWithOverriddenName < UserDefined
+    def self.name
+      "Foo"
+    end
+  end
+
+  class StringWithOverriddenName < String
+    def self.name
+      "Foo"
+    end
+  end
+
+  class ArrayWithOverriddenName < Array
+    def self.name
+      "Foo"
+    end
+  end
+
+  class HashWithOverriddenName < Hash
+    def self.name
+      "Foo"
+    end
+  end
+
+  class RegexpWithOverriddenName < Regexp
+    def self.name
+      "Foo"
+    end
+  end
+
+  class ObjectWithFreezeRaisingException < Object
+    def freeze
+      raise
+    end
+  end
+
+  class ObjectWithoutFreeze < Object
+    undef freeze
   end
 
   DATA = {
@@ -217,7 +305,7 @@ module MarshalSpec
                        "\004\b\"\012small"],
     "String big" => ['big' * 100,
                      "\004\b\"\002,\001#{'big' * 100}"],
-    "String extended" => [''.extend(Meths), # TODO: check for module on load
+    "String extended" => [''.dup.extend(Meths), # TODO: check for module on load
                           "\004\be:\nMeths\"\000"],
     "String subclass" => [UserString.new,
                           "\004\bC:\017UserString\"\000"],
@@ -324,7 +412,7 @@ module MarshalSpec
                     "\x04\bI\"\nsmall\x06:\x06EF"],
     "String big" => ['big' * 100,
                     "\x04\bI\"\x02,\x01bigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbigbig\x06:\x06EF"],
-    "String extended" => [''.extend(Meths), # TODO: check for module on load
+    "String extended" => [''.dup.extend(Meths), # TODO: check for module on load
                           "\x04\bIe:\nMeths\"\x00\x06:\x06EF"],
     "String subclass" => [UserString.new,
                           "\004\bC:\017UserString\"\000"],

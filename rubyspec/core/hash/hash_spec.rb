@@ -43,11 +43,11 @@ describe "Hash#hash" do
   end
 
   ruby_version_is "3.1" do
-    it "allows ommiting values" do
+    it "allows omitting values" do
       a = 1
       b = 2
 
-     eval('{a:, b:}.should == { a: 1, b: 2 }')
+      eval('{a:, b:}.should == { a: 1, b: 2 }')
     end
   end
 end
