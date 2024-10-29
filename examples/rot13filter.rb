@@ -1,5 +1,4 @@
 require 'io/like'
-require 'io/like_helpers/buffered_io'
 require 'io/like_helpers/delegated_io'
 require 'io/like_helpers/io_wrapper'
 
@@ -9,7 +8,7 @@ class ROT13Filter < DelegatedIO
   def self.io_like(delegate, **kwargs, &b)
     autoclose = kwargs.delete(:autoclose) { true }
     IO::Like.open(
-      BufferedIO.new(new(IOWrapper.new(delegate, autoclose: autoclose))),
+      new(IOWrapper.new(delegate, autoclose: autoclose)),
       **kwargs,
       &b
     )

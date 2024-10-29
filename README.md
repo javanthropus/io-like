@@ -39,7 +39,6 @@ A simple ROT13 codec:
 
 ```ruby
 require 'io/like'
-require 'io/like_helpers/buffered_io'
 require 'io/like_helpers/delegated_io'
 require 'io/like_helpers/io_wrapper'
 
@@ -49,13 +48,13 @@ class ROT13Filter < DelegatedIO
   def self.io_like(delegate, **kwargs, &b)
     autoclose = kwargs.delete(:autoclose) { true }
     IO::Like.open(
-      BufferedIO.new(new(IOWrapper.new(delegate, autoclose: autoclose))),
+      new(IOWrapper.new(delegate, autoclose: autoclose)),
       **kwargs,
       &b
     )
   end
 
-  def read(length, buffer: nil)
+  def read(length, buffer: nil, buffer_offset: 0)
     result = super
     if buffer.nil?
       encode_rot13(result)
