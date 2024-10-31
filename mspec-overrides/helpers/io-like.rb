@@ -75,6 +75,7 @@ class Object
     settings = io_like_parse_io_settings(*args, **kwargs)
     settings[:sync] = io.sync
     settings[:autoclose] = kwargs.fetch(:autoclose, true)
+    settings[:binmode] = settings[:binmode] || kwargs.fetch(:binmode, false)
     IO::Like.open(
       IO::LikeHelpers::IOWrapper.new(io),
       **settings,

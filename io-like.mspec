@@ -51,6 +51,13 @@ class MSpecScript
     # This test verifies buggy behavior on Ruby 3.1 and below that is not worth
     # supporting.
     /^IO#syswrite on a pipe raises Errno::E(AGAIN|WOULDBLOCK) when the write would block/,
+    # These tests are too C implementation specific.
+    /^IO#each_line with limit does not accept Integers that don't fit in a C off_t/,
+    /^IO#each with limit does not accept Integers that don't fit in a C off_t/,
+    /^IO#gets does not accept limit that doesn't fit in a C off_t/,
+    /^IO#lineno= does not accept Integers that don't fit in a C int/,
+    /^IO#readline when passed limit does not accept Integers that don't fit in a C off_t/,
+    /^IO#readlines when passed limit does not accept Integers that don't fit in a C off_t/,
   ]
 
   # Exclude IO specs not relevant to IO::Like.

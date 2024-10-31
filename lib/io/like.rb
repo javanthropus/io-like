@@ -332,15 +332,15 @@ class Like < LikeHelpers::DuplexedIO
   #   @return [self]
   #
   # @raise [IOError] if the stream is not open for reading
-  def each_line(*args, chomp: false)
+  def each_line(*args, **opts)
     unless block_given?
-      return to_enum(:each_line, *args, chomp: chomp)
+      return to_enum(:each_line, *args, **opts)
     end
 
     sep_string, limit = parse_readline_args(*args)
     raise ArgumentError, 'invalid limit: 0 for each_line' if limit == 0
 
-    while (line = gets(sep_string, limit, chomp: chomp)) do
+    while (line = gets(sep_string, limit, **opts)) do
       yield(line)
     end
     self
@@ -457,8 +457,8 @@ class Like < LikeHelpers::DuplexedIO
   #   @return [nil] if the end of the stream has been reached
   #
   # @raise [IOError] if the stream is not open for reading
-  def gets(*args, chomp: false)
-    readline(*args, chomp: chomp)
+  def gets(*args, **opts)
+    readline(*args, **opts)
   rescue EOFError
     # NOTE:
     # Through Ruby 3.3, assigning to $_ has no effect outside of a method that
@@ -513,7 +513,7 @@ class Like < LikeHelpers::DuplexedIO
   def lineno=(integer)
     assert_readable
 
-    @lineno = Integer(integer)
+    @lineno = ensure_integer(integer)
   end
 
   if RBVER_LT_3_0
@@ -601,15 +601,15 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [EOFError] when reading at the end of the stream
   # @raise [IOError] if the stream is not readable
   def pread(maxlen, offset, buffer = nil)
-    maxlen = Integer(maxlen)
-    raise ArgumentError, 'maxlen must be at least 0' if maxlen < 0
+    maxlen = ensure_integer(maxlen)
+    raise ArgumentError, 'negative string size (or size too big)' if maxlen < 0
     buffer = buffer.nil? ?
       String.new(encoding: Encoding::BINARY) :
-      buffer.to_str
+      ensure_string(buffer)
 
     return buffer if maxlen == 0
 
-    offset = Integer(offset)
+    offset = ensure_integer(offset)
     raise Errno::EINVAL if offset < 0
 
     assert_readable
@@ -688,7 +688,7 @@ class Like < LikeHelpers::DuplexedIO
            when String
              obj[0]
            else
-             [Integer(obj)].pack('V')[0]
+             [ensure_integer(obj)].pack('V')[0]
            end
     write(char)
     obj
@@ -734,7 +734,7 @@ class Like < LikeHelpers::DuplexedIO
   def pwrite(string, offset)
     string = string.to_s
 
-    offset = Integer(offset)
+    offset = ensure_integer(offset)
     raise Errno::EINVAL if offset < 0
 
     assert_writable
@@ -771,7 +771,7 @@ class Like < LikeHelpers::DuplexedIO
     unless length.nil? || length >= 0
       raise ArgumentError, "negative length #{length} given"
     end
-    buffer = buffer.to_str unless buffer.nil?
+    buffer = ensure_string(buffer) unless buffer.nil?
 
     assert_readable
 
@@ -831,9 +831,9 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [Errno::EBADF] if non-blocking mode is not supported
   # @raise [SystemCallError] if there are low level errors
   def read_nonblock(length, buffer = nil, exception: true)
-    length = Integer(length)
+    length = ensure_integer(length)
     raise ArgumentError, 'length must be at least 0' if length < 0
-    buffer = buffer.to_str unless buffer.nil?
+    buffer = ensure_string(buffer) unless buffer.nil?
 
     assert_readable
 
@@ -923,8 +923,9 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [EOFError] if reading begins at the end of the stream
   # @raise [IOError] if the stream is not open for reading
-  def readline(*args, chomp: false)
+  def readline(*args, **opts)
     separator, limit = parse_readline_args(*args)
+    chomp = opts.fetch(:chomp, false)
 
     assert_readable
 
@@ -999,8 +1000,8 @@ class Like < LikeHelpers::DuplexedIO
   #     separator is `$/`
   #
   # @raise [IOError] if the stream is not open for reading
-  def readlines(*args, chomp: false)
-    each_line(*args, chomp: chomp).to_a
+  def readlines(*args, **opts)
+    each_line(*args, **opts).to_a
   end
 
   ##
@@ -1018,9 +1019,9 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [EOFError] if reading begins at the end of the stream
   # @raise [IOError] if the stream is not open for reading
   def readpartial(length, buffer = nil)
-    length = Integer(length)
+    length = ensure_integer(length)
     raise ArgumentError, 'length must be at least 0' if length < 0
-    buffer = buffer.to_str unless buffer.nil?
+    buffer = ensure_string(buffer) unless buffer.nil?
 
     assert_readable
 
@@ -1427,9 +1428,9 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [IOError] if the internal read buffer is not empty
   # @raise [IOError] if the stream is not open for reading
   def sysread(length, buffer = nil)
-    length = Integer(length)
+    length = ensure_integer(length)
     raise ArgumentError, "negative length #{length} given" if length < 0
-    buffer = buffer.to_str unless buffer.nil?
+    buffer = ensure_string(buffer) unless buffer.nil?
 
     return (buffer || String.new(encoding: Encoding::BINARY)) if length == 0
 
@@ -1626,7 +1627,7 @@ class Like < LikeHelpers::DuplexedIO
           .inject(0) { |memo, value| memo | value }
       elsif args.size == 2
         # Ruby >=3.0 mode.
-        events = Integer(args[0])
+        events = ensure_integer(args[0])
         timeout = args[1]
         unless timeout.nil? || timeout >= 0
           raise ArgumentError, 'time interval must not be negative'
@@ -1812,6 +1813,58 @@ class Like < LikeHelpers::DuplexedIO
   end
 
   ##
+  # Attempt to perform implicit conversion of `object` to an `Integer`.
+  #
+  # @param object [Object] an object to be converted via its `#to_int` method
+  #
+  # This method exists solely to make the message of any raised `TypeError`
+  # exceptions exactly match what IO methods would produce in order to appease
+  # overly prescriptive rubyspec tests; otherwise, the `Integer()` method would
+  # suffice.
+  #
+  # @return [Integer] the converted value
+  #
+  # @raise [TypeError] when conversion fails
+  def ensure_integer(object)
+    object.to_int
+  rescue NoMethodError
+    case object
+    when nil
+      raise TypeError, 'no implicit conversion from nil to integer'
+    else
+      raise TypeError,
+        'no implicit conversion of %s into Integer' % [object.class]
+    end
+  end
+
+  ##
+  # Attempt to perform implicit conversion of `object` to a `String`.
+  #
+  # @param object [Object] an object to be converted via its `#to_str` method
+  #
+  # This method exists because no other method is strict about implicit string
+  # conversion while also raising `TypeError` for failures.  For instance,
+  # `String.new` first calls `#to_str` on its argument but then falls back to
+  # `#to_s` if the former call fails.  Some rubyspec tests require a `TypeError`
+  # to be raised when implicit conversion fails, and directly calling `#to_str`
+  # raises NoMethodError if the method does not exist.
+  #
+  # @return [String] the converted value
+  #
+  # @raise [TypeError] when conversion fails
+  def ensure_string(object)
+    object.to_str
+  rescue NoMethodError
+    case object
+    when nil
+      raise TypeError, 'no implicit conversion of nil into String'
+    else
+      raise TypeError,
+        'no implicit conversion of %s into String' % [object.class]
+    end
+  end
+
+  ##
   # Write `item` followed by the record separator.  Recursively process
   # elements of `item` if it responds to `#to_ary` with a non-`nil` result.
   #
@@ -1887,13 +1940,13 @@ class Like < LikeHelpers::DuplexedIO
         "wrong number of arguments (given #{args.size}, expected 0..2)"
     elsif args.size == 2
       sep_string = args[0].nil? ? nil : String.new(args[0])
-      limit = args[1].nil? ? nil : Integer(args[1])
+      limit = args[1].nil? ? nil : ensure_integer(args[1])
     elsif args.size == 1
       begin
         sep_string = args[0].nil? ? nil : String.new(args[0])
         limit = nil
       rescue TypeError
-        limit = Integer(args[0])
+        limit = ensure_integer(args[0])
         sep_string = $/
       end
     else
