@@ -18,7 +18,7 @@ describe "IO::LikeHelpers::BufferedIO#read" do
 
   it "returns the number of bytes read when the buffer argument is provided" do
     io = IO::LikeHelpers::BufferedIO.new(@delegate)
-    io.read(1, buffer: "\0").should == 1
+    io.read(1, buffer: String.new("\0")).should == 1
   end
 
   it "inserts bytes at the index specified by the buffer_offset argument" do

@@ -25,7 +25,7 @@ describe "IO::LikeHelpers::IOWrapper#ioctl" do
     guard -> { RUBY_PLATFORM.include?("86") } do # x86 / x86_64
       it "resizes an empty String to match the output size" do
         File.open(__FILE__, 'r') do |f|
-          buffer = ''
+          buffer = String.new
           io = IO::LikeHelpers::IOWrapper.new(f)
           # FIONREAD in /usr/include/asm-generic/ioctls.h
           io.ioctl 0x541B, buffer

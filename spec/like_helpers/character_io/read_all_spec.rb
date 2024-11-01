@@ -72,7 +72,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
         internal_encoding: Encoding::UTF_16LE
       )
       io.unread("a".b)
-      io.read_all.should == "a".force_encoding(Encoding::UTF_16LE)
+      io.read_all.should == String.new("a").force_encoding(Encoding::UTF_16LE)
     end
 
     it "obeys the universal newline decorator when set" do

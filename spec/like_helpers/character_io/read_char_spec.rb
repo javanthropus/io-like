@@ -241,8 +241,8 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
           internal_encoding: Encoding::UTF_16LE
         )
         io.unread(char_int.b[0..-2])
-        io.read_char.should == "\x3C\xD8".force_encoding(Encoding::UTF_16LE)
-        io.read_char.should == "\x63".force_encoding(Encoding::UTF_16LE)
+        io.read_char.should == String.new("\x3C\xD8").force_encoding(Encoding::UTF_16LE)
+        io.read_char.should == String.new("\x63").force_encoding(Encoding::UTF_16LE)
       end
 
       it "returns invalid characters composed of bytes from the internal buffer and converted bytes from the stream" do
@@ -276,10 +276,10 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
           internal_encoding: Encoding::UTF_16LE
         )
         io.unread(char_int.b[0..-2])
-        io.read_char.should == "\x3C\xD8".force_encoding(Encoding::UTF_16LE)
-        io.read_char.should == "\x63\x3C".force_encoding(Encoding::UTF_16LE)
-        io.read_char.should == "\xD8\x63".force_encoding(Encoding::UTF_16LE)
-        io.read_char.should == "\xDF".force_encoding(Encoding::UTF_16LE)
+        io.read_char.should == String.new("\x3C\xD8").force_encoding(Encoding::UTF_16LE)
+        io.read_char.should == String.new("\x63\x3C").force_encoding(Encoding::UTF_16LE)
+        io.read_char.should == String.new("\xD8\x63").force_encoding(Encoding::UTF_16LE)
+        io.read_char.should == String.new("\xDF").force_encoding(Encoding::UTF_16LE)
         obj.assert_complete
       end
     end
@@ -566,8 +566,8 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
           encoding_opts: {newline: :universal}
         )
         io.unread(char_int.b[0..-2])
-        io.read_char.should == "\x3C\xD8".force_encoding(Encoding::UTF_16LE)
-        io.read_char.should == "\x63".force_encoding(Encoding::UTF_16LE)
+        io.read_char.should == String.new("\x3C\xD8").force_encoding(Encoding::UTF_16LE)
+        io.read_char.should == String.new("\x63").force_encoding(Encoding::UTF_16LE)
       end
 
       it "returns the next character composed of bytes that are invalid in the internal encoding from the internal buffer" do
@@ -602,10 +602,10 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
           encoding_opts: {newline: :universal}
         )
         io.unread(char_int.b[0..-2])
-        io.read_char.should == "\x3C\xD8".force_encoding(Encoding::UTF_16LE)
-        io.read_char.should == "\x63\x3C".force_encoding(Encoding::UTF_16LE)
-        io.read_char.should == "\xD8\x63".force_encoding(Encoding::UTF_16LE)
-        io.read_char.should == "\xDF".force_encoding(Encoding::UTF_16LE)
+        io.read_char.should == String.new("\x3C\xD8").force_encoding(Encoding::UTF_16LE)
+        io.read_char.should == String.new("\x63\x3C").force_encoding(Encoding::UTF_16LE)
+        io.read_char.should == String.new("\xD8\x63").force_encoding(Encoding::UTF_16LE)
+        io.read_char.should == String.new("\xDF").force_encoding(Encoding::UTF_16LE)
         obj.assert_complete
       end
     end
