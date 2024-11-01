@@ -1179,14 +1179,14 @@ class Like < LikeHelpers::DuplexedIO
   # @overload set_encoding(encoding, **opts)
   #   @param encoding [Encoding, String, nil] the external encoding or both the
   #     external and internal encoding if specified as `"ext_enc:int_enc"`
-  #   @param opts [Hash] encoding conversion options used if both internal and
-  #     external encodings are specified
+  #   @param opts [Hash] encoding conversion options used character or newline
+  #     conversion is performed
   #
   # @overload set_encoding(external, internal, **opts)
   #   @param external [Encoding, String, nil] the external encoding
   #   @param internal [Encoding, String, nil] the internal encoding
-  #   @param opts [Hash] encoding conversion options used if both internal and
-  #     external encodings are specified
+  #   @param opts [Hash] encoding conversion options used character or newline
+  #     conversion is performed
   #
   # Sets the external and internal encodings of the stream.
   #

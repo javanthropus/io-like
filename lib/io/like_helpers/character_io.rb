@@ -225,26 +225,46 @@ class CharacterIO
     @readable = buffered_io.readable?
   end
 
-  def set_encoding(ext_enc, int_enc, **opts)
-    if ext_enc.nil? && ! int_enc.nil?
+  ##
+  # Sets the external and internal encodings of the stream.
+  #
+  # @param external [Encoding, nil] the external encoding
+  # @param internal [Encoding, nil] the internal encoding
+  # @param opts [Hash] encoding conversion options used when character or
+  #   newline conversion is performed
+  #
+  # @return [nil]
+  def set_encoding(external, internal, **opts)
+    if external.nil? && ! internal.nil?
       raise ArgumentError,
         'External encoding cannot be nil when internal encoding is not nil'
     end
 
-    int_enc = nil if int_enc == ext_enc
+    internal = nil if internal == external
 
     self.encoding_opts = opts
-    @internal_encoding = int_enc
-    @external_encoding = ext_enc
+    @internal_encoding = internal
+    @external_encoding = external
     @character_reader = nil
 
     nil
   end
 
+  ##
+  # When set to `true` the internal write buffer will be bypassed.  Any data
+  # currently in the buffer will be flushed prior to the next output operation.
+  # When set to `false`, the internal write buffer will be enabled.
+  #
+  # @param sync [Boolean] the sync mode
+  #
+  # @return [Boolean] the given value for `sync`
   def sync=(sync)
     @sync = sync ? true : false
   end
 
+  ##
+  # @return [Boolean] `true` if the internal write buffer is being bypassed and
+  #   `false` otherwise
   def sync?
     @sync ||= false
   end
@@ -332,6 +352,13 @@ class CharacterIO
     raise IOError, 'not opened for writing' unless writable?
   end
 
+  ##
+  # @param buffer_size [Integer, nil] the size of the internal character buffer;
+  #   ignored unless character or newline conversion will be performed
+  #
+  # @return [BasicReader, ConverterReader] a character reader based on the
+  #   external encoding, internal encoding, and universal newline settings of
+  #   this stream
   def character_reader(buffer_size = nil)
     return @character_reader if @character_reader
 
