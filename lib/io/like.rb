@@ -962,7 +962,10 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     buffer = delegate_r.character_io.read_line(
-      separator: separator, limit: limit, chomp: chomp, discard_newlines: discard_newlines
+      separator: separator,
+      limit: limit,
+      chomp: chomp,
+      discard_newlines: discard_newlines
     )
 
     # Increment the number of times this method has returned a "line".
