@@ -33,6 +33,9 @@ class MSpecScript
     # This test checks too closely that the io instance is actually an instance
     # of IO.
     /^IO#reopen with an IO does not call #to_io/,
+    # This test runs in a subprocess where IO functions cannot be intercepted by
+    # these tests.
+    /^IO#reopen with a String affects exec\/system\/fork performed after it/,
     # IO::Like#to_io always returns the underlying IO instance if there is one
     # and raises errors otherwise, so it never returns self.
     /^IO#to_io returns self/,
