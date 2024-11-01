@@ -17,7 +17,7 @@ new IO implementations may be created.
 
 ## FEATURES
 
-* All standard Ruby 2.6 to 3.1 IO methods.
+* All standard Ruby 2.7 to 3.4 IO methods.
 * Buffered operations.
 * Configurable buffer size.
 

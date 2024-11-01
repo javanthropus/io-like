@@ -10,7 +10,7 @@ detailed information is available in the rest of the documentation.
 * Reimplemented all version specific IO::Like modules as a single class
   * **WARNING:** Breaks API compatibility with prior versions
 * Dropped support for Ruby less than 2.7
-* Added full API compatibility for Ruby 2.7 through 3.1
+* Added full API compatibility for Ruby 2.7 through 3.4
   * Support for character encodings
   * Asynchronous/nonblocking methods
   * Many missing helper methods
