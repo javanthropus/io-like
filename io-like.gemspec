@@ -48,12 +48,18 @@ new IO implementations may be created.
     NEWS.md
     README.md
     lib/io/like.rb
+    lib/io/like_helpers.rb
     lib/io/like_helpers/abstract_io.rb
+    lib/io/like_helpers/blocking_io.rb
     lib/io/like_helpers/buffered_io.rb
+    lib/io/like_helpers/character_io.rb
+    lib/io/like_helpers/character_io/basic_reader.rb
+    lib/io/like_helpers/character_io/converter_reader.rb
     lib/io/like_helpers/delegated_io.rb
     lib/io/like_helpers/duplexed_io.rb
     lib/io/like_helpers/io.rb
     lib/io/like_helpers/io_wrapper.rb
+    lib/io/like_helpers/pipeline.rb
     lib/io/like_helpers/ruby_facts.rb
   )
 end
