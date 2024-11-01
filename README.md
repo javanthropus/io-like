@@ -208,7 +208,7 @@ be more easily accepted if they are consistent with the rest of the code.
 ```
 (The MIT License)
 
-Copyright (c) 2020 Jeremy Bopp
+Copyright (c) 2024 Jeremy Bopp
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
