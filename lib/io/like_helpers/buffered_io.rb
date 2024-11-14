@@ -26,7 +26,7 @@ class BufferedIO < DelegatedIO
 
     @buffer_size = buffer_size
     @buffer = String.new("\0".b * @buffer_size)
-    @start_idx = @end_idx = 0
+    @start_idx = @end_idx = @unread_offset = 0
     @mode = nil
   end
 
@@ -266,6 +266,7 @@ class BufferedIO < DelegatedIO
     length = available if available < length
     content = @buffer[@start_idx, length]
     @start_idx += length
+    @unread_offset += [@unread_offset, length].min
     return content if buffer.nil?
 
     buffer[buffer_offset, length] = content
@@ -349,14 +350,14 @@ class BufferedIO < DelegatedIO
     when :read
       case whence
       when IO::SEEK_CUR, :CUR
-        amount -= @end_idx - @start_idx
+        amount -= @end_idx - @start_idx - @unread_offset
       end
     end
     @mode = nil
 
     result = super(amount, whence)
     # Clear the buffer only if the seek was successful.
-    @start_idx = @end_idx = 0
+    @start_idx = @end_idx = @unread_offset = 0
     result
   end
 
@@ -384,6 +385,7 @@ class BufferedIO < DelegatedIO
     remaining = @end_idx - @start_idx
     length = remaining if length > remaining
     @start_idx += length
+    @unread_offset += [@unread_offset, length].min
 
     length
   end
@@ -423,6 +425,7 @@ class BufferedIO < DelegatedIO
     end
 
     @start_idx -= length
+    @unread_offset += length
     @buffer[@start_idx, length] = buffer[0, length]
 
     nil

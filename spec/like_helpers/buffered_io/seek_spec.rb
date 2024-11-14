@@ -60,6 +60,42 @@ describe "IO::LikeHelpers::BufferedIO#seek" do
     io.seek(1, IO::SEEK_CUR).should == 2
   end
 
+  it "ignores bytes pushed into the buffer via #unread when performing seek from the start of the stream" do
+    buffer = 'foo'.b
+    obj = mock("io")
+    obj.should_receive(:readable?).and_return(true)
+    obj.should_receive(:read).and_return(3)
+    obj.should_receive(:seek).with(1, IO::SEEK_SET).and_return(1)
+    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io.read(1, buffer: buffer).should == 1
+    io.unread('bar').should be_nil
+    io.seek(1, IO::SEEK_SET).should == 1
+  end
+
+  it "ignores bytes pushed into the buffer via #unread when performing seek from the end of the stream" do
+    buffer = 'foo'.b
+    obj = mock("io")
+    obj.should_receive(:readable?).and_return(true)
+    obj.should_receive(:read).and_return(3)
+    obj.should_receive(:seek).with(-1, IO::SEEK_END).and_return(1)
+    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io.read(1, buffer: buffer).should == 1
+    io.unread('bar').should be_nil
+    io.seek(-1, IO::SEEK_END).should == 1
+  end
+
+  it "ignores bytes pushed into the buffer via #unread when performing seek from the current position of the stream" do
+    buffer = 'foo'.b
+    obj = mock("io")
+    obj.should_receive(:readable?).and_return(true)
+    obj.should_receive(:read).and_return(3)
+    obj.should_receive(:seek).with(-3, IO::SEEK_CUR).and_return(0)
+    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io.read(1, buffer: buffer).should == 1
+    io.unread('bar').should be_nil
+    io.seek(-1, IO::SEEK_CUR).should == 0
+  end
+
   it "raises IOError if the stream is closed" do
     obj = mock("io")
     io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)

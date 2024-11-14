@@ -1,6 +1,8 @@
 # -*- encoding: utf-8 -*-
 require_relative '../../../spec_helper'
 
+require 'io/like_helpers/buffered_io'
+
 describe "IO::LikeHelpers::BufferedIO#unread" do
   it "raises ArgumentError if length is invalid" do
     buffer = 'foo'.b
@@ -56,6 +58,17 @@ describe "IO::LikeHelpers::BufferedIO#unread" do
     io = IO::LikeHelpers::BufferedIO.new(obj)
     io.write(buffer1).should == buffer1.size
     io.unread(buffer2).should be_nil
+  end
+
+  it "does not affect the stream position" do
+    buffer = 'foo'.b
+    obj = mock("io")
+    obj.should_receive(:readable?).and_return(true)
+    obj.should_receive(:seek).with(0, IO::SEEK_CUR).and_return(0).twice
+    io = IO::LikeHelpers::BufferedIO.new(obj)
+    pos = io.seek(0, IO::SEEK_CUR)
+    io.unread(buffer).should be_nil
+    io.seek(0, IO::SEEK_CUR).should == pos
   end
 
   it "raises IOError if its delegate is not readable" do
