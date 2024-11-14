@@ -453,13 +453,15 @@ class CharacterIO
       raise ArgumentError, "unexpected value for newline option: #{opts[:newline]}"
     end
 
-    # Ruby obeys only the universal newline decoration for reading.
+    # Ruby ignores xml conversion as well as newline decorators other than
+    # universal for reading.
     @encoding_opts_r = opts.reject do |k, v|
-      k == :crlf_newline || k == :cr_newline ||
-        (k == :newline && (v == :crlf || v == :cr || v == :lf))
+      k == :xml ||
+      k == :crlf_newline || k == :cr_newline || k == :lf_newline ||
+      (k == :newline && (v == :crlf || v == :cr || v == :lf))
     end
 
-    # Ruby ignores the universal newline decoration for writing.
+    # Ruby ignores the universal newline decorator for writing.
     @encoding_opts_w = opts.reject do |k, v|
       k == :universal_newline || (k == :newline && v == :universal)
     end
