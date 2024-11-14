@@ -226,6 +226,16 @@ class CharacterIO
   end
 
   ##
+  # Clears the state of this stream.
+  #
+  # @return [nil]
+  def clear
+    return unless @character_reader
+    @character_reader.clear
+    nil
+  end
+
+  ##
   # Sets the external and internal encodings of the stream.
   #
   # @param external [Encoding, nil] the external encoding

@@ -28,6 +28,15 @@ class BasicReader
   end
 
   ##
+  # Clears the state of this reader.
+  #
+  # @return [nil]
+  def clear
+    buffered_io.flush
+    nil
+  end
+
+  ##
   # Returns the bytes of the buffer as a binary encoded String.
   #
   # The returned bytes should be encoded using the value of #encoding and the

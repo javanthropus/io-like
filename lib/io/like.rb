@@ -1146,11 +1146,6 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [Errno::ESPIPE] if the stream is not seekable
   def rewind
     seek(0, IO::SEEK_SET)
-    # TODO:
-    # Reset the character IO completely.  #seek should not do that and should
-    # preserve the state of the character IO.  The reset must happen after #seek
-    # so that a failure in #seek avoids reseting the character IO.
-    # Also, write a spec for this behavior if there isn't one yet.
     self.lineno = 0 if readable?
     0
   end
@@ -1175,6 +1170,9 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [Errno::ESPIPE] if the stream is not seekable
   def seek(amount, whence = IO::SEEK_SET)
     super
+    # This also clears the byte oriented read buffer, so calling
+    # delegate_r.buffered_io.flush would be redundant.
+    delegate_r.character_io.clear
     0
   end
 
@@ -1273,6 +1271,7 @@ class Like < LikeHelpers::DuplexedIO
                   Encoding.find(int_enc)
                 end
     end
+
     # Ignore the chosen internal encoding when no conversion will be performed.
     if int_enc == ext_enc ||
        ext_enc == Encoding::BINARY && ! RBVER_LT_3_3

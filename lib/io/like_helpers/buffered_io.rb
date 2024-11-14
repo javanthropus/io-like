@@ -310,7 +310,7 @@ class BufferedIO < DelegatedIO
       end
     else
       # The read buffer is empty, so prepare to fill it at the beginning.
-      @start_idx = @end_idx = 0
+      @start_idx = @end_idx = @unread_offset = 0
     end
 
     result =
@@ -478,7 +478,7 @@ class BufferedIO < DelegatedIO
       result = flush
       return result if Symbol === result
 
-      @start_idx = @end_idx = 0
+      @start_idx = @end_idx = @unread_offset = 0
       available = @buffer_size
     end
 
@@ -540,7 +540,7 @@ class BufferedIO < DelegatedIO
       # Rewind delegate to buffered read position if possible.
       seek(0, IO::SEEK_CUR) rescue nil
       # Ensure the read buffer is cleared even if the stream is not seekable.
-      @start_idx = @end_idx = 0
+      @start_idx = @end_idx = @unread_offset = 0
     end
     @mode = :write
     nil

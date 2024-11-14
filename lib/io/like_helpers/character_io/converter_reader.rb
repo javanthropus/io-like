@@ -54,6 +54,16 @@ class ConverterReader < BasicReader
   end
 
   ##
+  # Clears the state of this reader.
+  #
+  # @return [nil]
+  def clear
+    super
+    @start_idx = @end_idx = @buffer_size
+    nil
+  end
+
+  ##
   # Returns the bytes of the buffer as a binary encoded String.
   #
   # The returned bytes should be encoded using the value of #encoding and the
