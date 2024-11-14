@@ -30,12 +30,14 @@ class MSpecScript
     # aspects of IO#reopen.
     /^IO#reopen changes the class of the instance to the class of the object returned by #to_io/,
     /^IO#reopen with an IO may change the class of the instance/,
-    # This test checks too closely that the io instance is actually an instance
+    # This test checks too closely that the IO instance is actually an instance
     # of IO.
     /^IO#reopen with an IO does not call #to_io/,
     # This test runs in a subprocess where IO functions cannot be intercepted by
     # these tests.
     /^IO#reopen with a String affects exec\/system\/fork performed after it/,
+    # There is currently no way to test that delegates are in append mode.
+    /^IO#reopen with a String opens the file in append mode if the IO appends/,
     # IO::Like#to_io always returns the underlying IO instance if there is one
     # and raises errors otherwise, so it never returns self.
     /^IO#to_io returns self/,
@@ -61,6 +63,8 @@ class MSpecScript
     /^IO#lineno= does not accept Integers that don't fit in a C int/,
     /^IO#readline when passed limit does not accept Integers that don't fit in a C off_t/,
     /^IO#readlines when passed limit does not accept Integers that don't fit in a C off_t/,
+    # IO#ungetc and IO#ungetbyte should not affect the stream position.  Issue #20889.
+    /^IO#ungetc adjusts the stream position/,
   ]
 
   # Exclude IO specs not relevant to IO::Like.
