@@ -1,3 +1,5 @@
+require 'rbconfig/sizeof'
+
 require 'io/like'
 require 'io/like_helpers/abstract_io'
 require 'io/like_helpers/delegated_io'
@@ -20,7 +22,7 @@ class LikeStringIO < IO::Like
       @writable = writable
       @pos = 0
 
-      raise Errno::EACCES if writable? && string.frozen?
+      raise Errno::EACCES if writable? && string && string.frozen?
 
       @string.clear if @truncate
     end
@@ -36,6 +38,7 @@ class LikeStringIO < IO::Like
     attr_reader :encoding
 
     def encoding=(encoding)
+      return nil if ! string
       encoding ||= @string.encoding
       @encoding = encoding
       @string.force_encoding(encoding) unless @string.frozen?
@@ -55,12 +58,13 @@ class LikeStringIO < IO::Like
 
     def nread
       assert_readable
+      return 0 if ! string
       [0, string.bytesize - @pos].max
     end
 
     def peek(length = nil)
       if length.nil?
-        length = string.bytesize - @pos
+        length = string.bytesize - @pos if string
       else
         length = Integer(length)
         raise ArgumentError, 'length must be at least 0' if length < 0
@@ -68,7 +72,7 @@ class LikeStringIO < IO::Like
 
       assert_readable
 
-      return String.new(encoding: Encoding::BINARY) if @pos > string.bytesize
+      return String.new(encoding: Encoding::BINARY) if ! string || @pos > string.bytesize
       return string.b[@pos, length]
     end
 
@@ -86,7 +90,7 @@ class LikeStringIO < IO::Like
 
       assert_readable
 
-      raise EOFError, 'end of file reached' if @pos >= string.bytesize
+      raise EOFError, 'end of file reached' if ! string || @pos >= string.bytesize
 
       content = string.b[@pos, length]
       @pos += content.bytesize
@@ -97,6 +101,7 @@ class LikeStringIO < IO::Like
     end
 
     def read_buffer_empty?
+      return true if ! string
       @pos >= string.bytesize
     end
 
@@ -123,6 +128,8 @@ class LikeStringIO < IO::Like
         raise Errno::EINVAL, 'Invalid argument - invalid whence'
       end
 
+      return 0 if ! string
+
       raise Errno::EINVAL, 'Invalid argument' if new_pos < 0
 
       @pos = new_pos
@@ -137,6 +144,8 @@ class LikeStringIO < IO::Like
       end
 
       assert_readable
+
+      return 0 if ! string
 
       remaining = string.bytesize - @pos
       length = remaining if length > remaining
@@ -158,6 +167,8 @@ class LikeStringIO < IO::Like
 
       assert_writable
 
+      return 0 if ! string
+
       string.force_encoding(Encoding::BINARY)
       if length < string.bytesize
         string.slice!(length..-1)
@@ -170,12 +181,12 @@ class LikeStringIO < IO::Like
     end
 
     def unread(buffer, length: buffer.bytesize)
-      assert_readable
-
       length = Integer(length)
       raise ArgumentError 'length must be at least 0' if length < 0
 
-      return nil if length == 0
+      assert_readable
+
+      return nil if length == 0 || ! string
 
       replace_length = length
       @pos -= length
@@ -211,6 +222,8 @@ class LikeStringIO < IO::Like
 
     def write(buffer)
       assert_writable
+
+      return 0 if ! string
 
       if string.encoding != buffer.encoding &&
          string.encoding != Encoding::BINARY &&
@@ -296,6 +309,8 @@ class LikeStringIO < IO::Like
         # 3. Chomping consumes all bytes from the line matching the separator as
         #    usual
         separator = Regexp.new("(\r?\n){2,}".b)
+      elsif separator == $/
+        separator = Regexp.new("\r?\n".b)
       end
       super
     end
@@ -348,14 +363,15 @@ class LikeStringIO < IO::Like
   end
 
   VERSION = '0.0.1'
+  MAX_LENGTH = RbConfig::LIMITS['LONG_MAX']
 
-  def initialize(string = '', mode = nil, **opt)
+  def initialize(string = String.new, mode = nil, **opt)
     if block_given?
       warn("#{self.class.name}::new() does not take block; use #{self.class.name}::open() instead")
     end
 
     string, opt = parse_init_args(string, mode, **opt)
-    string_encoding = string.encoding
+    string_encoding = string ? string.encoding : nil
     binmode = opt.delete(:binmode)
     encoding = opt.delete(:encoding)
 
@@ -367,7 +383,7 @@ class LikeStringIO < IO::Like
     )
 
     if encoding.nil?
-      self.binmode unless string_encoding.ascii_compatible?
+      self.binmode if string_encoding && !  string_encoding.ascii_compatible?
       set_encoding(string_encoding)
     end
   end
@@ -574,13 +590,13 @@ class LikeStringIO < IO::Like
   end
 
   def parse_init_args(string = '', mode = nil, **opt)
-    string = String.new(string) unless String === string
+    string = String.new(string) if string && ! (String === string)
     if ! (mode.nil? || opt[:mode].nil?)
       raise ArgumentError, 'mode specified twice'
     end
     mode = opt.delete(:mode) if mode.nil?
 
-    decoded_mode = decode_mode(mode, string.frozen?)
+    decoded_mode = decode_mode(mode, string && string.frozen?)
     if decoded_mode.key?(:binmode) && ! opt[:textmode].nil? ||
        decoded_mode.key?(:textmode) && ! opt[:binmode].nil? ||
        ! (opt[:textmode].nil? || opt[:binmode].nil?)
