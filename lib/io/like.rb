@@ -64,7 +64,7 @@ class Like < LikeHelpers::DuplexedIO
     # encoding when binmode is set.
     @binmode = false
     self.binmode if binmode
-    unless binmode && external_encoding.nil? && internal_encoding.nil?
+    if ! binmode || external_encoding || internal_encoding
       if ! (Encoding === external_encoding) && external_encoding =~ /^bom\|/i
         if set_encoding_by_bom.nil?
           set_encoding(
