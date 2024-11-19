@@ -32,9 +32,11 @@ class Like < LikeHelpers::DuplexedIO
   # @param binmode [Boolean] when `true` suppresses EOL <-> CRLF conversion on
   #   Windows and sets external encoding to ASCII-8BIT unless explicitly
   #   specified
+  # @param encoding [Encoding, String] the external encoding or both the
+  #   external and internal encoding if specified as `"ext_enc:int_enc"`
   # @param encoding_opts [Hash] options to be passed to String#encode
-  # @param internal_encoding [Encoding, String] the internal encoding
   # @param external_encoding [Encoding, String] the external encoding
+  # @param internal_encoding [Encoding, String] the internal encoding
   # @param sync [Boolean] when `true` causes write operations to bypass internal
   #   buffering
   # @param pid [Integer] the return value for {#pid}
@@ -43,13 +45,30 @@ class Like < LikeHelpers::DuplexedIO
     delegate_w = delegate_r,
     autoclose: true,
     binmode: false,
-    internal_encoding: nil,
-    external_encoding: nil,
+    encoding: nil,
     encoding_opts: {},
+    external_encoding: nil,
+    internal_encoding: nil,
     sync: false,
     pid: nil,
     pipeline_class: LikeHelpers::Pipeline
   )
+    if encoding
+      if external_encoding
+        warn("Ignoring encoding parameter '#{encoding}': external_encoding is used")
+        encoding = nil
+      elsif internal_encoding
+        warn("Ignoring encoding parameter '#{encoding}': internal_encoding is used")
+        encoding = nil
+      end
+    end
+
+    if external_encoding
+      external_encoding = Encoding.find(external_encoding)
+    elsif internal_encoding
+      external_encoding = Encoding.default_external
+    end
+
     @pipeline_class = pipeline_class
     pipeline_r = @pipeline_class.new(delegate_r, autoclose: autoclose)
     pipeline_w = delegate_r == delegate_w ?
@@ -64,17 +83,15 @@ class Like < LikeHelpers::DuplexedIO
     # encoding when binmode is set.
     @binmode = false
     self.binmode if binmode
-    if ! binmode || external_encoding || internal_encoding
-      if ! (Encoding === external_encoding) && external_encoding =~ /^bom\|/i
-        if set_encoding_by_bom.nil?
-          set_encoding(
-            external_encoding.to_s[4..-1],
-            internal_encoding,
-            **encoding_opts
-          )
+    if ! binmode || encoding || external_encoding || internal_encoding
+      if encoding && ! (Encoding === encoding) && encoding =~ /^bom\|/i
+        if ! set_encoding_by_bom
+          set_encoding(encoding.to_s[4..-1], **encoding_opts)
         end
       else
-        set_encoding(external_encoding, internal_encoding, **encoding_opts)
+        set_encoding(
+          encoding || external_encoding, internal_encoding, **encoding_opts
+        )
       end
     end
 

@@ -16,26 +16,14 @@ class Object
 
     mode ||= kwargs[:mode]
     result.merge!(io_like_parse_mode_string(mode)) unless Integer === mode
+    result.merge!(
+      kwargs.select do |k, v|
+        %i{encoding external_encoding internal_encoding}.include?(k)
+      end
+    )
 
-    case kwargs[:encoding]
-    when String
-      result[:external_encoding], result[:internal_encoding] =
-        kwargs[:encoding].split(':')
-    when Encoding
-      result[:external_encoding] = kwargs[:encoding]
-    end
-
-    if kwargs.key?(:external_encoding)
-      result[:external_encoding] = kwargs[:external_encoding]
-    end
-    if kwargs.key?(:internal_encoding)
-      result[:internal_encoding] = kwargs[:internal_encoding]
-    end
-
-    result[:internal_encoding] = nil if result[:internal_encoding] == '-'
-
-    result[:encoding_opts] = kwargs.select do |k, v|
-      ! %i{mode flags external_encoding internal_encoding encoding textmode binmode autoclose}.include?(k)
+    result[:encoding_opts] = kwargs.reject do |k, v|
+      %i{mode flags encoding external_encoding internal_encoding textmode binmode autoclose}.include?(k)
     end
 
     result
@@ -45,8 +33,8 @@ class Object
     result = {}
 
     mode = 'r' if mode.nil?
-    mode, result[:external_encoding], result[:internal_encoding] =
-      mode.split(':')
+    mode, encoding = mode.split(':', 2)
+    result[:encoding] = encoding if encoding && ! encoding.empty?
 
     case mode[0]
     when 'r', 'w', 'a'
