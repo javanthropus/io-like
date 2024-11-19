@@ -1248,15 +1248,18 @@ class Like < LikeHelpers::DuplexedIO
       raise ArgumentError, 'newline decorator with binary mode'
     end
 
+    # Ruby 3.2 and below have a bug (#18899) handling the internal encoding
+    # correctly when the external encoding is binary that only happens when they
+    # are supplied individually to this method.
+    bug_18899_compatibility = RBVER_LT_3_3
     # Convert the argument(s) into Encoding objects.
     if ! (ext_enc.nil? || Encoding === ext_enc) && int_enc.nil?
       string_arg = String.new(ext_enc)
       begin
-        split_idx = string_arg.rindex(':')
-        unless split_idx.nil? || split_idx == 0
-          ext_enc = string_arg[0...split_idx]
-          int_enc = string_arg[(split_idx + 1)..-1]
-        end
+        e, _, i = string_arg.rpartition(':')
+        # Bug #18899 compatibility is unnecessary when the encodings are passed
+        # together as a colon speparated string.
+        ext_enc, int_enc, bug_18899_compatibility = e, i, false unless e.empty?
       rescue Encoding::CompatibilityError
         # This is caused by failure to split on colon when the string argument
         # is not ASCII compatible.  Ignore it and use the argument as is.
@@ -1292,7 +1295,7 @@ class Like < LikeHelpers::DuplexedIO
 
     # Ignore the chosen internal encoding when no conversion will be performed.
     if int_enc == ext_enc ||
-       ext_enc == Encoding::BINARY && ! RBVER_LT_3_3
+       ext_enc == Encoding::BINARY && ! bug_18899_compatibility
       int_enc = nil
     end
 
