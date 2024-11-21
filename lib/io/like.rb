@@ -1878,13 +1878,8 @@ class Like < LikeHelpers::DuplexedIO
   def ensure_string(object)
     object.to_str
   rescue NoMethodError
-    case object
-    when nil
-      raise TypeError, 'no implicit conversion of nil into String'
-    else
-      raise TypeError,
-        'no implicit conversion of %s into String' % [object.class]
-    end
+    raise TypeError,
+      'no implicit conversion of %s into String' % [object&.class || 'nil']
   end
 
   ##
