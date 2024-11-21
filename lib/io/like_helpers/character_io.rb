@@ -9,6 +9,8 @@ class IO; module LikeHelpers
 # This class implements a stream that reads or writes characters to or from a
 # byte oriented stream.
 class CharacterIO
+  include RubyFacts
+
   ##
   # Creates a new intance of this class.
   #
@@ -206,7 +208,7 @@ class CharacterIO
       if separator
         # When the separator is provided, remove the separator.
         content.slice!(separator)
-      elsif IO::LikeHelpers::RubyFacts::RBVER_LT_3_2 && ! separator && ! limit
+      elsif RBVER_LT_3_2 && ! separator && ! limit
         # A default chomp is performed on Ruby <3.2 in the read all case even
         # though the separator is not provided there.
         content.chomp!
@@ -377,7 +379,7 @@ class CharacterIO
     # 2. The internal encoding is not set explicitly
     # 3. Character conversion would be necessary with it set
     internal_encoding = self.internal_encoding
-    if IO::LikeHelpers::RubyFacts::RBVER_LT_3_3 &&
+    if RBVER_LT_3_3 &&
        ! internal_encoding &&
        external_encoding != Encoding::BINARY &&
        external_encoding != Encoding.default_internal
@@ -408,7 +410,7 @@ class CharacterIO
   # @return [nil]
   def discard_newlines
     newline = String.new("\n")
-    if IO::LikeHelpers::RubyFacts::RBVER_LT_3_4
+    if RBVER_LT_3_4
       newline.encode!(internal_encoding) if internal_encoding
     else
       newline.encode!(character_reader.encoding)
