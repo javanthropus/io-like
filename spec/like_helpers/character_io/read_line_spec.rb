@@ -82,6 +82,49 @@ describe "IO::LikeHelpers::CharacterIO#read_line" do
           @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_16LE
         end
       end
+
+      describe "when using a Regexp as a separator" do
+        before :each do
+          @separator = Regexp.new(String.new("\n").encode(Encoding::UTF_16LE).b)
+        end
+
+        it "returns the next line in the stream" do
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "ʻO kēia ka paukū mua, ʻōlelo hoʻokahi.\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "Esta é a frase dois.\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "यह पैराग्राफ दो, वाक्य एक है।\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "그리고 이것은 두 번째 문장입니다.\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "Η τρίτη παράγραφος αρχίζει και τελειώνει εδώ.\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+        end
+
+        describe "when passed a non-nil limit" do
+          it "reads less than limit bytes if the separator is found first" do
+            @io.read_line(separator: @separator, limit: 10).should == "\n".encode(Encoding::UTF_16LE)
+          end
+
+          it "reads exactly limit bytes when the limit exactly bounds the last character" do
+            @io.read_line(separator: @separator, limit: 10).should == "\n".encode(Encoding::UTF_16LE)
+            @io.read_line(separator: @separator, limit: 10).should == "ʻO kē".encode(Encoding::UTF_16LE)
+          end
+
+          it "reads more than limit bytes to avoid splitting the last character" do
+            @io.read_line(separator: @separator, limit: 10).should == "\n".encode(Encoding::UTF_16LE)
+            @io.read_line(separator: @separator, limit: 9).should == "ʻO kē".encode(Encoding::UTF_16LE)
+          end
+
+          it "returns an empty string when passed 0 as a limit" do
+            @io.read_line(separator: @separator, limit: 0).should == ""
+            @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_16LE
+          end
+        end
+      end
     end
 
     describe "from ASCII incompatible to ASCII compatible encodings" do
@@ -157,6 +200,49 @@ describe "IO::LikeHelpers::CharacterIO#read_line" do
         it "returns an empty string when passed 0 as a limit" do
           @io.read_line(separator: @separator, limit: 0).should == ""
           @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_8
+        end
+      end
+
+      describe "when using a Regexp as a separator" do
+        before :each do
+          @separator = Regexp.new(String.new("\n").b)
+        end
+
+        it "returns the next line in the stream" do
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "ʻO kēia ka paukū mua, ʻōlelo hoʻokahi.\n"
+          @io.read_line(separator: @separator).should == "Esta é a frase dois.\n"
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "यह पैराग्राफ दो, वाक्य एक है।\n"
+          @io.read_line(separator: @separator).should == "그리고 이것은 두 번째 문장입니다.\n"
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "Η τρίτη παράγραφος αρχίζει και τελειώνει εδώ.\n"
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "\n"
+        end
+
+        describe "when passed a non-nil limit" do
+          it "reads less than limit bytes if the separator is found first" do
+            @io.read_line(separator: @separator, limit: 7).should == "\n"
+          end
+
+          it "reads exactly limit bytes when the limit exactly bounds the last character" do
+            @io.read_line(separator: @separator, limit: 7).should == "\n"
+            @io.read_line(separator: @separator, limit: 7).should == "ʻO kē"
+          end
+
+          it "reads more than limit bytes to avoid splitting the last character" do
+            @io.read_line(separator: @separator, limit: 7).should == "\n"
+            @io.read_line(separator: @separator, limit: 6).should == "ʻO kē"
+          end
+
+          it "returns an empty string when passed 0 as a limit" do
+            @io.read_line(separator: @separator, limit: 0).should == ""
+            @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_8
+          end
         end
       end
     end
@@ -239,6 +325,49 @@ describe "IO::LikeHelpers::CharacterIO#read_line" do
           @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_32LE
         end
       end
+
+      describe "when using a Regexp as a separator" do
+        before :each do
+          @separator = Regexp.new(String.new("\n").encode(Encoding::UTF_32LE).b)
+        end
+
+        it "returns the next line in the stream" do
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "ʻO kēia ka paukū mua, ʻōlelo hoʻokahi.\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "Esta é a frase dois.\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "यह पैराग्राफ दो, वाक्य एक है।\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "그리고 이것은 두 번째 문장입니다.\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "Η τρίτη παράγραφος αρχίζει και τελειώνει εδώ.\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+        end
+
+        describe "when passed a non-nil limit" do
+          it "reads less than limit bytes if the separator is found first" do
+            @io.read_line(separator: @separator, limit: 20).should == "\n".encode(Encoding::UTF_32LE)
+          end
+
+          it "reads exactly limit bytes when the limit exactly bounds the last character" do
+            @io.read_line(separator: @separator, limit: 20).should == "\n".encode(Encoding::UTF_32LE)
+            @io.read_line(separator: @separator, limit: 20).should == "ʻO kē".encode(Encoding::UTF_32LE)
+          end
+
+          it "reads more than limit bytes to avoid splitting the last character" do
+            @io.read_line(separator: @separator, limit: 20).should == "\n".encode(Encoding::UTF_32LE)
+            @io.read_line(separator: @separator, limit: 19).should == "ʻO kē".encode(Encoding::UTF_32LE)
+          end
+
+          it "returns an empty string when passed 0 as a limit" do
+            @io.read_line(separator: @separator, limit: 0).should == ""
+            @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_32LE
+          end
+        end
+      end
     end
   end
 
@@ -319,6 +448,49 @@ describe "IO::LikeHelpers::CharacterIO#read_line" do
           @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_16LE
         end
       end
+
+      describe "when using a Regexp as a separator" do
+        before :each do
+          @separator = Regexp.new(String.new("\n").encode(Encoding::UTF_16LE).b)
+        end
+
+        it "returns the next line in the stream" do
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "ʻO kēia ka paukū mua, ʻōlelo hoʻokahi.\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "Esta é a frase dois.\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "यह पैराग्राफ दो, वाक्य एक है।\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "그리고 이것은 두 번째 문장입니다.\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "Η τρίτη παράγραφος αρχίζει και τελειώνει εδώ.\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_16LE)
+        end
+
+        describe "when passed a non-nil limit" do
+          it "reads less than limit bytes if the separator is found first" do
+            @io.read_line(separator: @separator, limit: 10).should == "\n".encode(Encoding::UTF_16LE)
+          end
+
+          it "reads exactly limit bytes when the limit exactly bounds the last character" do
+            @io.read_line(separator: @separator, limit: 10).should == "\n".encode(Encoding::UTF_16LE)
+            @io.read_line(separator: @separator, limit: 10).should == "ʻO kē".encode(Encoding::UTF_16LE)
+          end
+
+          it "reads more than limit bytes to avoid splitting the last character" do
+            @io.read_line(separator: @separator, limit: 10).should == "\n".encode(Encoding::UTF_16LE)
+            @io.read_line(separator: @separator, limit: 9).should == "ʻO kē".encode(Encoding::UTF_16LE)
+          end
+
+          it "returns an empty string when passed 0 as a limit" do
+            @io.read_line(separator: @separator, limit: 0).should == ""
+            @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_16LE
+          end
+        end
+      end
     end
 
     describe "from ASCII incompatible to ASCII compatible encodings" do
@@ -395,6 +567,49 @@ describe "IO::LikeHelpers::CharacterIO#read_line" do
         it "returns an empty string when passed 0 as a limit" do
           @io.read_line(separator: @separator, limit: 0).should == ""
           @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_8
+        end
+      end
+
+      describe "when using a Regexp as a separator" do
+        before :each do
+          @separator = Regexp.new(String.new("\n").b)
+        end
+
+        it "returns the next line in the stream" do
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "ʻO kēia ka paukū mua, ʻōlelo hoʻokahi.\n"
+          @io.read_line(separator: @separator).should == "Esta é a frase dois.\n"
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "यह पैराग्राफ दो, वाक्य एक है।\n"
+          @io.read_line(separator: @separator).should == "그리고 이것은 두 번째 문장입니다.\n"
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "Η τρίτη παράγραφος αρχίζει και τελειώνει εδώ.\n"
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "\n"
+          @io.read_line(separator: @separator).should == "\n"
+        end
+
+        describe "when passed a non-nil limit" do
+          it "reads less than limit bytes if the separator is found first" do
+            @io.read_line(separator: @separator, limit: 7).should == "\n"
+          end
+
+          it "reads exactly limit bytes when the limit exactly bounds the last character" do
+            @io.read_line(separator: @separator, limit: 7).should == "\n"
+            @io.read_line(separator: @separator, limit: 7).should == "ʻO kē"
+          end
+
+          it "reads more than limit bytes to avoid splitting the last character" do
+            @io.read_line(separator: @separator, limit: 7).should == "\n"
+            @io.read_line(separator: @separator, limit: 6).should == "ʻO kē"
+          end
+
+          it "returns an empty string when passed 0 as a limit" do
+            @io.read_line(separator: @separator, limit: 0).should == ""
+            @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_8
+          end
         end
       end
     end
@@ -475,6 +690,49 @@ describe "IO::LikeHelpers::CharacterIO#read_line" do
           @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_32LE
         end
       end
+
+      describe "when using a Regexp as a separator" do
+        before :each do
+          @separator = Regexp.new(String.new("\n").encode(Encoding::UTF_32LE).b)
+        end
+
+        it "returns the next line in the stream" do
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "ʻO kēia ka paukū mua, ʻōlelo hoʻokahi.\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "Esta é a frase dois.\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "यह पैराग्राफ दो, वाक्य एक है।\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "그리고 이것은 두 번째 문장입니다.\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "Η τρίτη παράγραφος αρχίζει και τελειώνει εδώ.\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+          @io.read_line(separator: @separator).should == "\n".encode(Encoding::UTF_32LE)
+        end
+
+        describe "when passed a non-nil limit" do
+          it "reads less than limit bytes if the separator is found first" do
+            @io.read_line(separator: @separator, limit: 20).should == "\n".encode(Encoding::UTF_32LE)
+          end
+
+          it "reads exactly limit bytes when the limit exactly bounds the last character" do
+            @io.read_line(separator: @separator, limit: 20).should == "\n".encode(Encoding::UTF_32LE)
+            @io.read_line(separator: @separator, limit: 20).should == "ʻO kē".encode(Encoding::UTF_32LE)
+          end
+
+          it "reads more than limit bytes to avoid splitting the last character" do
+            @io.read_line(separator: @separator, limit: 20).should == "\n".encode(Encoding::UTF_32LE)
+            @io.read_line(separator: @separator, limit: 19).should == "ʻO kē".encode(Encoding::UTF_32LE)
+          end
+
+          it "returns an empty string when passed 0 as a limit" do
+            @io.read_line(separator: @separator, limit: 0).should == ""
+            @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_32LE
+          end
+        end
+      end
     end
   end
 
@@ -552,6 +810,49 @@ describe "IO::LikeHelpers::CharacterIO#read_line" do
         @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_8
       end
     end
+
+    describe "when using a Regexp as a separator" do
+      before :each do
+        @separator = Regexp.new(String.new("\n").b)
+      end
+
+      it "returns the next line in the stream" do
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "ʻO kēia ka paukū mua, ʻōlelo hoʻokahi.\n"
+        @io.read_line(separator: @separator).should == "Esta é a frase dois.\n"
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "यह पैराग्राफ दो, वाक्य एक है।\n"
+        @io.read_line(separator: @separator).should == "그리고 이것은 두 번째 문장입니다.\n"
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "Η τρίτη παράγραφος αρχίζει και τελειώνει εδώ.\n"
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "\n"
+      end
+
+      describe "when passed a non-nil limit" do
+        it "reads less than limit bytes if the separator is found first" do
+          @io.read_line(separator: @separator, limit: 7).should == "\n"
+        end
+
+        it "reads exactly limit bytes when the limit exactly bounds the last character" do
+          @io.read_line(separator: @separator, limit: 7).should == "\n"
+          @io.read_line(separator: @separator, limit: 7).should == "ʻO kē"
+        end
+
+        it "reads more than limit bytes to avoid splitting the last character" do
+          @io.read_line(separator: @separator, limit: 7).should == "\n"
+          @io.read_line(separator: @separator, limit: 6).should == "ʻO kē"
+        end
+
+        it "returns an empty string when passed 0 as a limit" do
+          @io.read_line(separator: @separator, limit: 0).should == ""
+          @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_8
+        end
+      end
+    end
   end
 
   describe "when not transcoding while the universal newline decorator is set" do
@@ -627,6 +928,49 @@ describe "IO::LikeHelpers::CharacterIO#read_line" do
       it "returns an empty string when passed 0 as a limit" do
         @io.read_line(separator: @separator, limit: 0).should == ""
         @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_8
+      end
+    end
+
+    describe "when using a Regexp as a separator" do
+      before :each do
+        @separator = Regexp.new(String.new("\n").b)
+      end
+
+      it "returns the next line in the stream" do
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "ʻO kēia ka paukū mua, ʻōlelo hoʻokahi.\n"
+        @io.read_line(separator: @separator).should == "Esta é a frase dois.\n"
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "यह पैराग्राफ दो, वाक्य एक है।\n"
+        @io.read_line(separator: @separator).should == "그리고 이것은 두 번째 문장입니다.\n"
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "Η τρίτη παράγραφος αρχίζει και τελειώνει εδώ.\n"
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "\n"
+        @io.read_line(separator: @separator).should == "\n"
+      end
+
+      describe "when passed a non-nil limit" do
+        it "reads less than limit bytes if the separator is found first" do
+          @io.read_line(separator: @separator, limit: 7).should == "\n"
+        end
+
+        it "reads exactly limit bytes when the limit exactly bounds the last character" do
+          @io.read_line(separator: @separator, limit: 7).should == "\n"
+          @io.read_line(separator: @separator, limit: 7).should == "ʻO kē"
+        end
+
+        it "reads more than limit bytes to avoid splitting the last character" do
+          @io.read_line(separator: @separator, limit: 7).should == "\n"
+          @io.read_line(separator: @separator, limit: 6).should == "ʻO kē"
+        end
+
+        it "returns an empty string when passed 0 as a limit" do
+          @io.read_line(separator: @separator, limit: 0).should == ""
+          @io.read_line(separator: @separator, limit: 0).encoding.should == Encoding::UTF_8
+        end
       end
     end
   end

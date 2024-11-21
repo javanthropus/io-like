@@ -10,13 +10,17 @@ class IO; module LikeHelpers
 # delegate.
 class BufferedIO < DelegatedIO
   ##
+  # The default size of the internal buffer.
+  DEFAULT_BUFFER_SIZE = 8192
+
+  ##
   # Creates a new intance of this class.
   #
   # @param delegate [LikeHelpers::AbstractIO] a readable and/or writable stream
   # @param autoclose [Boolean] when `true` close the delegate when this stream
   #   is closed
   # @param buffer_size [Integer] the size of the internal buffer in bytes
-  def initialize(delegate, autoclose: true, buffer_size: 8192)
+  def initialize(delegate, autoclose: true, buffer_size: DEFAULT_BUFFER_SIZE)
     buffer_size = Integer(buffer_size)
     if buffer_size <= 0
       raise ArgumentError, 'buffer_size must be greater than 0'

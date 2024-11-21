@@ -80,18 +80,13 @@ class ConverterReader < BasicReader
   ##
   # Consumes bytes from the front of the buffer.
   #
-  # @param length [Integer, nil] the number of bytes to consume or `nil` for all
-  #   remaining bytes
+  # @param length [Integer] the number of bytes to consume
   #
   # @return [nil]
-  def consume(length = nil)
-    if length.nil?
-      @start_idx = @end_idx
-    else
-      existing_content_size = @end_idx - @start_idx
-      length = existing_content_size if length > existing_content_size
-      @start_idx += length
-    end
+  def consume(length)
+    existing_content_size = @end_idx - @start_idx
+    length = existing_content_size if length > existing_content_size
+    @start_idx += length
     nil
   end
 

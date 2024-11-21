@@ -232,6 +232,20 @@ describe "IO::LikeHelpers::CharacterIO#set_encoding" do
     io.set_encoding(Encoding::UTF_8, Encoding::UTF_16LE, xml: :attr)
     io.read_line(separator: nil).should == @data.encode(Encoding::UTF_16LE)
   end
+
+  it "raises ArgumentError when external encoding is nil and internal encoding is not" do
+    io = IO::LikeHelpers::CharacterIO.new(@buffered_io)
+    -> {
+      io.set_encoding(nil, Encoding::UTF_8)
+    }.should raise_error(ArgumentError, "external encoding cannot be nil when internal encoding is not nil")
+  end
+
+  it "raises ArgumentError when newline decorator has invalid value" do
+    io = IO::LikeHelpers::CharacterIO.new(@buffered_io)
+    -> {
+      io.set_encoding(Encoding::UTF_8, Encoding::UTF_16LE, newline: :invalid)
+    }.should raise_error(ArgumentError, "unexpected value for newline option: invalid")
+  end
 end
 
 # vim: ts=2 sw=2 et

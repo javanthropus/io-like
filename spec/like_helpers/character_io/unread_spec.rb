@@ -7,130 +7,122 @@ describe "IO::LikeHelpers::CharacterIO#unread" do
   it "raises IOError if the delegate is not readable" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(false)
+    io = IO::LikeHelpers::CharacterIO.new(obj)
 
-    io = IO::LikeHelpers::CharacterIO.new(
-      obj,
-      external_encoding: Encoding::UTF_8,
-      internal_encoding: Encoding::UTF_16LE
-    )
-    -> { io.unread("a".encode(Encoding::UTF_16LE)) }.should raise_error(IOError)
+    -> { io.unread("a") }.should raise_error(IOError)
   end
 
   it "raises ArgumentError for invalid length" do
     obj = mock("io")
+    io = IO::LikeHelpers::CharacterIO.new(obj)
 
-    io = IO::LikeHelpers::CharacterIO.new(
-      obj,
-      external_encoding: Encoding::UTF_8,
-      internal_encoding: Encoding::UTF_16LE
-    )
-    -> do
-      io.unread("a".encode(Encoding::UTF_16LE), length: -1)
-    end.should raise_error(ArgumentError)
+    -> {
+      io.unread("a", length: -1)
+    }.should raise_error(ArgumentError)
   end
 
   describe "when transcoding" do
-    it "returns nil" do
+    before :each do
       obj = mock("io")
       obj.should_receive(:readable?).and_return(true)
 
-      io = IO::LikeHelpers::CharacterIO.new(
+      @io = IO::LikeHelpers::CharacterIO.new(
         obj,
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
-      io.unread("a".encode(Encoding::UTF_16LE)).should be_nil
+    end
+
+    it "returns nil" do
+      @io.unread("a".encode(Encoding::UTF_16LE)).should be_nil
     end
 
     it "pushes to the internal buffer" do
-      obj = mock("io")
-      obj.should_receive(:readable?).and_return(true)
-
-      io = IO::LikeHelpers::CharacterIO.new(
-        obj,
-        external_encoding: Encoding::UTF_8,
-        internal_encoding: Encoding::UTF_16LE
-      )
       # This should not call the delegate's #unread method.
-      io.unread("a".encode(Encoding::UTF_16LE)).should be_nil
-      io.read_char.should == "a".encode(Encoding::UTF_16LE)
+      @io.unread("a".encode(Encoding::UTF_16LE)).should be_nil
+      @io.read_char.should == "a".encode(Encoding::UTF_16LE)
+    end
+
+    it "creates a buffer large enough for the given data" do
+      content = "\0" * (IO::LikeHelpers::CharacterIO::ConverterReader::MIN_BUFFER_SIZE + 1)
+      @io.unread(content).should be_nil
+    end
+
+    it "raises IOError when the buffer is full" do
+      # This will create the character buffer with the minimum size.
+      @io.unread("a").should be_nil
+      -> {
+        @io.unread(
+          "a" * IO::LikeHelpers::CharacterIO::ConverterReader::MIN_BUFFER_SIZE
+        )
+      }.should raise_error(IOError, "insufficient buffer space for unread")
     end
   end
 
   describe "when not transcoding and with the universal newline decorator" do
-    it "returns nil" do
+    before :each do
       obj = mock("io")
       obj.should_receive(:readable?).and_return(true)
 
-      io = IO::LikeHelpers::CharacterIO.new(
+      @io = IO::LikeHelpers::CharacterIO.new(
         obj,
         external_encoding: Encoding::UTF_8,
         encoding_opts: {newline: :universal}
       )
-      io.unread("a".encode(Encoding::UTF_16LE)).should be_nil
+    end
+
+    it "returns nil" do
+      @io.unread("a".encode(Encoding::UTF_16LE)).should be_nil
     end
 
     it "pushes to the internal buffer" do
-      obj = mock("io")
-      obj.should_receive(:readable?).and_return(true)
+      @io.unread("a").should be_nil
+      @io.read_char.should == "a"
+    end
 
-      io = IO::LikeHelpers::CharacterIO.new(
-        obj,
-        external_encoding: Encoding::UTF_8,
-        encoding_opts: {newline: :universal}
-      )
-      io.unread("a").should be_nil
-      io.read_char.should == "a"
+    it "creates a buffer large enough for the given data" do
+      content = "\0" * (IO::LikeHelpers::CharacterIO::ConverterReader::MIN_BUFFER_SIZE + 1)
+      @io.unread(content).should be_nil
+    end
+
+    it "raises IOError when the buffer is full" do
+      # This will create the character buffer with the minimum size.
+      @io.unread("a").should be_nil
+      -> {
+        @io.unread(
+          "a" * IO::LikeHelpers::CharacterIO::ConverterReader::MIN_BUFFER_SIZE
+        )
+      }.should raise_error(IOError, "insufficient buffer space for unread")
     end
   end
 
   describe "when not transcoding and without the universal newline decorator" do
+    before :each do
+      obj = mock("io")
+      obj.should_receive(:readable?).and_return(true)
+
+      bio = IO::LikeHelpers::BufferedIO.new(obj)
+      @io = IO::LikeHelpers::CharacterIO.new(
+        bio,
+        external_encoding: Encoding::UTF_8
+      )
+    end
+
     it "returns nil" do
-      obj = mock("io")
-      obj.should_receive(:readable?).and_return(true)
-
-      bio = IO::LikeHelpers::BufferedIO.new(obj)
-      io = IO::LikeHelpers::CharacterIO.new(
-        bio,
-        external_encoding: Encoding::UTF_8
-      )
-      io.unread("a".encode(Encoding::UTF_16LE)).should be_nil
+      @io.unread("a".encode(Encoding::UTF_16LE)).should be_nil
     end
 
-    it "raises IOError if the internal buffer capacity would be exceeded" do
-      obj = mock("io")
-      obj.should_receive(:readable?).and_return(true)
-
-      bio = IO::LikeHelpers::BufferedIO.new(obj)
-      io = IO::LikeHelpers::CharacterIO.new(
-        bio,
-        external_encoding: Encoding::UTF_8
-      )
-      -> { io.unread("\0" * (131072 + 1)) }.should raise_error(IOError)
+    it "pushes to the internal buffer" do
+      @io.unread("a").should be_nil
+      @io.read_char.should == "a"
     end
 
-    it "pushes to the delegate" do
-      obj = mock("io")
-      obj.should_receive(:readable?).and_return(true)
-      obj.should_receive(:unread).with("a", length: 1).and_return(nil)
-
-      io = IO::LikeHelpers::CharacterIO.new(
-        obj,
-        external_encoding: Encoding::UTF_8
-      )
-      io.unread("a").should be_nil
-    end
-
-    it "raises exceptions raised by the delegate" do
-      obj = mock("io")
-      obj.should_receive(:readable?).and_return(true)
-      obj.should_receive(:unread).with("a", length: 1).and_raise(IOError.new)
-
-      io = IO::LikeHelpers::CharacterIO.new(
-        obj,
-        external_encoding: Encoding::UTF_8
-      )
-      -> { io.unread("a") }.should raise_error(IOError)
+    it "raises IOError when the buffer is full" do
+      -> {
+        @io.unread(
+          "\0" * (IO::LikeHelpers::BufferedIO::DEFAULT_BUFFER_SIZE + 1)
+        )
+      }.should raise_error(IOError, "insufficient buffer space for unread")
     end
   end
 end

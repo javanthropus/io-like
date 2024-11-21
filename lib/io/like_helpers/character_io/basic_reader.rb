@@ -55,13 +55,12 @@ class BasicReader
   ##
   # Consumes bytes from the front of the buffer.
   #
-  # @param length [Integer, nil] the number of bytes to consume or `nil` for all
-  #   remaining bytes
+  # @param length [Integer, nil] the number of bytes to consume
   #
   # @return [nil]
   #
   # @raise [IOError] if the stream is not readable
-  def consume(length = nil)
+  def consume(length)
     buffered_io.skip(length)
     nil
   end

@@ -249,7 +249,7 @@ class CharacterIO
   def set_encoding(external, internal, **opts)
     if external.nil? && ! internal.nil?
       raise ArgumentError,
-        'External encoding cannot be nil when internal encoding is not nil'
+        'external encoding cannot be nil when internal encoding is not nil'
     end
 
     internal = nil if internal == external
