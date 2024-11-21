@@ -1547,10 +1547,6 @@ class Like < LikeHelpers::DuplexedIO
   def ungetbyte(obj)
     assert_readable
 
-    unless delegate_r.character_io.buffer_empty?
-      raise IOError, 'byte oriented read for character buffered IO'
-    end
-
     return if obj.nil?
 
     string = case obj
@@ -1562,7 +1558,7 @@ class Like < LikeHelpers::DuplexedIO
                String.new(obj)
              end
 
-    delegate_r.buffered_io.unread(string.b)
+    delegate_r.character_io.unread(string.b)
 
     nil
   end
