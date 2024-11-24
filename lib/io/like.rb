@@ -376,8 +376,6 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [IOError] if the stream is not open for reading
   def eof?
-    return false unless delegate_r.character_io.buffer_empty?
-
     if byte = getbyte
       ungetbyte(byte)
       return false
@@ -1459,10 +1457,8 @@ class Like < LikeHelpers::DuplexedIO
 
     assert_readable
 
-    unless delegate_r.character_io.buffer_empty?
-      raise IOError, 'byte oriented read for character buffered IO'
-    end
-    unless delegate_r.buffered_io.read_buffer_empty?
+    if ! delegate_r.buffered_io.read_buffer_empty? ||
+       ! delegate_r.character_io.buffer_empty?
       raise IOError, 'sysread for buffered IO'
     end
 

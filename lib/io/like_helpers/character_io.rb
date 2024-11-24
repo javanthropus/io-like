@@ -73,9 +73,7 @@ class CharacterIO
   # @raise [EOFError] when reading at the end of the stream
   # @raise [IOError] if the stream is not readable
   def read_all
-    # TODO:
-    # Remove this method and merge its tests with the read_line tests.
-    return read_line(separator: nil)
+    read_all_internal
   end
 
   ##
@@ -120,13 +118,15 @@ class CharacterIO
   # @param limit [Integer, nil] an Integer limiting the number of bytes
   #   returned in each line or `nil` to indicate no limit
   # @param chomp [Boolean] when `true` trailing newlines and carriage returns
-  #   will be removed from each line
+  #   will be removed from each line; ignored when `separator` is `nil`
   #
   # @return [String] a buffer containing the characters that were read
   #
   # @raise [EOFError] when reading at the end of the stream
   # @raise [IOError] if the stream is not readable
   def read_line(separator: $/, limit: nil, chomp: false, discard_newlines: false)
+    return read_all_internal(chomp: chomp) if ! (separator || limit)
+
     if String === separator && separator.encoding != Encoding::BINARY
       separator = separator.encode(character_reader.encoding).b
     end
@@ -167,7 +167,7 @@ class CharacterIO
           end
         end
 
-        if limit && limit < content.bytesize
+        if limit && content.bytesize >= limit
           # Truncate the content to no more than limit + 16 bytes in order to
           # ensure that the last character is not truncated at the limit
           # boundary.
@@ -196,7 +196,7 @@ class CharacterIO
         # The limit was reached.
         break if limit && content.bytesize >= limit && ! need_more
 
-        character_reader.refill
+        character_reader.refill(false)
       end
 
       self.discard_newlines if discard_newlines
@@ -204,16 +204,8 @@ class CharacterIO
       raise if content.empty?
     end
 
-    if chomp
-      if separator
-        # When the separator is provided, remove the separator.
-        content.slice!(separator)
-      elsif RBVER_LT_3_2 && ! separator && ! limit
-        # A default chomp is performed on Ruby <3.2 in the read all case even
-        # though the separator is not provided there.
-        content.chomp!
-      end
-    end
+    # Remove the separator when requested.
+    content.slice!(separator) if chomp && separator
 
     content.force_encoding(character_reader.encoding)
   end
@@ -494,6 +486,43 @@ class CharacterIO
   ##
   # The encoding options for writing.
   attr_reader :encoding_opts_w
+
+  ##
+  # Reads all remaining characters from the stream.  This exists only to handle
+  # chomp behavior on Ruby < 3.2 without exposing that interface publicly.
+  #
+  # @todo Move this method implementation to #read_all when Ruby < 3.2 support
+  #   is dropped.
+  #
+  # @param chomp [Boolean] performs a chomp on the content when `true` on Ruby <
+  #   3.2; otherwise, ignored
+  #
+  # @return [String] a buffer containing the characters that were read
+  #
+  # @raise [Encoding::InvalidByteSequenceError] if character conversion is being
+  #   performed and the next sequence of bytes are invalid in the external
+  #   encoding
+  # @raise [EOFError] when reading at the end of the stream
+  # @raise [IOError] if the stream is not readable
+  def read_all_internal(chomp: false)
+    content = String.new(encoding: Encoding::BINARY)
+    begin
+      loop do
+        already_consumed = content.bytesize
+        content << character_reader.content
+        character_reader.consume(content.bytesize - already_consumed)
+        character_reader.refill
+      end
+    rescue EOFError
+      raise if content.empty?
+    end
+
+    # HACK:
+    # A default chomp is performed on Ruby <3.2 when chomp is requested.
+    content.chomp! if RBVER_LT_3_2 && chomp
+
+    content.force_encoding(character_reader.encoding)
+  end
 end
 end; end
 
