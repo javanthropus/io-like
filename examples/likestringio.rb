@@ -378,7 +378,7 @@ class LikeStringIO < IO::Like
     super(
       StringWrapper.new(string, **opt),
       binmode: binmode,
-      external_encoding: encoding,
+      encoding: encoding,
       pipeline_class: StringPipeline
     )
 
