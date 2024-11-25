@@ -1457,9 +1457,10 @@ class Like < LikeHelpers::DuplexedIO
 
     assert_readable
 
-    if ! delegate_r.buffered_io.read_buffer_empty? ||
-       ! delegate_r.character_io.buffer_empty?
+    if ! delegate_r.buffered_io.read_buffer_empty?
       raise IOError, 'sysread for buffered IO'
+    elsif ! delegate_r.character_io.buffer_empty?
+      raise IOError, 'byte oriented read for character buffered IO'
     end
 
     result = ensure_buffer(length, buffer) do |binary_buffer|
