@@ -19,7 +19,7 @@ class ROT13Filter < DelegatedIO
     if buffer.nil?
       encode_rot13(result)
     else
-      encode_rot13(buffer)
+      encode_rot13(buffer, buffer_offset: buffer_offset)
     end
     result
   end
@@ -30,8 +30,8 @@ class ROT13Filter < DelegatedIO
 
   private
 
-  def encode_rot13(buffer)
-    0.upto(buffer.length - 1) do |i|
+  def encode_rot13(buffer, buffer_offset: 0)
+    buffer_offset.upto(buffer.length - 1) do |i|
       ord = buffer[i].ord
       case ord
       when 65..90
