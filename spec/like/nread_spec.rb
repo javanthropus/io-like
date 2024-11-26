@@ -24,6 +24,16 @@ describe "IO::Like#nread" do
     io.close
     -> { io.nread }.should raise_error(IOError, 'closed stream')
   end
+
+  it "raises IOError if the character buffer is not empty" do
+    obj = mock("io")
+    obj.should_receive(:readable?).and_return(true)
+    io = IO::Like.new(obj, encoding: 'utf-8:utf-16le')
+    io.ungetc("a".encode("utf-16le"))
+    -> {
+      io.nread
+    }.should raise_error(IOError, 'byte oriented read for character buffered IO')
+  end
 end
 
 # vim: ts=2 sw=2 et
