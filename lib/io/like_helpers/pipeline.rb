@@ -45,7 +45,7 @@ class Pipeline < DelegatedIO
   end
 
   ##
-  # A references to the CharacterIO instance
+  # A reference to the CharacterIO instance
   attr_reader :character_io
 
   ##
