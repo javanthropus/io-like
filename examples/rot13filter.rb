@@ -87,8 +87,10 @@ if $0 == __FILE__
   IO.pipe do |r, w|
     w.puts('This is a test')
     w.close
-    IO::Like.open(ROT13Filter.new(ROT13Filter.new(IOWrapper.new(r)))) do |rot26| # ;-)
-      puts(rot26.read)                    # -> This is a test
+    ROT13Filter.io_like(r) do |rot13|
+      ROT13Filter.io_like(rot13) do |rot26|
+        puts(rot26.read)                  # -> This is a test
+      end
     end
   end
 end
