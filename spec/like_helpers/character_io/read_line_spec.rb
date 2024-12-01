@@ -314,9 +314,6 @@ describe "IO::LikeHelpers::CharacterIO#read_line" do
 
         it "reads more than limit bytes to avoid splitting the last character" do
           @io.read_line(separator: @separator, limit: 20).should == "\n".encode(Encoding::UTF_32LE)
-          # TODO:
-          # File bug with Ruby because when the limit would split a character in
-          # this case, it appears to ignore the limit completely.
           @io.read_line(separator: @separator, limit: 19).should == "ʻO kē".encode(Encoding::UTF_32LE)
         end
 
