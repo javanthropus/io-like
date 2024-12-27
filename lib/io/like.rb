@@ -618,9 +618,7 @@ class Like < LikeHelpers::DuplexedIO
   def pread(maxlen, offset, buffer = nil)
     maxlen = ensure_integer(maxlen)
     raise ArgumentError, 'negative string size (or size too big)' if maxlen < 0
-    buffer = buffer.nil? ?
-      String.new(encoding: Encoding::BINARY) :
-      ensure_string(buffer)
+    buffer = buffer.nil? ? ''.b : ensure_string(buffer)
 
     return buffer if maxlen == 0
 
@@ -1252,7 +1250,7 @@ class Like < LikeHelpers::DuplexedIO
     bug_18899_compatibility = RBVER_LT_3_3
     # Convert the argument(s) into Encoding objects.
     if ! (ext_enc.nil? || Encoding === ext_enc) && int_enc.nil?
-      string_arg = String.new(ext_enc)
+      string_arg = ensure_string(ext_enc)
       begin
         e, _, i = string_arg.rpartition(':')
         # Bug #18899 compatibility is unnecessary when the encodings are passed
@@ -1552,7 +1550,7 @@ class Like < LikeHelpers::DuplexedIO
              when Integer
                (obj & 255).chr
              else
-               String.new(obj)
+               ensure_string(obj)
              end
 
     delegate_r.character_io.unread(string.b)
@@ -1589,7 +1587,7 @@ class Like < LikeHelpers::DuplexedIO
                encoding = internal_encoding || external_encoding
                encoding.nil? ? string.chr : string.chr(encoding)
              else
-               String.new(string)
+               ensure_string(string)
              end
 
     delegate_r.character_io.unread(string.b)
@@ -1950,11 +1948,11 @@ class Like < LikeHelpers::DuplexedIO
       raise ArgumentError,
         "wrong number of arguments (given #{args.size}, expected 0..2)"
     elsif args.size == 2
-      sep_string = args[0].nil? ? nil : String.new(args[0])
+      sep_string = args[0].nil? ? nil : ensure_string(args[0])
       limit = args[1].nil? ? nil : ensure_integer(args[1])
     elsif args.size == 1
       begin
-        sep_string = args[0].nil? ? nil : String.new(args[0])
+        sep_string = args[0].nil? ? nil : ensure_string(args[0])
         limit = nil
       rescue TypeError
         limit = ensure_integer(args[0])
