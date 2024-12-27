@@ -71,14 +71,14 @@ class Object
     )
   end
 
-  def __called_by_rubyspec?
-    caller.any? %r{rubyspec/core/io/.*_spec\.rb:\d+:in }
+  def called_by_rubyspec?
+    caller.any? %r{rubyspec/core/io/.*\.rb:\d+:in }
   end
 
   # Replace mspec's new_io helper method to return an IO::Like wrapped IO.
   alias_method :__mspec_new_io, :new_io
   def new_io(name, mode = 'w:utf-8')
-    return __mspec_new_io(name, mode) unless __called_by_rubyspec?
+    return __mspec_new_io(name, mode) unless called_by_rubyspec?
 
     if Hash === mode # Avoid kwargs warnings on Ruby 2.7+
       io_like_wrapped_io(__mspec_new_io(name, mode), **mode)
@@ -90,7 +90,7 @@ class Object
   # Replace the Kernel.open method to return an IO::Like wrapped IO.
   alias_method :__open, :open
   def open(*args, &block)
-    return __open(*args, &block) unless __called_by_rubyspec?
+    return __open(*args, &block) unless called_by_rubyspec?
     io_like_wrapped_io(__open(*args), *args[1..-1], &block)
   end
 end
@@ -100,7 +100,7 @@ class File
   class << self
     alias_method :__file_open, :open
     def open(*args, **kwargs, &block)
-      return __file_open(*args, **kwargs, &block) unless __called_by_rubyspec?
+      return __file_open(*args, **kwargs, &block) unless called_by_rubyspec?
 
       io_like_wrapped_io(
         __file_open(*args, **kwargs),
@@ -117,7 +117,7 @@ class IO
   class << self
     alias_method :__pipe, :pipe
     def pipe(*args, &block)
-      return __pipe(*args, &block) unless __called_by_rubyspec?
+      return __pipe(*args, &block) unless called_by_rubyspec?
 
       r, w = __pipe(*args)
       r, w = io_like_wrapped_io(r), io_like_wrapped_io(w)
@@ -136,9 +136,7 @@ class IO
     # instance wrapping read and write pipes.
     alias_method :__popen, :popen
     def popen(cmd, mode = 'r', &block)
-      unless caller.any? %r{rubyspec/core/io/.*\.rb:\d+:in }
-        return __popen(cmd, mode, &block)
-      end
+      return __popen(cmd, mode, &block) unless called_by_rubyspec?
 
       read = false
       write = false
