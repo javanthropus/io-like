@@ -329,7 +329,6 @@ class LikeStringIO < IO::Like
       internal_encoding: nil,
       sync: false
     )
-
       raise ArgumentError, 'delegate cannot be nil' if delegate.nil?
 
       super(delegate)
