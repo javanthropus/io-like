@@ -181,9 +181,3 @@ class IO
     end
   end
 end
-
-# Remap stdout and stderr to be IO::Like wrappers (as used in some tests).
-unless IO::Like === $stdout
-  $stdout = io_like_wrapped_io($stdout, autoclose: false)
-  $stderr = io_like_wrapped_io($stderr, autoclose: false)
-end
