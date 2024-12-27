@@ -5,14 +5,14 @@ describe "IO::Like#nread" do
   it "delegates to its delegate" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
-    io = IO::Like.new(obj)
+    io = IO::Like.new(obj, autoclose: false)
     io.nread.should == 0
   end
 
   it "raises IOError if its delegate is not readable" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(false)
-    io = IO::Like.new(obj)
+    io = IO::Like.new(obj, autoclose: false)
     -> { io.nread }.should raise_error(IOError, 'not opened for reading')
   end
 
@@ -28,7 +28,7 @@ describe "IO::Like#nread" do
   it "raises IOError if the character buffer is not empty" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
-    io = IO::Like.new(obj, encoding: 'utf-8:utf-16le')
+    io = IO::Like.new(obj, autoclose: false, encoding: 'utf-8:utf-16le')
     io.ungetc("a".encode("utf-16le"))
     -> {
       io.nread

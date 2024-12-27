@@ -8,3 +8,5 @@ describe "IO::LikeHelpers::Pipeline#concrete_io" do
     io.concrete_io.should equal(obj)
   end
 end
+
+# vim: ts=2 sw=2 et

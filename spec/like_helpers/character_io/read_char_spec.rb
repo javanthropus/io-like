@@ -11,7 +11,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:readable?).and_return(false)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
@@ -24,7 +24,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:read).and_raise(EOFError)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
@@ -47,7 +47,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
@@ -59,7 +59,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:readable?).and_return(true)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
@@ -85,7 +85,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
@@ -112,7 +112,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
@@ -137,7 +137,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_16LE,
         internal_encoding: Encoding::UTF_8
       )
@@ -162,7 +162,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         content.bytesize
       end
 
-      bio = IO::LikeHelpers::BufferedIO.new(obj)
+      bio = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
       io = IO::LikeHelpers::CharacterIO.new(
         bio,
         external_encoding: Encoding::UTF_16LE,
@@ -197,7 +197,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
@@ -221,7 +221,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::Windows_31J
       )
@@ -236,7 +236,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         obj.should_receive(:read).at_least(1).and_raise(EOFError)
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: Encoding::UTF_8,
           internal_encoding: Encoding::UTF_16LE
         )
@@ -271,7 +271,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         end
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: Encoding::UTF_8,
           internal_encoding: Encoding::UTF_16LE
         )
@@ -291,7 +291,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:readable?).and_return(false)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE,
         encoding_opts: {newline: :universal}
@@ -305,7 +305,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:read).and_raise(EOFError)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE,
         encoding_opts: {newline: :universal}
@@ -329,7 +329,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE,
         encoding_opts: {newline: :universal}
@@ -342,7 +342,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:readable?).and_return(true)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE,
         encoding_opts: {newline: :universal}
@@ -369,7 +369,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE,
         encoding_opts: {newline: :universal}
@@ -405,7 +405,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE,
         encoding_opts: {newline: :universal}
@@ -431,7 +431,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE,
         encoding_opts: {newline: :universal}
@@ -457,7 +457,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_16LE,
         internal_encoding: Encoding::UTF_8,
         encoding_opts: {newline: :universal}
@@ -483,7 +483,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         content.bytesize
       end
 
-      bio = IO::LikeHelpers::BufferedIO.new(obj)
+      bio = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
       io = IO::LikeHelpers::CharacterIO.new(
         bio,
         external_encoding: Encoding::UTF_16LE,
@@ -519,7 +519,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE,
         encoding_opts: {newline: :universal}
@@ -544,7 +544,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::Windows_31J,
         encoding_opts: {newline: :universal}
@@ -560,7 +560,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         obj.should_receive(:read).at_least(1).and_raise(EOFError)
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: Encoding::UTF_8,
           internal_encoding: Encoding::UTF_16LE,
           encoding_opts: {newline: :universal}
@@ -596,7 +596,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         end
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: Encoding::UTF_8,
           internal_encoding: Encoding::UTF_16LE,
           encoding_opts: {newline: :universal}
@@ -617,7 +617,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:readable?).and_return(false)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8
       )
       lambda { io.read_char }.should raise_error(IOError)
@@ -629,7 +629,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:read).and_raise(EOFError)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8
       )
       -> { io.read_char }.should raise_error(EOFError)
@@ -644,7 +644,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8
       )
       io.read_char.should == "a"
@@ -655,7 +655,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:readable?).and_return(true)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8
       )
       io.unread("a".b)
@@ -671,7 +671,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj)
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
       )
       begin
         default_external = Encoding.default_external
@@ -692,7 +692,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj)
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
       )
       begin
         default_external = Encoding.default_external
@@ -709,7 +709,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:readable?).and_return(true)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8
       )
       io.unread("a".b)
@@ -734,7 +734,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8
       )
       io.read_char.should == cr.encode(Encoding::UTF_8)
@@ -761,7 +761,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         end
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: Encoding::UTF_8
         )
         io.unread(char.b[0..-2])
@@ -785,7 +785,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         end
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: Encoding::UTF_8
         )
         io.unread(char.b[0..-2])
@@ -802,7 +802,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         obj.should_receive(:read).at_least(1).and_raise(EOFError)
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: Encoding::UTF_8
         )
         io.unread(char.b[0..-2])
@@ -819,7 +819,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:readable?).and_return(false)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         encoding_opts: {newline: :universal}
       )
@@ -832,7 +832,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:read).and_raise(EOFError)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         encoding_opts: {newline: :universal}
       )
@@ -848,7 +848,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         encoding_opts: {newline: :universal}
       )
@@ -860,7 +860,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:readable?).and_return(true)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         encoding_opts: {newline: :universal}
       )
@@ -886,7 +886,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         encoding_opts: {newline: :universal}
       )
@@ -920,7 +920,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         encoding_opts: {newline: :universal}
       )
@@ -946,7 +946,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         end
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: Encoding::UTF_8,
           encoding_opts: {newline: :universal}
         )
@@ -971,7 +971,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         end
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: Encoding::UTF_8,
           encoding_opts: {newline: :universal}
         )
@@ -989,7 +989,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         obj.should_receive(:read).at_least(1).and_raise(EOFError)
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: Encoding::UTF_8,
           encoding_opts: {newline: :universal}
         )
@@ -1007,7 +1007,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:readable?).and_return(false)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: nil,
         encoding_opts: {newline: :universal}
       )
@@ -1020,7 +1020,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:read).and_raise(EOFError)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: nil,
         encoding_opts: {newline: :universal}
       )
@@ -1036,7 +1036,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: nil,
         encoding_opts: {newline: :universal}
       )
@@ -1048,7 +1048,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       obj.should_receive(:readable?).and_return(true)
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: nil,
         encoding_opts: {newline: :universal}
       )
@@ -1074,7 +1074,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: nil,
         encoding_opts: {newline: :universal}
       )
@@ -1102,7 +1102,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         end
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: nil,
           encoding_opts: {newline: :universal}
         )
@@ -1127,7 +1127,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         end
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: nil,
           encoding_opts: {newline: :universal}
         )
@@ -1145,7 +1145,7 @@ describe "IO::LikeHelpers::CharacterIO#read_char" do
         obj.should_receive(:read).at_least(1).and_raise(EOFError)
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: nil,
           encoding_opts: {newline: :universal}
         )

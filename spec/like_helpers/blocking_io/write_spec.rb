@@ -6,7 +6,7 @@ describe "IO::LikeHelpers::BlockingIO#write" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).and_return(5)
-    io = IO::LikeHelpers::BlockingIO.new(obj)
+    io = IO::LikeHelpers::BlockingIO.new(obj, autoclose: false)
     io.write("\0" * 10).should == 5
   end
 
@@ -15,7 +15,7 @@ describe "IO::LikeHelpers::BlockingIO#write" do
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).and_return(:wait_writable, 10)
     obj.should_receive(:wait).with(IO::WRITABLE, 1).and_return(nil)
-    io = IO::LikeHelpers::BlockingIO.new(obj)
+    io = IO::LikeHelpers::BlockingIO.new(obj, autoclose: false)
     io.write("\0" * 10).should == 10
   end
 
@@ -23,7 +23,7 @@ describe "IO::LikeHelpers::BlockingIO#write" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:writable?).and_return(false)
-    io = IO::LikeHelpers::BlockingIO.new(obj)
+    io = IO::LikeHelpers::BlockingIO.new(obj, autoclose: false)
     -> { io.write(buffer) }.should raise_error(IOError, 'not opened for writing')
   end
 
@@ -39,7 +39,7 @@ describe "IO::LikeHelpers::BlockingIO#write" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).and_return(:invalid)
-    io = IO::LikeHelpers::BlockingIO.new(obj)
+    io = IO::LikeHelpers::BlockingIO.new(obj, autoclose: false)
     -> { io.write("\0") }.should raise_error(RuntimeError, 'Unexpected result: invalid')
   end
 
@@ -63,7 +63,7 @@ describe "IO::LikeHelpers::BlockingIO#write" do
     end
     obj.should_receive(:writable?).and_return(true)
 
-    io = IO::LikeHelpers::BlockingIO.new(obj)
+    io = IO::LikeHelpers::BlockingIO.new(obj, autoclose: false)
     io.write("\0").should == 1
 
     obj.assert_complete

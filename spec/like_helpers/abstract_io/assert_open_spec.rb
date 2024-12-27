@@ -9,3 +9,5 @@ describe "IO::LikeHelpers::AbstractIO#assert_open" do
     -> { io.send(:assert_open) }.should raise_error(IOError)
   end
 end
+
+# vim: ts=2 sw=2 et

@@ -6,14 +6,22 @@ describe "IO::LikeHelpers::DelegatedIO#nread" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:nread).and_return(0)
-    io = IO::LikeHelpers::DelegatedIO.new(obj)
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
     io.nread.should == 0
+  end
+
+  it "raises IOError when its delegate raises it" do
+    obj = mock("io")
+    obj.should_receive(:readable?).and_return(true)
+    obj.should_receive(:nread).and_raise(IOError.new('closed stream'))
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
+    -> { io.nread }.should raise_error(IOError, 'closed stream')
   end
 
   it "raises IOError if its delegate is not readable" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(false)
-    io = IO::LikeHelpers::DelegatedIO.new(obj)
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
     -> { io.nread }.should raise_error(IOError, 'not opened for reading')
   end
 

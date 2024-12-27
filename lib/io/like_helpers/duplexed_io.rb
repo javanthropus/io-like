@@ -20,10 +20,10 @@ class DuplexedIO < DelegatedIO
     raise ArgumentError, 'delegate_r cannot be nil' if delegate_r.nil?
     raise ArgumentError, 'delegate_w cannot be nil' if delegate_w.nil?
 
-    super(delegate_r, autoclose: autoclose)
-
     @delegate_w = delegate_w
     @closed_write = false
+
+    super(delegate_r, autoclose: autoclose)
   end
 
   ##
@@ -37,12 +37,15 @@ class DuplexedIO < DelegatedIO
   def close
     return nil if closed?
 
-    result = close_write
-    return result if Symbol === result
-    result = close_read
-    return result if Symbol === result
+    begin
+      result = close_write
+    ensure
+      # Complete the closing process if the writable delegate closed normally or
+      # an exception was raised.
+      result = close_read unless Symbol === result
+    end
 
-    nil
+    result
   end
 
   ##
@@ -76,15 +79,19 @@ class DuplexedIO < DelegatedIO
   def close_read
     return nil if closed_read?
 
-    if @autoclose
-      result = delegate_r.close
-      return result if Symbol === result
+    begin
+      result = delegate_r.close if @autoclose
+    ensure
+      # Complete the closing process if the delegate closed normally or an
+      # exception was raised.
+      unless Symbol === result
+        @closed_write = true unless duplexed?
+        @closed = true
+        @delegate = @delegate_w
+      end
     end
-    @closed_write = true unless duplexed?
-    @closed = true
-    @delegate = @delegate_w
 
-    nil
+    result
   end
 
   ##
@@ -96,15 +103,19 @@ class DuplexedIO < DelegatedIO
   def close_write
     return nil if closed_write?
 
-    if @autoclose
-      result = delegate_w.close
-      return result if Symbol === result
+    begin
+      result = delegate_w.close if @autoclose
+    ensure
+      # Complete the closing process if the delegate closed normally or an
+      # exception was raised.
+      unless Symbol === result
+        @closed = true unless duplexed?
+        @closed_write = true
+        @delegate_w = @delegate
+      end
     end
-    @closed = true unless duplexed?
-    @closed_write = true
-    @delegate_w = @delegate
 
-    nil
+    result
   end
 
   ##
@@ -120,7 +131,7 @@ class DuplexedIO < DelegatedIO
 
     assert_open
 
-    delegate_r.close_on_exec = delegate_w.close_on_exec = close_on_exec
+    delegate_w.close_on_exec = delegate_r.close_on_exec = close_on_exec
 
     close_on_exec
   end
@@ -141,7 +152,7 @@ class DuplexedIO < DelegatedIO
 
     assert_open
 
-    delegate_r.nonblock = delegate_w.nonblock = nonblock
+    delegate_w.nonblock = delegate_r.nonblock = nonblock
 
     nonblock
   end
@@ -192,6 +203,19 @@ class DuplexedIO < DelegatedIO
   private
 
   ##
+  # Defines a finalizer for this object.
+  #
+  # @return [nil]
+  def enable_finalizer
+    if duplexed?
+      ObjectSpace.define_finalizer(
+        self, self.class.create_finalizer(delegate_w)
+      )
+    end
+    super
+  end
+
+  ##
   # Creates an instance of this class that copies state from `other`.
   #
   # The delegates of `other` are `dup`'d.
@@ -205,6 +229,8 @@ class DuplexedIO < DelegatedIO
     super
 
     @delegate_w = other.duplexed? ? @delegate_w.dup : @delegate
+    disable_finalizer
+    self.autoclose = true
 
     nil
   end

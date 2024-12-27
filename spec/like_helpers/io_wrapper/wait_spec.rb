@@ -27,3 +27,5 @@ describe "IO::LikeHelpers::IOWrapper#wait" do
     io.wait(16, 1).should be_false
   end
 end
+
+# vim: ts=2 sw=2 et

@@ -8,6 +8,8 @@ describe "IO::LikeHelpers::DelegatedIO.new" do
 
   it "enables autoclose by default" do
     obj = mock("io")
+    # Satisfy the finalizer that will call #close on this object.
+    def obj.close; end
     io = IO::LikeHelpers::DelegatedIO.new(obj)
     io.autoclose?.should be_true
   end
@@ -18,3 +20,5 @@ describe "IO::LikeHelpers::DelegatedIO.new" do
     io.autoclose?.should be_false
   end
 end
+
+# vim: ts=2 sw=2 et

@@ -8,6 +8,8 @@ describe "IO::LikeHelpers::Pipeline.new" do
 
   it "enables autoclose by default" do
     obj = mock("io")
+    # Satisfy the finalizer that will call #close on this object.
+    def obj.close; end
     obj.should_receive(:close).and_return(nil)
     io = IO::LikeHelpers::Pipeline.new(obj)
     io.close
@@ -15,11 +17,10 @@ describe "IO::LikeHelpers::Pipeline.new" do
 
   it "allows autoclose to be set" do
     obj = mock("io")
+    obj.should_not_receive(:close)
     io = IO::LikeHelpers::Pipeline.new(obj, autoclose: false)
     io.close
-    # At least 1 expectation is required in a spec, and this is a hacky way to
-    # test that the mock should NOT receive any calls since any calls to the
-    # mock would raise errors.
-    true.should be_true
   end
 end
+
+# vim: ts=2 sw=2 et

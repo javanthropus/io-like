@@ -7,3 +7,5 @@ describe "IO::LikeHelpers::AbstractIO.new" do
     io.closed?.should be_false
   end
 end
+
+# vim: ts=2 sw=2 et

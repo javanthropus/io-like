@@ -5,7 +5,7 @@ describe "IO::LikeHelpers::BufferedIO#write" do
   it "raises ArgumentError if length is invalid" do
     buffer = 'foo'.b
     obj = mock("io")
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.write(buffer, length: -1) }.should raise_error(ArgumentError)
   end
 
@@ -13,7 +13,7 @@ describe "IO::LikeHelpers::BufferedIO#write" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer, length: 1).should == 1
   end
 
@@ -21,7 +21,7 @@ describe "IO::LikeHelpers::BufferedIO#write" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: 2)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false, buffer_size: 2)
     io.write(buffer).should == 2
   end
 
@@ -29,7 +29,7 @@ describe "IO::LikeHelpers::BufferedIO#write" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer).should == buffer.size
   end
 
@@ -38,7 +38,7 @@ describe "IO::LikeHelpers::BufferedIO#write" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(buffer.size)
-    io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: 3)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false, buffer_size: 3)
     io.write(buffer).should == buffer.size
     io.write(buffer).should == buffer.size
   end
@@ -48,7 +48,7 @@ describe "IO::LikeHelpers::BufferedIO#write" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(:wait_writable)
-    io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: 3)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false, buffer_size: 3)
     io.write(buffer).should == buffer.size
     io.write(buffer).should == :wait_writable
   end
@@ -59,7 +59,7 @@ describe "IO::LikeHelpers::BufferedIO#write" do
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(3)
     obj.should_receive(:writable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read(1)
     io.write(buffer, length: 1).should == 1
   end
@@ -71,7 +71,7 @@ describe "IO::LikeHelpers::BufferedIO#write" do
     obj.should_receive(:read).and_return(3)
     obj.should_receive(:seek).with(-2, IO::SEEK_CUR).and_return(1)
     obj.should_receive(:writable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read(1)
     io.write(buffer, length: 1).should == 1
   end
@@ -80,7 +80,7 @@ describe "IO::LikeHelpers::BufferedIO#write" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:writable?).and_return(false)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.write(buffer) }.should raise_error(IOError, 'not opened for writing')
   end
 

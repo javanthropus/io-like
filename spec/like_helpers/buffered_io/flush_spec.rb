@@ -8,7 +8,7 @@ describe "IO::LikeHelpers::BufferedIO#flush" do
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(1)
     obj.should_receive(:write).with(buffer[1, 2]).and_return(buffer.size - 1)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer)
     io.flush.should be_nil
   end
@@ -18,14 +18,14 @@ describe "IO::LikeHelpers::BufferedIO#flush" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(:wait_readable)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer)
     io.flush.should == :wait_readable
   end
 
   it "does nothing if there is no buffered data" do
     obj = mock("io")
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.flush.should be_nil
   end
 

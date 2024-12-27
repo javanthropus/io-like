@@ -7,7 +7,7 @@ describe "IO::LikeHelpers::BufferedIO#unread" do
   it "raises ArgumentError if length is invalid" do
     buffer = 'foo'.b
     obj = mock("io")
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.unread(buffer, length: -1) }.should raise_error(ArgumentError)
   end
 
@@ -15,7 +15,7 @@ describe "IO::LikeHelpers::BufferedIO#unread" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.unread(buffer, length: 1).should be_nil
   end
 
@@ -23,7 +23,7 @@ describe "IO::LikeHelpers::BufferedIO#unread" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.unread(buffer).should be_nil
     io.read(3).should == buffer
   end
@@ -32,7 +32,7 @@ describe "IO::LikeHelpers::BufferedIO#unread" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: 1)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false, buffer_size: 1)
     -> { io.unread(buffer) }.should raise_error(IOError, 'insufficient buffer space for unread')
   end
 
@@ -43,7 +43,7 @@ describe "IO::LikeHelpers::BufferedIO#unread" do
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer1).and_return(:wait_writable)
     obj.should_receive(:readable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer1).should == buffer1.size
     io.unread(buffer2).should == :wait_writable
   end
@@ -55,7 +55,7 @@ describe "IO::LikeHelpers::BufferedIO#unread" do
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer1).and_return(buffer1.size)
     obj.should_receive(:readable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer1).should == buffer1.size
     io.unread(buffer2).should be_nil
   end
@@ -65,7 +65,7 @@ describe "IO::LikeHelpers::BufferedIO#unread" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:seek).with(0, IO::SEEK_CUR).and_return(0).twice
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     pos = io.seek(0, IO::SEEK_CUR)
     io.unread(buffer).should be_nil
     io.seek(0, IO::SEEK_CUR).should == pos
@@ -75,7 +75,7 @@ describe "IO::LikeHelpers::BufferedIO#unread" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:readable?).and_return(false)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.unread(buffer) }.should raise_error(IOError, 'not opened for reading')
   end
 

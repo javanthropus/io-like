@@ -5,8 +5,15 @@ describe "IO::LikeHelpers::DelegatedIO#fsync" do
   it "delegates to its delegate" do
     obj = mock("io")
     obj.should_receive(:fsync).and_return(nil)
-    io = IO::LikeHelpers::DelegatedIO.new(obj)
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
     io.fsync.should be_nil
+  end
+
+  it "raises IOError when its delegate raises it" do
+    obj = mock("io")
+    obj.should_receive(:fsync).and_raise(IOError.new('closed stream'))
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
+    -> { io.fsync }.should raise_error(IOError, 'closed stream')
   end
 
   it "raises IOError if the stream is closed" do

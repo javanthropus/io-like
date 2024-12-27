@@ -9,7 +9,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(false)
     io = IO::LikeHelpers::CharacterIO.new(
-      IO::LikeHelpers::BufferedIO.new(obj),
+      IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
       external_encoding: Encoding::UTF_8
     )
     lambda { io.read_all }.should raise_error(IOError)
@@ -40,7 +40,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
@@ -54,7 +54,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       obj.should_receive(:readable?).and_return(true)
       obj.should_receive(:read).and_raise(EOFError)
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
@@ -67,7 +67,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       obj.should_receive(:readable?).and_return(true)
       obj.should_receive(:read).and_raise(EOFError)
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
@@ -99,7 +99,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE,
         encoding_opts: {newline: :universal}
@@ -133,7 +133,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
@@ -147,7 +147,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       obj.should_receive(:readable?).and_return(true)
       obj.should_receive(:read).and_raise(EOFError)
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
@@ -176,7 +176,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       def obj.assert_complete
         raise "Called too few times" if @times < 2
       end
-      bio = IO::LikeHelpers::BufferedIO.new(obj)
+      bio = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
       io = IO::LikeHelpers::CharacterIO.new(
         bio,
         external_encoding: Encoding::UTF_8,
@@ -212,7 +212,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::UTF_16LE
       )
@@ -245,7 +245,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         internal_encoding: Encoding::Windows_31J
       )
@@ -278,7 +278,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
         end
 
         io = IO::LikeHelpers::CharacterIO.new(
-          IO::LikeHelpers::BufferedIO.new(obj),
+          IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
           external_encoding: Encoding::UTF_8,
           internal_encoding: Encoding::UTF_16LE
         )
@@ -315,7 +315,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8
       )
       io.read_all.should == content
@@ -346,7 +346,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
         raise "Called too few times" if @times < 2
       end
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj)
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
       )
 
       begin
@@ -384,7 +384,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
         raise "Called too few times" if @times < 2
       end
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj)
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
       )
 
       begin
@@ -404,7 +404,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       obj.should_receive(:readable?).and_return(true)
       obj.should_receive(:read).and_raise(EOFError)
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         encoding_opts: {newline: :universal}
       )
@@ -417,7 +417,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       obj.should_receive(:readable?).and_return(true)
       obj.should_receive(:read).and_raise(EOFError)
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         encoding_opts: {newline: :universal}
       )
@@ -449,7 +449,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8,
         encoding_opts: {newline: :universal}
       )
@@ -482,7 +482,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       end
 
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8
       )
       io.read_all.should == content.encode(content.encoding)
@@ -495,7 +495,7 @@ describe "IO::LikeHelpers::CharacterIO#read_all" do
       obj.should_receive(:readable?).and_return(true)
       obj.should_receive(:read).and_raise(EOFError)
       io = IO::LikeHelpers::CharacterIO.new(
-        IO::LikeHelpers::BufferedIO.new(obj),
+        IO::LikeHelpers::BufferedIO.new(obj, autoclose: false),
         external_encoding: Encoding::UTF_8
       )
       -> { io.read_all }.should raise_error(EOFError)

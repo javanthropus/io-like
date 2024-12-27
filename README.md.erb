@@ -20,18 +20,12 @@
 
 ## FEATURES
 
-* All standard Ruby 2.7 to 3.4 IO methods.
-* Buffered operations.
-* Configurable buffer size.
+* All standard Ruby 2.7 to 3.4 IO methods
+* Primitive IO interfaces to facilitate creating IO filters/pipelines
 
 ## KNOWN BUGS/LIMITATIONS
 
-* Ruby's finalization capabilities fall a bit short in a few respects, and as a
-  result, it is impossible to cause the close, close_read, or close_write
-  methods to be called automatically when a descendent class is garbage
-  collected.  Use the class open method which guarantees that an appropriate
-  close method will be called after executing a block.  Other than that, be
-  diligent about calling the close methods.
+* None at this time
 
 ## SYNOPSIS
 

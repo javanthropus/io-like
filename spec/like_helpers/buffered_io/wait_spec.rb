@@ -5,7 +5,7 @@ describe "IO::LikeHelpers::BufferedIO#wait" do
   it "delegates to its delegate when the internal read buffer is empty" do
     obj = mock("io")
     obj.should_receive(:wait).with(IO::READABLE, nil).and_return(:result)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.wait(IO::READABLE).should == :result
   end
 
@@ -14,7 +14,7 @@ describe "IO::LikeHelpers::BufferedIO#wait" do
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(3)
     obj.should_receive(:wait).with(IO::WRITABLE, nil).and_return(:result)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read(1)
     io.wait(IO::WRITABLE).should == :result
   end
@@ -23,7 +23,7 @@ describe "IO::LikeHelpers::BufferedIO#wait" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(3)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read(1)
     io.wait(IO::READABLE).should be_true
     io.wait(IO::PRIORITY).should be_true
@@ -36,3 +36,5 @@ describe "IO::LikeHelpers::BufferedIO#wait" do
     -> { io.wait(IO::READABLE) }.should raise_error(IOError, 'closed stream')
   end
 end
+
+# vim: ts=2 sw=2 et

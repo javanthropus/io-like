@@ -27,3 +27,5 @@ describe "IO::LikeHelpers::IOWrapper.new" do
     io.autoclose?.should be_false
   end
 end
+
+# vim: ts=2 sw=2 et

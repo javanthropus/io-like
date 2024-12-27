@@ -1,72 +1,74 @@
 # -*- encoding: utf-8 -*-
 require_relative '../../../spec_helper'
 
-describe "IO::LikeHelpers::DuplexedIO#fdatasync" do
+describe "IO::LikeHelpers::DuplexedIO#nread" do
   describe "when not duplexed" do
     it "delegates to its delegate" do
       obj = mock("io")
-      obj.should_receive(:fdatasync).and_return(nil)
-      io = IO::LikeHelpers::DuplexedIO.new(obj, autoclose: false)
-      io.fdatasync.should be_nil
+      obj.should_receive(:readable?).and_return(true)
+      obj.should_receive(:nread).and_return(0)
+      io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
+      io.nread.should == 0
     end
 
     it "raises IOError when its delegate raises it" do
       obj = mock("io")
-      obj.should_receive(:fdatasync).and_raise(IOError.new('closed stream'))
+      obj.should_receive(:readable?).and_return(true)
+      obj.should_receive(:nread).and_raise(IOError.new('closed stream'))
       io = IO::LikeHelpers::DuplexedIO.new(obj, autoclose: false)
-      -> { io.fdatasync }.should raise_error(IOError, 'closed stream')
+      -> { io.nread }.should raise_error(IOError, 'closed stream')
+    end
+
+    it "raises IOError if its delegate is not readable" do
+      obj = mock("io")
+      obj.should_receive(:readable?).and_return(false)
+      io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
+      -> { io.nread }.should raise_error(IOError, 'not opened for reading')
     end
 
     it "raises IOError if the stream is closed" do
       obj = mock("io")
-      io = IO::LikeHelpers::DuplexedIO.new(obj, autoclose: false)
+      io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
       io.close
-      -> { io.fdatasync }.should raise_error(IOError, 'closed stream')
+      -> { io.nread }.should raise_error(IOError, 'closed stream')
     end
   end
 
   describe "when duplexed" do
     it "delegates to the reader delegate when not closed" do
       obj_r = mock("reader_io")
-      obj_r.should_receive(:fdatasync).and_return(nil)
+      obj_r.should_receive(:readable?).and_return(true)
+      obj_r.should_receive(:nread).and_return(0)
       obj_w = mock("writer_io")
       io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w, autoclose: false)
-      io.fdatasync.should be_nil
+      io.nread.should == 0
     end
 
     it "raises IOError when the reader delegate raises it" do
       obj_r = mock("reader_io")
-      obj_r.should_receive(:fdatasync).and_raise(IOError.new('closed stream'))
+      obj_r.should_receive(:readable?).and_return(true)
+      obj_r.should_receive(:nread).and_raise(IOError.new('closed stream'))
       obj_w = mock("writer_io")
       io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w, autoclose: false)
-      -> { io.fdatasync }.should raise_error(IOError, 'closed stream')
+      -> { io.nread }.should raise_error(IOError, 'closed stream')
     end
 
     it "delegates to the reader delegate when the write stream is closed" do
       obj_r = mock("reader_io")
-      obj_r.should_receive(:fdatasync).and_return(nil)
+      obj_r.should_receive(:readable?).and_return(true)
+      obj_r.should_receive(:nread).and_return(0)
       obj_w = mock("writer_io")
       io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w, autoclose: false)
       io.close_write
-      io.fdatasync.should be_nil
+      io.nread.should == 0
     end
 
-    it "delegates to the writer delegate when the read stream is closed" do
+    it "raises IOError when the read stream is closed" do
       obj_r = mock("reader_io")
       obj_w = mock("writer_io")
-      obj_w.should_receive(:fdatasync).and_return(nil)
       io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w, autoclose: false)
       io.close_read
-      io.fdatasync.should be_nil
-    end
-
-    it "raises IOError when its writer delegate raises it" do
-      obj_r = mock("reader_io")
-      obj_w = mock("writer_io")
-      obj_w.should_receive(:fdatasync).and_raise(IOError.new('closed stream'))
-      io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w, autoclose: false)
-      io.close_read
-      -> { io.fdatasync }.should raise_error(IOError, 'closed stream')
+      -> { io.nread }.should raise_error(IOError, 'not opened for reading')
     end
 
     it "raises IOError when both streams are closed" do
@@ -75,7 +77,7 @@ describe "IO::LikeHelpers::DuplexedIO#fdatasync" do
       io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w, autoclose: false)
       io.close_read
       io.close_write
-      -> { io.fdatasync }.should raise_error(IOError, 'closed stream')
+      -> { io.nread }.should raise_error(IOError, 'closed stream')
     end
 
     it "raises IOError if the stream is closed" do
@@ -83,7 +85,7 @@ describe "IO::LikeHelpers::DuplexedIO#fdatasync" do
       obj_w = mock("writer_io")
       io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w, autoclose: false)
       io.close
-      -> { io.fdatasync }.should raise_error(IOError, 'closed stream')
+      -> { io.nread }.should raise_error(IOError, 'closed stream')
     end
   end
 end

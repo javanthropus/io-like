@@ -101,7 +101,7 @@ describe "IO::LikeHelpers::CharacterIO#unread" do
       obj = mock("io")
       obj.should_receive(:readable?).and_return(true)
 
-      bio = IO::LikeHelpers::BufferedIO.new(obj)
+      bio = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
       @io = IO::LikeHelpers::CharacterIO.new(
         bio,
         external_encoding: Encoding::UTF_8

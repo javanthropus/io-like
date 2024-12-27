@@ -5,14 +5,14 @@ describe "IO::LikeHelpers::BufferedIO#seek" do
   it "delegates to its delegate" do
     obj = mock("io")
     obj.should_receive(:seek).with(1, :CUR).and_return(:result)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.seek(1, :CUR).should == :result
   end
 
   it "defaults the starting point to be absolute" do
     obj = mock("io")
     obj.should_receive(:seek).with(1, IO::SEEK_SET).and_return(:result)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.seek(1).should == :result
   end
 
@@ -22,7 +22,7 @@ describe "IO::LikeHelpers::BufferedIO#seek" do
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(3)
     obj.should_receive(:seek).with(1, IO::SEEK_SET).and_return(1)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer)
     io.seek(1).should == 1
   end
@@ -32,7 +32,7 @@ describe "IO::LikeHelpers::BufferedIO#seek" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(:wait_writable)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer)
     io.seek(1).should == :wait_writable
   end
@@ -43,7 +43,7 @@ describe "IO::LikeHelpers::BufferedIO#seek" do
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(3).exactly(2)
     obj.should_receive(:seek).with(0, IO::SEEK_SET).and_return(0)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read(1, buffer: buffer).should == 1
     io.seek(0, IO::SEEK_SET).should == 0
     io.read(1, buffer: buffer).should == 1
@@ -55,7 +55,7 @@ describe "IO::LikeHelpers::BufferedIO#seek" do
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(3)
     obj.should_receive(:seek).with(-1, IO::SEEK_CUR).and_return(2)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read(1, buffer: buffer).should == 1
     io.seek(1, IO::SEEK_CUR).should == 2
   end
@@ -66,7 +66,7 @@ describe "IO::LikeHelpers::BufferedIO#seek" do
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(3)
     obj.should_receive(:seek).with(1, IO::SEEK_SET).and_return(1)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read(1, buffer: buffer).should == 1
     io.unread('bar').should be_nil
     io.seek(1, IO::SEEK_SET).should == 1
@@ -78,7 +78,7 @@ describe "IO::LikeHelpers::BufferedIO#seek" do
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(3)
     obj.should_receive(:seek).with(-1, IO::SEEK_END).and_return(1)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read(1, buffer: buffer).should == 1
     io.unread('bar').should be_nil
     io.seek(-1, IO::SEEK_END).should == 1
@@ -90,7 +90,7 @@ describe "IO::LikeHelpers::BufferedIO#seek" do
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(3)
     obj.should_receive(:seek).with(-3, IO::SEEK_CUR).and_return(0)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read(1, buffer: buffer).should == 1
     io.unread('bar').should be_nil
     io.seek(-1, IO::SEEK_CUR).should == 0

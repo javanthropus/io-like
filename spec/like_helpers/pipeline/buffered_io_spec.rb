@@ -8,3 +8,5 @@ describe "IO::LikeHelpers::Pipeline#buffered_io" do
     io.buffered_io.should be_kind_of(IO::LikeHelpers::BufferedIO)
   end
 end
+
+# vim: ts=2 sw=2 et

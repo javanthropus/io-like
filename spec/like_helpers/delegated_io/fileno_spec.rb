@@ -5,8 +5,15 @@ describe "IO::LikeHelpers::DelegatedIO#fileno" do
   it "delegates to its delegate" do
     obj = mock("io")
     obj.should_receive(:fileno).and_return(nil)
-    io = IO::LikeHelpers::DelegatedIO.new(obj)
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
     io.fileno.should be_nil
+  end
+
+  it "raises IOError when its delegate raises it" do
+    obj = mock("io")
+    obj.should_receive(:fileno).and_raise(IOError.new('closed stream'))
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
+    -> { io.fileno }.should raise_error(IOError, 'closed stream')
   end
 
   it "raises IOError if the stream is closed" do

@@ -18,3 +18,5 @@ describe "IO::LikeHelpers::IOWrapper#ready?" do
     io.ready?.should be_true
   end
 end
+
+# vim: ts=2 sw=2 et

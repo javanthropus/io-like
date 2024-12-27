@@ -14,7 +14,7 @@ describe "IO::LikeHelpers::DelegatedIO.delegate" do
       delegate :test_method
     end
 
-    io = clazz.new(obj)
+    io = clazz.new(obj, autoclose: false)
     io.test_method.should be_nil
   end
 
@@ -30,13 +30,14 @@ describe "IO::LikeHelpers::DelegatedIO.delegate" do
       delegate :test_method=
     end
 
-    io = clazz.new(obj)
+    io = clazz.new(obj, autoclose: false)
     io.test_method = 'value'
   end
 
   it "adds an instance method that delegates to the given delegate name" do
-    obj = mock("io")
-    obj.should_receive(:test_method).and_return(nil)
+    obj = mock("ignored-io")
+    other_obj = mock("io")
+    other_obj.should_receive(:test_method).and_return(nil)
 
     # This creates a throwaway class in order to avoid polluting DelegatedIO
     # with test methods and the runtime environment with long lived classes
@@ -47,8 +48,8 @@ describe "IO::LikeHelpers::DelegatedIO.delegate" do
       delegate :test_method, to: :test_delegate
     end
 
-    io = clazz.new('ignore')
-    io.test_delegate = obj
+    io = clazz.new(obj, autoclose: false)
+    io.test_delegate = other_obj
     io.test_method.should be_nil
   end
 
@@ -65,7 +66,7 @@ describe "IO::LikeHelpers::DelegatedIO.delegate" do
       delegate :test_method, assert: :readable
     end
 
-    io = clazz.new(obj)
+    io = clazz.new(obj, autoclose: false)
     io.test_method.should be_nil
   end
 
@@ -82,7 +83,7 @@ describe "IO::LikeHelpers::DelegatedIO.delegate" do
       delegate :test_method, assert: :writable
     end
 
-    io = clazz.new(obj)
+    io = clazz.new(obj, autoclose: false)
     io.test_method.should be_nil
   end
 

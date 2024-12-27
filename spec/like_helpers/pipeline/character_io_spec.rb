@@ -8,3 +8,5 @@ describe "IO::LikeHelpers::Pipeline#character_io" do
     io.character_io.should be_kind_of(IO::LikeHelpers::CharacterIO)
   end
 end
+
+# vim: ts=2 sw=2 et

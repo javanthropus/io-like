@@ -4,13 +4,13 @@ require_relative '../../../spec_helper'
 describe "IO::LikeHelpers::BufferedIO#pread" do
   it "raises ArgumentError if length is invalid" do
     obj = mock("io")
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.pread(-1, 2) }.should raise_error(ArgumentError)
   end
 
   it "raises ArgumentError if offset is invalid" do
     obj = mock("io")
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.pread(1, -2) }.should raise_error(ArgumentError)
   end
 
@@ -19,7 +19,7 @@ describe "IO::LikeHelpers::BufferedIO#pread" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:pread).with(1, 2, buffer: buffer, buffer_offset: 1).and_return(:result)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.pread(1, 2, buffer: buffer, buffer_offset: 1).should == :result
   end
 
@@ -29,7 +29,7 @@ describe "IO::LikeHelpers::BufferedIO#pread" do
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(:wait_writable)
     obj.should_receive(:readable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer).should == buffer.size
     io.pread(1, 2).should == :wait_writable
   end
@@ -41,7 +41,7 @@ describe "IO::LikeHelpers::BufferedIO#pread" do
     obj.should_receive(:write).with(buffer).and_return(buffer.size)
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:pread).and_return("\0".b)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer).should == buffer.size
     io.pread(1, 2).should == "\0".b
   end
@@ -61,7 +61,7 @@ describe "IO::LikeHelpers::BufferedIO#pread" do
     end
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:pread).and_return('a'.b)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read(1).should == '0'.b
     io.pread(1, 2).should == 'a'.b
     io.read(1).should == '1'.b
@@ -70,7 +70,7 @@ describe "IO::LikeHelpers::BufferedIO#pread" do
   it "raises Argument error when the buffer offset is not a valid buffer index" do
     buffer = 'foo'.b
     obj = mock("io")
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.pread(1, 2, buffer: buffer, buffer_offset: -1) }.should raise_error(ArgumentError)
     -> { io.pread(1, 2, buffer: buffer, buffer_offset: 100) }.should raise_error(ArgumentError)
   end
@@ -78,7 +78,7 @@ describe "IO::LikeHelpers::BufferedIO#pread" do
   it "raises Argument error when the amount to read would not fit into the given buffer" do
     buffer = 'foo'.b
     obj = mock("io")
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.pread(20, 2, buffer: buffer, buffer_offset: 1) }.should raise_error(ArgumentError)
     -> { io.pread(20, 2, buffer: buffer) }.should raise_error(ArgumentError)
   end
@@ -86,7 +86,7 @@ describe "IO::LikeHelpers::BufferedIO#pread" do
   it "raises IOError if its delegate is not readable" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(false)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.pread(1, 2) }.should raise_error(IOError, 'not opened for reading')
   end
 

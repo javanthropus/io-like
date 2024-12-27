@@ -4,6 +4,8 @@ require_relative '../../../spec_helper'
 describe "IO::LikeHelpers::BufferedIO#close" do
   it "delegates to its delegate when #autoclose? is true" do
     obj = mock("io")
+    # Satisfy the finalizer that will call #close on this object.
+    def obj.close; end
     obj.should_receive(:close).and_return(nil)
     io = IO::LikeHelpers::BufferedIO.new(obj)
     io.close.should be_nil
@@ -17,6 +19,8 @@ describe "IO::LikeHelpers::BufferedIO#close" do
 
   it "returns a Symbol if its delegate does so" do
     obj = mock("io")
+    # Satisfy the finalizer that will call #close on this object.
+    def obj.close; end
     obj.should_receive(:close).and_return(:wait_readable)
     io = IO::LikeHelpers::BufferedIO.new(obj)
     io.close.should == :wait_readable
@@ -25,9 +29,10 @@ describe "IO::LikeHelpers::BufferedIO#close" do
   it "flushes the write buffer" do
     buffer = 'foo'.b
     obj = mock("io")
+    # Satisfy the finalizer that will call #close on this object.
+    def obj.close; end
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(3)
-    obj.should_receive(:close).and_return(nil)
     io = IO::LikeHelpers::BufferedIO.new(obj)
     io.write(buffer)
     io.close.should be_nil
@@ -36,6 +41,8 @@ describe "IO::LikeHelpers::BufferedIO#close" do
   it "short circuits after the first call" do
     buffer = 'foo'.b
     obj = mock("io")
+    # Satisfy the finalizer that will call #close on this object.
+    def obj.close; end
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(3)
     obj.should_receive(:close).and_return(nil)
@@ -48,6 +55,8 @@ describe "IO::LikeHelpers::BufferedIO#close" do
   it "returns a Symbol if delegate.write does so when there is buffered data" do
     buffer = 'foo'.b
     obj = mock("io")
+    # Satisfy the finalizer that will call #close on this object.
+    def obj.close; end
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(:wait_readable)
     io = IO::LikeHelpers::BufferedIO.new(obj)

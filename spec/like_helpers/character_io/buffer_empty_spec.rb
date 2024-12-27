@@ -7,9 +7,7 @@ describe "IO::LikeHelpers::CharacterIO#buffer_empty?" do
   before :each do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
-    @io = IO::LikeHelpers::CharacterIO.new(
-      obj,
-    )
+    @io = IO::LikeHelpers::CharacterIO.new(obj)
     @io.set_encoding(Encoding::UTF_8, Encoding::UTF_16LE)
   end
 

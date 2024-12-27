@@ -13,3 +13,5 @@ describe "IO::LikeHelpers::AbstractIO#ready?" do
     -> { io.ready? }.should raise_error(IOError, 'closed stream')
   end
 end
+
+# vim: ts=2 sw=2 et

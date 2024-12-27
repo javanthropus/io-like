@@ -5,14 +5,14 @@ describe "IO::LikeHelpers::BufferedIO#pwrite" do
   it "raises ArgumentError if length is invalid" do
     buffer = 'foo'.b
     obj = mock("io")
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.pwrite(buffer, 2, length: -1) }.should raise_error(ArgumentError)
   end
 
   it "raises ArgumentError if offset is invalid" do
     buffer = 'foo'.b
     obj = mock("io")
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.pwrite(buffer, -2, length: 1) }.should raise_error(ArgumentError)
   end
 
@@ -21,7 +21,7 @@ describe "IO::LikeHelpers::BufferedIO#pwrite" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:pwrite).with(buffer, 2, length: buffer.size).and_return(buffer.size)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.pwrite(buffer, 2).should == buffer.size
   end
 
@@ -30,7 +30,7 @@ describe "IO::LikeHelpers::BufferedIO#pwrite" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:pwrite).with(buffer, 2, length: 1).and_return(:result)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.pwrite(buffer, 2, length: 1).should == :result
   end
 
@@ -42,7 +42,7 @@ describe "IO::LikeHelpers::BufferedIO#pwrite" do
     obj.should_receive(:read).with(100, buffer: read_buffer, buffer_offset: 0).and_return(read_buffer.size).twice
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:pwrite).with(buffer, 2, length: buffer.size).and_return(buffer.size)
-    io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: read_buffer.size)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false, buffer_size: read_buffer.size)
     io.read(1).should == "\0"
     io.pwrite(buffer, 2).should == buffer.size
     io.read(1).should == "\0"
@@ -66,7 +66,7 @@ describe "IO::LikeHelpers::BufferedIO#pwrite" do
       @content ||= String.new("\0".b * 5)
     end
     obj.should_receive(:writable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer).should == buffer.size
     io.pwrite(buffer, 2).should == buffer.size
     io.flush
@@ -77,7 +77,7 @@ describe "IO::LikeHelpers::BufferedIO#pwrite" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:writable?).and_return(false)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.pwrite(buffer, 2) }.should raise_error(IOError, 'not opened for writing')
   end
 

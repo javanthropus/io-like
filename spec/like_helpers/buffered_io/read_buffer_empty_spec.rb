@@ -5,7 +5,7 @@ describe "IO::LikeHelpers::BufferedIO#read_buffer_empty?" do
   it "returns true when not in read mode" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read_buffer_empty?.should be_true
     io.write('foo')
     io.read_buffer_empty?.should be_true
@@ -15,7 +15,7 @@ describe "IO::LikeHelpers::BufferedIO#read_buffer_empty?" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(0)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read(1)
     io.read_buffer_empty?.should be_true
   end

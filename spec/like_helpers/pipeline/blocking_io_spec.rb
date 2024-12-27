@@ -8,3 +8,5 @@ describe "IO::LikeHelpers::Pipeline#blocking_io" do
     io.blocking_io.should be_kind_of(IO::LikeHelpers::BlockingIO)
   end
 end
+
+# vim: ts=2 sw=2 et

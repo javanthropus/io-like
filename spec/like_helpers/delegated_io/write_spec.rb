@@ -7,8 +7,17 @@ describe "IO::LikeHelpers::DelegatedIO#write" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer, length: 1).and_return(:result)
-    io = IO::LikeHelpers::DelegatedIO.new(obj)
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
     io.write(buffer, length: 1).should == :result
+  end
+
+  it "raises IOError when its delegate raises it" do
+    buffer = 'foo'.b
+    obj = mock("io")
+    obj.should_receive(:writable?).and_return(true)
+    obj.should_receive(:write).with(buffer, length: 1).and_raise(IOError.new('closed stream'))
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
+    -> { io.write(buffer, length: 1) }.should raise_error(IOError, 'closed stream')
   end
 
   it "defaults the number of bytes to write to the number of bytes in the buffer" do
@@ -16,7 +25,7 @@ describe "IO::LikeHelpers::DelegatedIO#write" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(:result)
-    io = IO::LikeHelpers::DelegatedIO.new(obj)
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
     io.write(buffer).should == :result
   end
 
@@ -24,8 +33,8 @@ describe "IO::LikeHelpers::DelegatedIO#write" do
     buffer = 'foo'.b
     obj = mock("io")
     obj.should_receive(:writable?).and_return(false)
-    io = IO::LikeHelpers::DelegatedIO.new(obj)
-    -> { io.write(buffer) }.should raise_error(IOError, 'not opened for writing')
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
+    -> { io.write(buffer, length: 1) }.should raise_error(IOError, 'not opened for writing')
   end
 
   it "raises IOError if the stream is closed" do
@@ -33,7 +42,7 @@ describe "IO::LikeHelpers::DelegatedIO#write" do
     obj = mock("io")
     io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
     io.close
-    -> { io.write(buffer) }.should raise_error(IOError, 'closed stream')
+    -> { io.write(buffer, length: 1) }.should raise_error(IOError, 'closed stream')
   end
 end
 

@@ -972,3 +972,5 @@ describe "IO::LikeHelpers::CharacterIO#read_line" do
     end
   end
 end
+
+# vim: ts=2 sw=2 et

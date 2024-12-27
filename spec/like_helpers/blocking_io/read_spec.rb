@@ -6,7 +6,7 @@ describe "IO::LikeHelpers::BlockingIO#read" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return("\0" * 5, 5, 5)
-    io = IO::LikeHelpers::BlockingIO.new(obj)
+    io = IO::LikeHelpers::BlockingIO.new(obj, autoclose: false)
     io.read(10).should == "\0" * 5
     io.read(10, buffer: "\0" * 10).should == 5
     io.read(10, buffer: "\0" * 11, buffer_offset: 1).should == 5
@@ -17,7 +17,7 @@ describe "IO::LikeHelpers::BlockingIO#read" do
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(:wait_readable, "\0" * 10, :wait_readable, 10)
     obj.should_receive(:wait).with(IO::READABLE, 1).and_return(nil).exactly(2)
-    io = IO::LikeHelpers::BlockingIO.new(obj)
+    io = IO::LikeHelpers::BlockingIO.new(obj, autoclose: false)
     io.read(10).should == "\0" * 10
     io.read(10, buffer: "\0" * 10).should == 10
   end
@@ -35,14 +35,14 @@ describe "IO::LikeHelpers::BlockingIO#read" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_raise(EOFError.new)
-    io = IO::LikeHelpers::BlockingIO.new(obj)
+    io = IO::LikeHelpers::BlockingIO.new(obj, autoclose: false)
     -> { io.read(1) }.should raise_error(EOFError)
   end
 
   it "raises IOError if its delegate is not readable" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(false)
-    io = IO::LikeHelpers::BlockingIO.new(obj)
+    io = IO::LikeHelpers::BlockingIO.new(obj, autoclose: false)
     -> { io.read(1) }.should raise_error(IOError, 'not opened for reading')
   end
 
@@ -57,7 +57,7 @@ describe "IO::LikeHelpers::BlockingIO#read" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(:invalid)
-    io = IO::LikeHelpers::BlockingIO.new(obj)
+    io = IO::LikeHelpers::BlockingIO.new(obj, autoclose: false)
     -> { io.read(1) }.should raise_error(RuntimeError, 'Unexpected result: invalid')
   end
 
@@ -81,7 +81,7 @@ describe "IO::LikeHelpers::BlockingIO#read" do
     end
     obj.should_receive(:readable?).and_return(true)
 
-    io = IO::LikeHelpers::BlockingIO.new(obj)
+    io = IO::LikeHelpers::BlockingIO.new(obj, autoclose: false)
     io.read(1).should == 'c'
 
     obj.assert_complete

@@ -38,7 +38,7 @@ describe "IO::LikeHelpers::BufferedIO#peek" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:readable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write('bar'.b)
     io.peek(1).should == ''.b
   end
@@ -51,7 +51,7 @@ describe "IO::LikeHelpers::BufferedIO#peek" do
   it "raises IOError if its delegate is not readable" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(false)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.peek(1) }.should raise_error(IOError, 'not opened for reading')
   end
 

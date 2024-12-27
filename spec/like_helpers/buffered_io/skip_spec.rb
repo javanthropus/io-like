@@ -7,7 +7,7 @@ describe "IO::LikeHelpers::BufferedIO#skip" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:readable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer).should == buffer.size
     io.skip(3).should == 0
   end
@@ -16,7 +16,7 @@ describe "IO::LikeHelpers::BufferedIO#skip" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(3)
-    io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: 100)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false, buffer_size: 100)
     io.read(1)
     io.skip(2).should == 2
   end
@@ -25,7 +25,7 @@ describe "IO::LikeHelpers::BufferedIO#skip" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(3)
-    io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: 100)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false, buffer_size: 100)
     io.read(1)
     io.skip.should == 2
   end
@@ -34,21 +34,21 @@ describe "IO::LikeHelpers::BufferedIO#skip" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(3)
-    io = IO::LikeHelpers::BufferedIO.new(obj, buffer_size: 100)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false, buffer_size: 100)
     io.read(1)
     io.skip(3).should == 2
   end
 
   it "raises ArgumentError if length is invalid" do
     obj = mock("io")
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.skip(-1) }.should raise_error(ArgumentError)
   end
 
   it "raises IOError if its delegate is not readable" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(false)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.skip(1) }.should raise_error(IOError, 'not opened for reading')
   end
 

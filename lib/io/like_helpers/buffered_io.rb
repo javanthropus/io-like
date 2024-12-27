@@ -49,12 +49,14 @@ class BufferedIO < DelegatedIO
   def close
     return nil if closed?
 
-    if @mode == :write
-      result = flush
-      return result if Symbol === result
+    begin
+      result = flush if @mode == :write
+    ensure
+      # Complete the closing process if #flush completed normally or an
+      # exception was raised.
+      result = super unless Symbol === result
     end
-
-    super
+    result
   end
 
   ##

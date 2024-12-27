@@ -46,7 +46,7 @@ describe "IO::LikeHelpers::BufferedIO#read" do
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).with(buffer).and_return(:wait_writable)
     obj.should_receive(:readable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer).should == buffer.size
     io.read(1).should == :wait_writable
   end
@@ -58,7 +58,7 @@ describe "IO::LikeHelpers::BufferedIO#read" do
     obj.should_receive(:write).with(buffer).and_return(buffer.size)
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(3)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write(buffer).should == buffer.size
     io.read(1)
   end
@@ -67,7 +67,7 @@ describe "IO::LikeHelpers::BufferedIO#read" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(:wait_readable)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read(1).should == :wait_readable
   end
 
@@ -77,7 +77,7 @@ describe "IO::LikeHelpers::BufferedIO#read" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
     obj.should_receive(:read).and_return(:wait_readable)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.read(1, buffer: buffer)
     buffer.should == expected
   end
@@ -110,7 +110,7 @@ describe "IO::LikeHelpers::BufferedIO#read" do
   it "raises IOError if its delegate is not readable" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(false)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     -> { io.read(1) }.should raise_error(IOError, 'not opened for reading')
   end
 

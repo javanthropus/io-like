@@ -49,6 +49,15 @@ class DelegatedIO < AbstractIO
   end
 
   ##
+  # @param delegate [LikeHelpers::AbstractIO] a readable and/or writable stream
+  #
+  # @return [Proc] a proc to be used as a fializer that calls #close on
+  #   `delegate` when an instance of this class it garbage collected
+  def self.create_finalizer(delegate)
+    proc { |id| delegate.close }
+  end
+
+  ##
   # Creates a new intance of this class.
   #
   # @param delegate [LikeHelpers::AbstractIO] a readable and/or writable stream
@@ -59,7 +68,7 @@ class DelegatedIO < AbstractIO
     super()
 
     @delegate = delegate
-    @autoclose = autoclose
+    self.autoclose = autoclose
   end
 
   ##
@@ -69,6 +78,7 @@ class DelegatedIO < AbstractIO
   def autoclose=(autoclose)
     assert_open
     @autoclose = autoclose ? true : false
+    @autoclose ? enable_finalizer : disable_finalizer
     autoclose
   end
 
@@ -93,19 +103,21 @@ class DelegatedIO < AbstractIO
   def close
     return nil if closed?
 
-    if @autoclose
-      result = delegate.close
-      return result if Symbol === result
+    begin
+      result = delegate.close if @autoclose
+    ensure
+      # Complete the closing process if the delegate closed normally or an
+      # exception was raised.
+      result = super unless Symbol === result
     end
-    super
 
-    nil
+    result
   end
 
   ##
   # @return [String] a string representation of this object
   def inspect
-    "<#{self.class}:#{delegate.inspect}>"
+    "<#{self.class}:#{delegate.inspect}#{' (closed)' if closed?}>"
   end
 
   ##
@@ -193,6 +205,24 @@ class DelegatedIO < AbstractIO
   private
 
   ##
+  # Removes all finalizers for this object.
+  #
+  # @return [nil]
+  def disable_finalizer
+    ObjectSpace.undefine_finalizer(self)
+    nil
+  end
+
+  ##
+  # Defines a finalizer for this object.
+  #
+  # @return [nil]
+  def enable_finalizer
+    ObjectSpace.define_finalizer(self, self.class.create_finalizer(delegate))
+    nil
+  end
+
+  ##
   # Creates an instance of this class that copies state from `other`.
   #
   # The delegate of `other` is `dup`'d.
@@ -205,8 +235,9 @@ class DelegatedIO < AbstractIO
   def initialize_copy(other)
     super
 
-    @autoclose = true
     @delegate = @delegate.dup
+    disable_finalizer
+    self.autoclose = true
 
     nil
   end

@@ -5,8 +5,15 @@ describe "IO::LikeHelpers::DelegatedIO#tty?" do
   it "delegates to its delegate" do
     obj = mock("io")
     obj.should_receive(:tty?).and_return(:result)
-    io = IO::LikeHelpers::DelegatedIO.new(obj)
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
     io.tty?.should == :result
+  end
+
+  it "raises IOError when its delegate raises it" do
+    obj = mock("io")
+    obj.should_receive(:tty?).and_raise(IOError.new('closed stream'))
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
+    -> { io.tty? }.should raise_error(IOError, 'closed stream')
   end
 
   it "raises IOError if the stream is closed" do

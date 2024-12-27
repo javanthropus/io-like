@@ -11,7 +11,7 @@ describe "IO::LikeHelpers::DelegatedIO#closed?" do
 
   it "returns false when the stream is not closed" do
     obj = mock("io")
-    io = IO::LikeHelpers::DelegatedIO.new(obj)
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
     io.closed?.should be_false
   end
 end

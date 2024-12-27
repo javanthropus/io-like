@@ -5,7 +5,7 @@ describe "IO::LikeHelpers::DelegatedIO#readable?" do
   it "delegates to its delegate exactly once" do
     obj = mock("io")
     obj.should_receive(:readable?).and_return(true)
-    io = IO::LikeHelpers::DelegatedIO.new(obj)
+    io = IO::LikeHelpers::DelegatedIO.new(obj, autoclose: false)
     io.readable?.should be_true
     io.readable?.should be_true
   end

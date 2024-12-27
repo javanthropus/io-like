@@ -17,7 +17,7 @@ describe "IO::LikeHelpers::BufferedIO#write_buffer_empty?" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:write).and_return(3)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write('foo'.b)
     io.flush
     io.write_buffer_empty?.should be_true
@@ -26,7 +26,7 @@ describe "IO::LikeHelpers::BufferedIO#write_buffer_empty?" do
   it "returns false when in write mode with a non-empty buffer" do
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
-    io = IO::LikeHelpers::BufferedIO.new(obj)
+    io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false)
     io.write('foo'.b)
     io.write_buffer_empty?.should be_false
   end
