@@ -62,10 +62,10 @@ class Object
   def io_like_wrapped_io(io, *args, **kwargs, &block)
     settings = io_like_parse_io_settings(*args, **kwargs)
     settings[:sync] = io.sync
-    settings[:autoclose] = kwargs.fetch(:autoclose, true)
     settings[:binmode] = settings[:binmode] || kwargs.fetch(:binmode, false)
+    autoclose = kwargs.fetch(:autoclose, true)
     IO::Like.open(
-      IO::LikeHelpers::IOWrapper.new(io),
+      IO::LikeHelpers::IOWrapper.new(io, autoclose: autoclose),
       **settings,
       &block
     )
