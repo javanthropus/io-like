@@ -1884,13 +1884,13 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @return [nil]
   def flatten_puts(item, seen = [])
-    if seen.include?(item.object_id)
+    if seen.include?(item.__id__)
       write('[...]')
       write(ORS)
       return
     end
 
-    seen.push(item.object_id)
+    seen.push(item.__id__)
 
     array = item.to_ary rescue nil
     if array.nil?
@@ -1900,13 +1900,13 @@ class Like < LikeHelpers::DuplexedIO
         # implments its own #inspect implementation.
         #
         # NOTE:
-        # This seems to work even for decendents of BasicObject even though
+        # This seems to work even for descendants of BasicObject even though
         # Object is not part of the ancestry of BasicObject and thus
-        # Object#inspect should not be bindable to classes that decend more
+        # Object#inspect should not be bindable to classes that descend more
         # directly from BasicObject.  IOW, this may only work as side effect of
-        # Ruby VM implementation in such cases.
+        # the Ruby VM implementation in such cases.
         string =
-          Object.new.method(:inspect).unbind.bind(item)[].split(' ')[0] + '>'
+          "#<#{Object.new.method(:inspect).unbind.bind(item)[][2..-2].split(' ')[0]}>"
       end
       write(string)
       write(ORS) unless string.end_with?(ORS)
