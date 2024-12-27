@@ -45,7 +45,7 @@ class ConverterReader < BasicReader
     end
     @buffer_size = buffer_size
     @start_idx = @end_idx = @buffer_size
-    @buffer = String.new("\0".b * @buffer_size)
+    @buffer = "\0".b * @buffer_size
     @converter = internal_encoding ?
       Encoding::Converter.new(
        external_encoding, internal_encoding, **encoding_opts
@@ -120,7 +120,7 @@ class ConverterReader < BasicReader
     # Nothing to do if the character buffer is already full.
     return nil if existing_content_size >= @buffer_size
 
-    conversion_buffer = String.new
+    conversion_buffer = ''.b
 
     conversion_options = Encoding::Converter::PARTIAL_INPUT
     conversion_options |= Encoding::Converter::AFTER_OUTPUT unless many

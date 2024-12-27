@@ -130,7 +130,7 @@ class CharacterIO
     if String === separator && separator.encoding != Encoding::BINARY
       separator = separator.encode(character_reader.encoding).b
     end
-    content = String.new(encoding: Encoding::BINARY)
+    content = ''.b
 
     return content.force_encoding(character_reader.encoding) if limit == 0
 
@@ -401,7 +401,7 @@ class CharacterIO
   #
   # @return [nil]
   def discard_newlines
-    newline = String.new("\n")
+    newline = "\n".dup
     if RBVER_LT_3_4
       newline.encode!(internal_encoding) if internal_encoding
     else
@@ -505,7 +505,7 @@ class CharacterIO
   # @raise [EOFError] when reading at the end of the stream
   # @raise [IOError] if the stream is not readable
   def read_all_internal(chomp: false)
-    content = String.new(encoding: Encoding::BINARY)
+    content = ''.b
     begin
       loop do
         already_consumed = content.bytesize

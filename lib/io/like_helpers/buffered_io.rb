@@ -29,7 +29,7 @@ class BufferedIO < DelegatedIO
     super(delegate, autoclose: autoclose)
 
     @buffer_size = buffer_size
-    @buffer = String.new("\0".b * @buffer_size)
+    @buffer = "\0".b * @buffer_size
     @start_idx = @end_idx = @unread_offset = 0
     @mode = nil
   end

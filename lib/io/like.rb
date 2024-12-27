@@ -794,10 +794,10 @@ class Like < LikeHelpers::DuplexedIO
       content = begin
                   delegate_r.character_io.read_all
                 rescue EOFError
-                  String.new(
-                    encoding: internal_encoding ||
-                              external_encoding ||
-                              Encoding.default_external
+                  ''.encode(
+                    internal_encoding ||
+                    external_encoding ||
+                    Encoding.default_external
                   )
                 end
       return content if buffer.nil?
@@ -853,7 +853,7 @@ class Like < LikeHelpers::DuplexedIO
     assert_readable
 
     if RBVER_LT_3_0_4 && length == 0
-      return (buffer || String.new(encoding: Encoding::BINARY))
+      return (buffer || ''.b)
     end
 
     unless delegate_r.character_io.buffer_empty?
@@ -1044,7 +1044,7 @@ class Like < LikeHelpers::DuplexedIO
     assert_readable
 
     if RBVER_LT_3_0_4 && length == 0
-      return (buffer || String.new(encoding: Encoding::BINARY))
+      return (buffer || ''.b)
     end
 
     unless delegate_r.character_io.buffer_empty?
@@ -1126,7 +1126,7 @@ class Like < LikeHelpers::DuplexedIO
         assert_open
         io = io.dup
       rescue NoMethodError
-        mode = String.new(readable? ? 'r' : 'w')
+        mode = (readable? ? 'r' : 'w').dup
         mode << '+' if readable? && writable?
         mode << 'b'
         io = File.open(args[0], mode)
@@ -1453,7 +1453,7 @@ class Like < LikeHelpers::DuplexedIO
     raise ArgumentError, "negative length #{length} given" if length < 0
     buffer = ensure_string(buffer) unless buffer.nil?
 
-    return (buffer || String.new(encoding: Encoding::BINARY)) if length == 0
+    return (buffer || ''.b) if length == 0
 
     assert_readable
 
@@ -1978,7 +1978,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @return [String] up to `length` bytes read from this stream
   def read_bytes(length)
-    buffer = String.new(encoding: Encoding::BINARY)
+    buffer = ''.b
 
     if delegate_r.buffered_io.read_buffer_empty?
       # Flush any pending write data in the buffered IO in preparation for
