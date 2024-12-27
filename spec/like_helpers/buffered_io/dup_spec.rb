@@ -4,21 +4,22 @@ require_relative '../../../spec_helper'
 describe "IO::LikeHelpers::BufferedIO#dup" do
   it "dups the delegate" do
     obj_dup = mock("io_dup")
-    # Satisfy the finalizer that will call #close on this object.
-    def obj_dup.close; end
     obj_dup.should_receive(:readable?).and_return(true)
+    obj_dup.should_receive(:close).and_return(nil)
     obj = mock("io")
     obj.should_receive(:dup).and_return(obj_dup)
     io = IO::LikeHelpers::BufferedIO.new(obj, autoclose: false).dup
+
     io.readable?.should be_true
+
+    io.close
   end
 
   it "dups the internal buffer" do
     buffer = 'foo'.b
     obj_dup = mock("io_dup")
-    # Satisfy the finalizer that will call #close on this object.
-    def obj_dup.close; end
     obj_dup.should_receive(:write).with(buffer).and_return(buffer.size)
+    obj_dup.should_receive(:close).and_return(nil)
     obj = mock("io")
     obj.should_receive(:writable?).and_return(true)
     obj.should_receive(:dup).and_return(obj_dup)
@@ -29,6 +30,8 @@ describe "IO::LikeHelpers::BufferedIO#dup" do
 
     io.flush
     io_dup.flush
+
+    io_dup.close
   end
 
   it "raises IOError if the stream is closed" do

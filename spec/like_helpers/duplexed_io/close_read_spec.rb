@@ -5,8 +5,6 @@ describe "IO::LikeHelpers::DuplexedIO#close_read" do
   describe "when not duplexed" do
     it "delegates to its delegate" do
       obj = mock("io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj.close; end
       obj.should_receive(:close).and_return(nil)
       io = IO::LikeHelpers::DuplexedIO.new(obj)
       io.close_read.should be_nil
@@ -14,8 +12,6 @@ describe "IO::LikeHelpers::DuplexedIO#close_read" do
 
     it "short circuits after the first call" do
       obj = mock("io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj.close; end
       obj.should_receive(:close).and_return(nil)
       io = IO::LikeHelpers::DuplexedIO.new(obj)
       io.close_read.should be_nil
@@ -31,40 +27,42 @@ describe "IO::LikeHelpers::DuplexedIO#close_read" do
 
     it "returns a Symbol if its delegate does so" do
       obj = mock("io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj.close; end
       obj.should_receive(:close).and_return(:wait_readable)
       io = IO::LikeHelpers::DuplexedIO.new(obj)
       io.close_read.should == :wait_readable
+
+      # Disable the finalizer that would attempt to close the mock delegate
+      # and break the test.
+      io.autoclose = false
     end
   end
 
   describe "when duplexed" do
     it "delegates only to the reader delegate" do
       obj_r = mock("reader_io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj_r.close; end
       obj_r.should_receive(:close).and_return(nil)
       obj_w = mock("writer_io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj_w.close; end
       obj_w.should_not_receive(:close)
       io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w)
       io.close_read.should be_nil
+
+      # Disable the finalizer that would attempt to close the mock writer
+      # delegate and break the test.
+      io.autoclose = false
     end
 
     it "short circuits after the first call" do
       obj_r = mock("reader_io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj_r.close; end
       obj_r.should_receive(:close).and_return(nil)
       obj_w = mock("writer_io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj_w.close; end
       obj_w.should_not_receive(:close)
       io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w)
       io.close_read.should be_nil
       io.close_read.should be_nil
+
+      # Disable the finalizer that would attempt to close the mock writer
+      # delegate and break the test.
+      io.autoclose = false
     end
 
     it "does not delegate to the reader delegate" do
@@ -78,15 +76,15 @@ describe "IO::LikeHelpers::DuplexedIO#close_read" do
 
     it "returns a Symbol if its delegate does so" do
       obj_r = mock("reader_io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj_r.close; end
       obj_r.should_receive(:close).and_return(:wait_readable)
       obj_w = mock("writer_io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj_w.close; end
       obj_w.should_not_receive(:close)
       io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w)
       io.close_read.should == :wait_readable
+
+      # Disable the finalizer that would attempt to close the mock delegates and
+      # break the test.
+      io.autoclose = false
     end
   end
 end

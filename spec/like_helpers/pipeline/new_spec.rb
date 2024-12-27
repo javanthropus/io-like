@@ -8,8 +8,6 @@ describe "IO::LikeHelpers::Pipeline.new" do
 
   it "enables autoclose by default" do
     obj = mock("io")
-    # Satisfy the finalizer that will call #close on this object.
-    def obj.close; end
     obj.should_receive(:close).and_return(nil)
     io = IO::LikeHelpers::Pipeline.new(obj)
     io.close

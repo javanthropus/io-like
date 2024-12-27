@@ -12,17 +12,17 @@ describe "IO::LikeHelpers::DuplexedIO.new" do
 
   it "enables autoclose by default" do
     obj_r = mock("reader_io")
-    # Satisfy the finalizer that will call #close on this object.
-    def obj_r.close; end
+    obj_r.should_receive(:close).and_return(nil).exactly(2)
     obj_w = mock("writer_io")
-    # Satisfy the finalizer that will call #close on this object.
-    def obj_w.close; end
+    obj_w.should_receive(:close).and_return(nil)
 
     io = IO::LikeHelpers::DuplexedIO.new(obj_r)
     io.autoclose?.should be_true
+    io.close
 
     io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w)
     io.autoclose?.should be_true
+    io.close
   end
 
   it "allows autoclose to be set" do

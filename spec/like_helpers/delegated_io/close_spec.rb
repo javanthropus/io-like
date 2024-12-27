@@ -4,8 +4,6 @@ require_relative '../../../spec_helper'
 describe "IO::LikeHelpers::DelegatedIO#close" do
   it "delegates to its delegate when #autoclose? is true" do
     obj = mock("io")
-    # Satisfy the finalizer that will call #close on this object.
-    def obj.close; end
     obj.should_receive(:close).and_return(nil)
     io = IO::LikeHelpers::DelegatedIO.new(obj)
     io.close.should be_nil
@@ -13,8 +11,6 @@ describe "IO::LikeHelpers::DelegatedIO#close" do
 
   it "short circuits after the first call" do
     obj = mock("io")
-    # Satisfy the finalizer that will call #close on this object.
-    def obj.close; end
     obj.should_receive(:close).and_return(nil)
     io = IO::LikeHelpers::DelegatedIO.new(obj)
     io.close.should be_nil
@@ -29,11 +25,13 @@ describe "IO::LikeHelpers::DelegatedIO#close" do
 
   it "returns a Symbol if its delegate does so" do
     obj = mock("io")
-    # Satisfy the finalizer that will call #close on this object.
-    def obj.close; end
     obj.should_receive(:close).and_return(:wait_readable)
     io = IO::LikeHelpers::DelegatedIO.new(obj)
     io.close.should == :wait_readable
+
+    # Disable the finalizer that would attempt to close the mock delegate and
+    # break the test.
+    io.autoclose = false
   end
 end
 

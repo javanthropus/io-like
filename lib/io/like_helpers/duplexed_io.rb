@@ -88,6 +88,8 @@ class DuplexedIO < DelegatedIO
         @closed_write = true unless duplexed?
         @closed = true
         @delegate = @delegate_w
+        disable_finalizer
+        enable_finalizer if @autoclose && ! closed?
       end
     end
 
@@ -112,6 +114,8 @@ class DuplexedIO < DelegatedIO
         @closed = true unless duplexed?
         @closed_write = true
         @delegate_w = @delegate
+        disable_finalizer
+        enable_finalizer if @autoclose && ! closed?
       end
     end
 
@@ -228,9 +232,14 @@ class DuplexedIO < DelegatedIO
   def initialize_copy(other)
     super
 
-    @delegate_w = other.duplexed? ? @delegate_w.dup : @delegate
     disable_finalizer
-    self.autoclose = true
+    begin
+      @delegate_w = other.duplexed? ? @delegate_w.dup : @delegate
+      self.autoclose = true
+    rescue
+      delegate_r.close rescue nil
+      raise
+    end
 
     nil
   end

@@ -5,18 +5,16 @@ describe "IO::LikeHelpers::DuplexedIO#autoclose=" do
   describe "when not duplexed" do
     it "returns the argument given" do
       obj = mock("io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj.close; end
+      obj.should_receive(:close).and_return(nil)
       io = IO::LikeHelpers::DuplexedIO.new(obj)
       io.send(:autoclose=, true).should be_true
       io.send(:autoclose=, false).should be_false
       io.send(:autoclose=, :foo).should == :foo
+      io.close
     end
 
     it "causes the delegate to be closed when set to true" do
       obj = mock("io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj.close; end
       obj.should_receive(:close).and_return(nil)
       io = IO::LikeHelpers::DuplexedIO.new(obj, autoclose: false)
       io.autoclose = true
@@ -42,25 +40,20 @@ describe "IO::LikeHelpers::DuplexedIO#autoclose=" do
   describe "when duplexed" do
     it "returns the argument given" do
       obj_r = mock("reader_io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj_r.close; end
+      obj_r.should_receive(:close).and_return(nil)
       obj_w = mock("writer_io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj_w.close; end
+      obj_w.should_receive(:close).and_return(nil)
       io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w)
       io.send(:autoclose=, true).should be_true
       io.send(:autoclose=, false).should be_false
       io.send(:autoclose=, :foo).should == :foo
+      io.close
     end
 
     it "causes the delegates to be closed when set to true" do
       obj_r = mock("reader_io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj_r.close; end
       obj_r.should_receive(:close).and_return(nil)
       obj_w = mock("writer_io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj_w.close; end
       obj_w.should_receive(:close).and_return(nil)
       io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w, autoclose: false)
       io.autoclose = true
@@ -91,8 +84,7 @@ describe "IO::LikeHelpers::DuplexedIO#autoclose?" do
   describe "when not duplexed" do
     it "returns the truthiness of #autoclose=" do
       obj = mock("io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj.close; end
+      obj.should_receive(:close).and_return(nil)
       io = IO::LikeHelpers::DuplexedIO.new(obj)
 
       io.autoclose = true
@@ -103,6 +95,8 @@ describe "IO::LikeHelpers::DuplexedIO#autoclose?" do
 
       io.autoclose = :foo
       io.autoclose?.should be_true
+
+      io.close
     end
 
     it "raises IOError if the stream is closed" do
@@ -116,11 +110,9 @@ describe "IO::LikeHelpers::DuplexedIO#autoclose?" do
   describe "when duplexed" do
     it "returns the truthiness of #autoclose=" do
       obj_r = mock("reader_io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj_r.close; end
+      obj_r.should_receive(:close).and_return(nil)
       obj_w = mock("writer_io")
-      # Satisfy the finalizer that will call #close on this object.
-      def obj_w.close; end
+      obj_w.should_receive(:close).and_return(nil)
       io = IO::LikeHelpers::DuplexedIO.new(obj_r, obj_w)
 
       io.autoclose = true
@@ -131,6 +123,8 @@ describe "IO::LikeHelpers::DuplexedIO#autoclose?" do
 
       io.autoclose = :foo
       io.autoclose?.should be_true
+
+      io.close
     end
 
     it "raises IOError if the stream is closed" do

@@ -108,7 +108,10 @@ class DelegatedIO < AbstractIO
     ensure
       # Complete the closing process if the delegate closed normally or an
       # exception was raised.
-      result = super unless Symbol === result
+      unless Symbol === result
+        disable_finalizer
+        result = super
+      end
     end
 
     result
@@ -235,8 +238,8 @@ class DelegatedIO < AbstractIO
   def initialize_copy(other)
     super
 
-    @delegate = @delegate.dup
     disable_finalizer
+    @delegate = @delegate.dup
     self.autoclose = true
 
     nil
