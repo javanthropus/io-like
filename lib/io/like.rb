@@ -95,7 +95,7 @@ class Like < LikeHelpers::DuplexedIO
       end
     end
 
-    @pid = pid
+    @pid = nil == pid ? pid : ensure_integer(pid)
 
     self.sync = sync
 
@@ -566,7 +566,7 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [IOError] if the stream is closed
   def pid
     assert_open
-    return @pid unless @pid.nil?
+    return @pid unless nil == @pid
     super
   end
 
@@ -618,7 +618,7 @@ class Like < LikeHelpers::DuplexedIO
   def pread(maxlen, offset, buffer = nil)
     maxlen = ensure_integer(maxlen)
     raise ArgumentError, 'negative string size (or size too big)' if maxlen < 0
-    buffer = buffer.nil? ? ''.b : ensure_string(buffer)
+    buffer = nil == buffer ? ''.b : ensure_string(buffer)
 
     return buffer if maxlen == 0
 
@@ -667,7 +667,7 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     # Write the output record separator if one is specified.
-    write($\) unless $\.nil?
+    write($\) if $\
     nil
   end
 
@@ -781,14 +781,15 @@ class Like < LikeHelpers::DuplexedIO
   # @raise [ArgumentError] if `length` is less than 0
   # @raise [IOError] if the stream is not open for reading
   def read(length = nil, buffer = nil)
-    unless length.nil? || length >= 0
+    length = ensure_integer(length) if nil != length
+    if nil != length && length < 0
       raise ArgumentError, "negative length #{length} given"
     end
-    buffer = ensure_string(buffer) unless buffer.nil?
+    buffer = ensure_string(buffer) unless nil == buffer
 
     assert_readable
 
-    if length.nil?
+    unless length
       content = begin
                   delegate_r.character_io.read_all
                 rescue EOFError
@@ -798,7 +799,7 @@ class Like < LikeHelpers::DuplexedIO
                     Encoding.default_external
                   )
                 end
-      return content if buffer.nil?
+      return content unless buffer
       return buffer.replace(content)
     end
 
@@ -807,7 +808,7 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     content = read_bytes(length)
-    unless buffer.nil?
+    if buffer
       orig_encoding = buffer.encoding
       buffer.replace(content)
       buffer.force_encoding(orig_encoding)
@@ -846,7 +847,7 @@ class Like < LikeHelpers::DuplexedIO
   def read_nonblock(length, buffer = nil, exception: true)
     length = ensure_integer(length)
     raise ArgumentError, 'length must be at least 0' if length < 0
-    buffer = ensure_string(buffer) unless buffer.nil?
+    buffer = ensure_string(buffer) if nil != buffer
 
     assert_readable
 
@@ -1037,7 +1038,7 @@ class Like < LikeHelpers::DuplexedIO
   def readpartial(length, buffer = nil)
     length = ensure_integer(length)
     raise ArgumentError, 'length must be at least 0' if length < 0
-    buffer = ensure_string(buffer) unless buffer.nil?
+    buffer = ensure_string(buffer) if nil != buffer
 
     assert_readable
 
@@ -1058,7 +1059,7 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     # The delegate returns the read content unless a buffer is given.
-    return buffer.nil? ? result : buffer
+    return nil == buffer ? result : buffer
   end
 
   ##
@@ -1249,7 +1250,7 @@ class Like < LikeHelpers::DuplexedIO
     # are supplied individually to this method.
     bug_18899_compatibility = RBVER_LT_3_3
     # Convert the argument(s) into Encoding objects.
-    if ! (ext_enc.nil? || Encoding === ext_enc) && int_enc.nil?
+    if ! (nil == ext_enc || Encoding === ext_enc) && nil == int_enc
       string_arg = ensure_string(ext_enc)
       begin
         e, _, i = string_arg.rpartition(':')
@@ -1269,9 +1270,9 @@ class Like < LikeHelpers::DuplexedIO
     # nil            nil       => maybe copy default encodings
     # Object         Object    => use given encodings
     # Object         nil       => maybe copy default internal encoding
-    if ext_enc.nil? && int_enc.nil?
-      unless Encoding.default_external == Encoding::BINARY ||
-             Encoding.default_internal.nil?
+    if nil == ext_enc && nil == int_enc
+      unless Encoding::BINARY == Encoding.default_external ||
+             nil == Encoding.default_internal
         ext_enc = Encoding.default_external
         int_enc = Encoding.default_internal
       end
@@ -1291,13 +1292,13 @@ class Like < LikeHelpers::DuplexedIO
 
     # Ignore the chosen internal encoding when no conversion will be performed.
     if int_enc == ext_enc ||
-       ext_enc == Encoding::BINARY && ! bug_18899_compatibility
+       Encoding::BINARY == ext_enc && ! bug_18899_compatibility
       int_enc = nil
     end
 
     # ASCII incompatible external encoding without conversion when reading
     # requires binmode.
-    if ! binmode? && readable? && int_enc.nil? &&
+    if ! binmode? && readable? && nil == int_enc &&
       ! (ext_enc || Encoding.default_external).ascii_compatible?
       raise ArgumentError, 'ASCII incompatible encoding needs binmode'
     end
@@ -1326,9 +1327,9 @@ class Like < LikeHelpers::DuplexedIO
     unless binmode?
       raise ArgumentError, 'ASCII incompatible encoding needs binmode'
     end
-    if ! internal_encoding.nil?
+    if nil != internal_encoding
       raise ArgumentError, 'encoding conversion is set'
-    elsif ! (external_encoding.nil? || external_encoding == Encoding::BINARY)
+    elsif nil != external_encoding && Encoding::BINARY != external_encoding
       raise ArgumentError, "encoding is set to #{external_encoding} already"
     end
 
@@ -1449,7 +1450,7 @@ class Like < LikeHelpers::DuplexedIO
   def sysread(length, buffer = nil)
     length = ensure_integer(length)
     raise ArgumentError, "negative length #{length} given" if length < 0
-    buffer = ensure_string(buffer) unless buffer.nil?
+    buffer = ensure_string(buffer) unless nil == buffer
 
     return (buffer || ''.b) if length == 0
 
@@ -1466,7 +1467,7 @@ class Like < LikeHelpers::DuplexedIO
     end
 
     # The delegate returns the read content unless a buffer is given.
-    return buffer.nil? ? result : buffer
+    return buffer ? buffer : result
   end
 
   ##
@@ -1542,7 +1543,7 @@ class Like < LikeHelpers::DuplexedIO
   def ungetbyte(obj)
     assert_readable
 
-    return if obj.nil?
+    return if nil == obj
 
     string = case obj
              when String
@@ -1578,14 +1579,14 @@ class Like < LikeHelpers::DuplexedIO
   def ungetc(string)
     assert_readable
 
-    return if string.nil? && RBVER_LT_3_0
+    return if nil == string && RBVER_LT_3_0
 
     string = case string
              when String
                string.dup
              when Integer
                encoding = internal_encoding || external_encoding
-               encoding.nil? ? string.chr : string.chr(encoding)
+               nil == encoding ? string.chr : string.chr(encoding)
              else
                ensure_string(string)
              end
@@ -1624,7 +1625,7 @@ class Like < LikeHelpers::DuplexedIO
           events |= wait_event_from_symbol(arg)
         else
           timeout = arg
-          unless timeout.nil? || timeout >= 0
+          if nil != timeout && timeout < 0
             raise ArgumentError, 'time interval must not be negative'
           end
         end
@@ -1633,7 +1634,7 @@ class Like < LikeHelpers::DuplexedIO
       if args.size < 2 || args.size >= 2 && Symbol === args[1]
         # Ruby <=2.7 compatibility mode while running Ruby >=3.0.
         timeout = args[0] if args.size > 0
-        unless timeout.nil? || timeout >= 0
+        if nil != timeout && timeout < 0
           raise ArgumentError, 'time interval must not be negative'
         end
         events = args[1..-1]
@@ -1643,7 +1644,7 @@ class Like < LikeHelpers::DuplexedIO
         # Ruby >=3.0 mode.
         events = ensure_integer(args[0])
         timeout = args[1]
-        unless timeout.nil? || timeout >= 0
+        if nil != timeout && timeout < 0
           raise ArgumentError, 'time interval must not be negative'
         end
       else
@@ -1792,6 +1793,20 @@ class Like < LikeHelpers::DuplexedIO
   private
 
   ##
+  # This returns the class name as a string for all objects including those
+  # where #class is not defined such as descendants of BasicObject.
+  #
+  # @param object [any] an object instance of any class
+  #
+  # @return [String] the class name of `object`
+  def class_name_of(object)
+    # This ensures that the standard #class method is used whether object
+    # implements its own #inspect implementation or does not implement it at
+    # all, such as for BasicObject descendants.
+    Kernel.instance_method(:class).bind(object).call.to_s
+  end
+
+  ##
   # Ensures that a buffer, if provided, is large enough to hold the requested
   # number of bytes and is then truncated to the returned number of bytes while
   # ensuring that the encoding is preserved.
@@ -1806,7 +1821,7 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @return the result of the given block
   def ensure_buffer(length, buffer)
-    unless buffer.nil?
+    if nil != buffer
       orig_encoding = buffer.encoding
       buffer.force_encoding(Encoding::BINARY)
 
@@ -1817,7 +1832,7 @@ class Like < LikeHelpers::DuplexedIO
 
     result = yield(buffer)
   ensure
-    unless buffer.nil?
+    if nil != buffer
       # A buffer was given to fill, so the delegate returned the number of bytes
       # read.  Truncate the buffer if necessary and restore its original
       # encoding.
@@ -1842,13 +1857,22 @@ class Like < LikeHelpers::DuplexedIO
   def ensure_integer(object)
     object.to_int
   rescue NoMethodError
-    case object
-    when nil
+    if nil == object
       raise TypeError, 'no implicit conversion from nil to integer'
-    else
-      raise TypeError,
-        'no implicit conversion of %s into Integer' % [object.class]
     end
+
+    name = case object
+           when nil
+             'nil'
+           when false
+             'false'
+           when true
+             'true'
+           else
+             class_name_of(object)
+           end
+    raise TypeError,
+      'no implicit conversion of %s into Integer' % [name]
   end
 
   ##
@@ -1867,10 +1891,29 @@ class Like < LikeHelpers::DuplexedIO
   #
   # @raise [TypeError] when conversion fails
   def ensure_string(object)
-    object.to_str
-  rescue NoMethodError
+    begin
+      result = object.to_str
+      return result if String === result
+    rescue NoMethodError
+      name = case object
+             when nil
+               'nil'
+             when false
+               'false'
+             when true
+               'true'
+             else
+               class_name_of(object)
+             end
+      raise TypeError,
+        'no implicit conversion of %s into String' % [name]
+    end
+
+    object_class = class_name_of(object)
+    result_class = class_name_of(result)
     raise TypeError,
-      'no implicit conversion of %s into String' % [object&.class || 'nil']
+      'can\'t convert %s to String (%s#to_str gives %s)' %
+      [object_class, object_class, result_class]
   end
 
   ##
@@ -1891,20 +1934,14 @@ class Like < LikeHelpers::DuplexedIO
     seen.push(item.__id__)
 
     array = item.to_ary rescue nil
-    if array.nil?
+    if nil == array
       string = item.to_s
       unless String === string
         # This ensures that #inspect-like output is generated even if item
-        # implments its own #inspect implementation.
-        #
-        # NOTE:
-        # This seems to work even for descendants of BasicObject even though
-        # Object is not part of the ancestry of BasicObject and thus
-        # Object#inspect should not be bindable to classes that descend more
-        # directly from BasicObject.  IOW, this may only work as side effect of
-        # the Ruby VM implementation in such cases.
+        # implements its own #inspect implementation or does not implement it at
+        # all, such as for BasicObject descendants.
         string =
-          "#<#{Object.new.method(:inspect).unbind.bind(item)[][2..-2].split(' ')[0]}>"
+          Kernel.instance_method(:inspect).bind(item).call.sub(%r{ .*}, '>')
       end
       write(string)
       write(ORS) unless string.end_with?(ORS)
@@ -1948,11 +1985,11 @@ class Like < LikeHelpers::DuplexedIO
       raise ArgumentError,
         "wrong number of arguments (given #{args.size}, expected 0..2)"
     elsif args.size == 2
-      sep_string = args[0].nil? ? nil : ensure_string(args[0])
-      limit = args[1].nil? ? nil : ensure_integer(args[1])
+      sep_string = nil == args[0] ? nil : ensure_string(args[0])
+      limit = nil == args[1] ? nil : ensure_integer(args[1])
     elsif args.size == 1
       begin
-        sep_string = args[0].nil? ? nil : ensure_string(args[0])
+        sep_string = nil == args[0] ? nil : ensure_string(args[0])
         limit = nil
       rescue TypeError
         limit = ensure_integer(args[0])
