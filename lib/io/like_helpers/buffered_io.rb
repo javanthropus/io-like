@@ -307,16 +307,14 @@ class BufferedIO < DelegatedIO
     if available == 0
       # The read buffer is already full.
       return 0
-    elsif available < buffer_size
-      if @start_idx > 0
-        # Shift the remaining buffer content to the beginning of the buffer.
-        @buffer[0, remaining] = @buffer[@start_idx, remaining]
-        @start_idx = 0
-        @end_idx = remaining
-      end
-    else
+    elsif available >= buffer_size
       # The read buffer is empty, so prepare to fill it at the beginning.
       @start_idx = @end_idx = @unread_offset = 0
+    elsif @start_idx > 0
+      # Shift the remaining buffer content to the beginning of the buffer.
+      @buffer[0, remaining] = @buffer[@start_idx, remaining]
+      @start_idx = 0
+      @end_idx = remaining
     end
 
     result =
