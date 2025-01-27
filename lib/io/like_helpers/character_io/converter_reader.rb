@@ -66,11 +66,11 @@ class ConverterReader < BasicReader
   ##
   # Returns the bytes of the buffer as a binary encoded String.
   #
-  # The returned bytes should be encoded using the value of #encoding and the
-  # #force_encoding method of the String.  Bytes are returned rather than
-  # characters because CharacterIO#read_line works on bytes for compatibility
-  # with the MRI implementation and working with characters would be inefficient
-  # in that case.
+  # The returned bytes should be encoded using the value of {#encoding} and
+  # `String#force_encoding`.  Bytes are returned rather than characters because
+  # CharacterIO#read_line works on bytes for compatibility with the MRI
+  # implementation and working with characters would be inefficient in that
+  # case.
   #
   # @return [String] the bytes of the buffer
   def content

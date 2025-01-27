@@ -249,9 +249,9 @@ class DuplexedIO < DelegatedIO
   attr_reader :delegate_w
 
   ##
-  # @!attribute [r] delegate_r
+  # @!attribute [r] __ignore__
   #   @overload delegate_r
-  #     The readable delegate.
+  #     The readable delegate.  Aliases {#delegate}.
   alias_method :delegate_r, :delegate
 end
 end; end
