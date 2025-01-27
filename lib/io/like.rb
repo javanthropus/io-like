@@ -362,7 +362,7 @@ class Like < LikeHelpers::DuplexedIO
     end
     self
   end
-  alias :each :each_line
+  alias_method :each, :each_line
 
   ##
   # Returns `true` if the end of the stream has been reached and `false`
@@ -382,7 +382,7 @@ class Like < LikeHelpers::DuplexedIO
     end
     true
   end
-  alias :eof :eof?
+  alias_method :eof, :eof?
 
   ##
   # Returns the external encoding of the stream, if any.
@@ -584,7 +584,7 @@ class Like < LikeHelpers::DuplexedIO
     flush
     delegate.seek(0, IO::SEEK_CUR)
   end
-  alias :tell :pos
+  alias_method :tell, :pos
 
   ##
   # Sets the position of the stream to the given byte offset.
