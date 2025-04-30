@@ -132,10 +132,10 @@ namespace :build do
   # gemspec contents.
   file 'README.md' => ['README.md.erb', 'LICENSE', 'rubyspec/LICENSE',
                        'examples/rot13filter.rb', GEMSPEC] do
-    spec = SPEC
     File.open('README.md', 'w') do |readme|
       readme.write(
-        ERB.new(File.read('README.md.erb'), trim_mode: '-').result(binding)
+        ERB.new(File.read('README.md.erb'), trim_mode: '-')
+        .result_with_hash(spec: SPEC)
       )
     end
   end
