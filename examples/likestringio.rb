@@ -41,7 +41,9 @@ class LikeStringIO < IO::Like
       return nil if ! string
       encoding ||= @string.encoding
       @encoding = encoding
-      @string.force_encoding(encoding) unless @string.frozen?
+      if ! @string.frozen? && @string.encoding != encoding
+        @string.force_encoding(encoding)
+      end
     end
 
     def flush
@@ -72,7 +74,7 @@ class LikeStringIO < IO::Like
 
       assert_readable
 
-      return String.new(encoding: Encoding::BINARY) if ! string || @pos > string.bytesize
+      return ''.b if ! string || @pos > string.bytesize
       return string.b[@pos, length]
     end
 
@@ -329,8 +331,6 @@ class LikeStringIO < IO::Like
       internal_encoding: nil,
       sync: false
     )
-      raise ArgumentError, 'delegate cannot be nil' if delegate.nil?
-
       super(delegate)
 
       @character_io = StringCharacterIO.new(
@@ -343,12 +343,11 @@ class LikeStringIO < IO::Like
       )
     end
 
-    alias_method :buffered_io, :delegate
-    public :buffered_io
-
-    alias_method :blocking_io, :delegate
     attr_reader :character_io
-    alias_method :concrete_io, :delegate
+
+    public alias_method :buffered_io, :delegate
+    public alias_method :blocking_io, :delegate
+    public alias_method :concrete_io, :delegate
 
     private
 
@@ -364,11 +363,12 @@ class LikeStringIO < IO::Like
   VERSION = '0.0.1'
   MAX_LENGTH = RbConfig::LIMITS['LONG_MAX']
 
-  def initialize(string = String.new, mode = nil, **opt)
+  def initialize(string = ''.b, mode = nil, **opt)
     if block_given?
       warn("#{self.class.name}::new() does not take block; use #{self.class.name}::open() instead")
     end
 
+    string = ensure_string(string) if nil != string
     string, opt = parse_init_args(string, mode, **opt)
     string_encoding = string ? string.encoding : nil
     binmode = opt.delete(:binmode)
@@ -381,7 +381,7 @@ class LikeStringIO < IO::Like
       pipeline_class: StringPipeline
     )
 
-    if encoding.nil?
+    if nil == encoding
       self.binmode if string_encoding && !  string_encoding.ascii_compatible?
       set_encoding(string_encoding)
     end
@@ -418,13 +418,11 @@ class LikeStringIO < IO::Like
   def set_encoding(ext_enc, int_enc = nil, **opts)
     assert_thawed
 
-    if ! (ext_enc.nil? || Encoding === ext_enc)
-      string_arg = String.new(ext_enc)
+    if ! (nil == ext_enc || Encoding === ext_enc)
+      string_arg = ensure_string(ext_enc)
       begin
-        split_idx = string_arg.rindex(':')
-        unless split_idx.nil? || split_idx == 0
-          ext_enc = string_arg[0...split_idx]
-        end
+        e, _, _ = string_arg.rpartition(':')
+        ext_enc = e unless e.empty?
       rescue Encoding::CompatibilityError
         # This is caused by failure to split on colon when the string argument
         # is not ASCII compatible.  Ignore it and use the argument as is.
@@ -546,8 +544,10 @@ class LikeStringIO < IO::Like
       truncate: false
     }
 
-    if mode.nil?
+    if nil == mode
       mode = frozen ? 'r' : 'r+'
+    else
+      mode = ensure_string(mode)
     end
     simple_mode, encoding = mode.split(':')
     result[:encoding] = encoding unless encoding.nil?
@@ -588,23 +588,22 @@ class LikeStringIO < IO::Like
     result
   end
 
-  def parse_init_args(string = '', mode = nil, **opt)
-    string = String.new(string) if string && ! (String === string)
-    if ! (mode.nil? || opt[:mode].nil?)
+  def parse_init_args(string, mode, **opt)
+    if nil != mode && nil != opt[:mode]
       raise ArgumentError, 'mode specified twice'
     end
-    mode = opt.delete(:mode) if mode.nil?
+    mode = opt.delete(:mode) if nil == mode
 
     decoded_mode = decode_mode(mode, string && string.frozen?)
-    if decoded_mode.key?(:binmode) && ! opt[:textmode].nil? ||
-       decoded_mode.key?(:textmode) && ! opt[:binmode].nil? ||
-       ! (opt[:textmode].nil? || opt[:binmode].nil?)
+    if decoded_mode.key?(:binmode) && nil != opt[:textmode] ||
+       decoded_mode.key?(:textmode) && nil != opt[:binmode] ||
+       (nil != opt[:textmode] && nil != opt[:binmode])
       raise ArgumentError, 'both textmode and binmode specified'
     end
-    if decoded_mode.key?(:binmode) && ! opt[:binmode].nil?
+    if decoded_mode.key?(:binmode) && nil != opt[:binmode]
       raise ArgumentError, 'binmode specified twice'
     end
-    if decoded_mode.key?(:textmode) && ! opt[:textmode].nil?
+    if decoded_mode.key?(:textmode) && nil != opt[:textmode]
       raise ArgumentError, 'textmode specified twice'
     end
     opt_encodings_count =
@@ -627,7 +626,7 @@ class LikeStringIO < IO::Like
   # This overrides the handling of any buffer given to read operations to always
   # leave it in binary encoding, contrary to the behavior of real IO objects.
   def ensure_buffer(length, buffer)
-    buffer.force_encoding(Encoding::BINARY) unless buffer.nil?
+    buffer.force_encoding(Encoding::BINARY) if buffer
     super(length, buffer)
   end
 end

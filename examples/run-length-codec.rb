@@ -4,17 +4,21 @@ require 'io/like_helpers/io_wrapper'
 
 include IO::LikeHelpers
 
-class RunLengthEncoder < DelegatedIO
-  def self.io_like(delegate, **kwargs, &b)
-    autoclose = kwargs.delete(:autoclose) { true }
-    IO::Like.open(
-      new(IOWrapper.new(delegate, autoclose: autoclose)),
-      **kwargs,
-      &b
-    )
-  end
+class RunLengthCodec < IO::Like
+  def initialize(delegate, autoclose: true, **kwargs)
+    delegate = RLCFilter.new(delegate, autoclose: autoclose)
 
+    super(delegate, autoclose: true, **kwargs)
+  end
+end
+
+class RLCFilter < DelegatedIO
   def initialize(delegate, autoclose: true)
+    if IO === delegate
+      delegate = IOWrapper.new(delegate, autoclose: autoclose)
+      autoclose = true
+    end
+
     super(delegate, autoclose: autoclose)
 
     @run_size = 0
@@ -108,8 +112,8 @@ end
 
 if $0 == __FILE__
   IO.pipe do |r, w|
-    RunLengthEncoder.io_like(w) do |rle|
-      rle.puts('abbccc')
+    RunLengthCodec.open(w) do |rlc|
+      rlc.puts('abbccc')
     end
     puts r.read.inspect
   end
@@ -117,17 +121,17 @@ if $0 == __FILE__
   IO.pipe do |r, w|
     w.write("\u0001a\u0002b\u0003c\u0001\n")
     w.close
-    RunLengthEncoder.io_like(r) do |rle|
-      puts rle.readline.inspect
+    RunLengthCodec.open(r) do |rlc|
+      puts rlc.readline.inspect
     end
   end
 
   IO.pipe do |r, w|
-    RunLengthEncoder.io_like(w) do |rle|
-      rle.puts('abbccc')
+    RunLengthCodec.open(w) do |rlc|
+      rlc.puts('abbccc')
     end
-    RunLengthEncoder.io_like(r) do |rle|
-      puts rle.read
+    RunLengthCodec.open(r) do |rlc|
+      puts rlc.read
     end
   end
 end

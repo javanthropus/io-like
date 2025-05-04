@@ -38,14 +38,30 @@ require 'io/like_helpers/io_wrapper'
 
 include IO::LikeHelpers
 
+class ROT13IO < IO::Like
+  def initialize(delegate, autoclose: true, **kwargs)
+    delegate = delegate.rot13_filter if self.class === delegate
+    @rot13_filter = ROT13Filter.new(delegate, autoclose: autoclose)
+
+    super(@rot13_filter, autoclose: true, **kwargs)
+  end
+
+  protected
+
+  def rot13_filter
+    flush if writable?
+    @rot13_filter
+  end
+end
+
 class ROT13Filter < DelegatedIO
-  def self.io_like(delegate, **kwargs, &b)
-    autoclose = kwargs.delete(:autoclose) { true }
-    IO::Like.open(
-      new(IOWrapper.new(delegate, autoclose: autoclose)),
-      **kwargs,
-      &b
-    )
+  def initialize(delegate, autoclose: true, **kwargs)
+    if IO === delegate
+      delegate = IOWrapper.new(delegate, autoclose: autoclose)
+      autoclose = true
+    end
+
+    super(delegate, autoclose: autoclose, **kwargs)
   end
 
   def read(length, buffer: nil, buffer_offset: 0)
@@ -79,51 +95,28 @@ class ROT13Filter < DelegatedIO
 end
 
 if $0 == __FILE__
+  # Write encoded content to stdout, leaving stdout open after completion.
+  ROT13IO.open(STDOUT, autoclose: false) do |rot13|
+    rot13.puts('This is a test. 1234!')   # -> Guvf vf n grfg. 1234!
+  end
+
+  # Decode content from an input stream and read as lines.
   IO.pipe do |r, w|
-    w.puts('This is a test')
+    w.puts('This is a test. 1234!')
+    w.puts('Guvf vf n grfg. 4567!')
     w.close
-    ROT13Filter.io_like(r) do |rot13|
-      puts(rot13.read)                    # -> Guvf vf n grfg
+    ROT13IO.open(r) do |rot13|
+      puts(rot13.each_line.to_a.inspect)  # -> ["Guvf vf n grfg. 1234!\n", "This is a test. 4567!\n"]
     end
   end
 
+  # Double decode content (noop) and dump to stdout using IO.copy_stream.
   IO.pipe do |r, w|
-    ROT13Filter.io_like(w) do |rot13|
-      rot13.puts('This is a test')
-    end
-    puts(r.read)                          # -> Guvf vf n grfg
-  end
-
-  IO.pipe do |r, w|
-    w.puts('Guvf vf n grfg')
+    w.puts('This is a test. 1234!')
     w.close
-    ROT13Filter.io_like(r) do |rot13|
-      puts(rot13.read)                    # -> This is a test
-    end
-  end
-
-  IO.pipe do |r, w|
-    w.puts('This is a test')
-    w.close
-    ROT13Filter.io_like(r) do |rot13|
-      puts(rot13.each_line.to_a.inspect)  # -> ["Guvf vf n grfg\n"]
-    end
-  end
-
-  IO.pipe do |r, w|
-    w.puts('Guvf vf n grfg')
-    w.close
-    ROT13Filter.io_like(r) do |rot13|
-      puts(rot13.each_line.to_a.inspect)  # -> ["This is a test\n"]
-    end
-  end
-
-  IO.pipe do |r, w|
-    w.puts('This is a test')
-    w.close
-    ROT13Filter.io_like(r) do |rot13|
-      ROT13Filter.io_like(rot13) do |rot26|
-        puts(rot26.read)                  # -> This is a test
+    ROT13IO.open(r) do |rot13|
+      ROT13IO.open(rot13) do |rot26|
+        IO.copy_stream(rot26, STDOUT)     # -> This is a test. 1234!
       end
     end
   end
