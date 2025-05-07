@@ -6,7 +6,7 @@ detailed information is available in the rest of the documentation.
 **NOTE:** Date stamps in the following entries are in YYYY/MM/DD format.
 
 
-## v0.4.0.pre1 (????/??/??)
+## v0.4.0.pre1 (2025/05/07)
 * Reimplemented all version specific IO::Like modules as a single class
   * **WARNING:** Breaks API compatibility with prior versions
 * Dropped support for Ruby less than 2.7
