@@ -24,7 +24,7 @@ IO classes.  Ruby IO classes may function as both sources and sinks, or entirely
 new IO implementations may be created.
   EOD
 
-  s.required_ruby_version = '>= 2.5.0'
+  s.required_ruby_version = '>= 2.7.0'
 
   s.add_development_dependency('rake', '~> 13.0')
   s.add_development_dependency('yard', '~> 0.9')
