@@ -6,6 +6,19 @@ detailed information is available in the rest of the documentation.
 **NOTE:** Date stamps in the following entries are in YYYY/MM/DD format.
 
 
+## v0.4.0 (2025/06/01)
+* Reimplemented all version specific IO::Like modules as a single class
+  * **WARNING:** Breaks API compatibility with prior versions
+* Dropped support for Ruby less than 2.7
+* Added full API compatibility for Ruby 2.7 through 3.4
+  * Support for character encodings
+  * Asynchronous/nonblocking methods
+  * Many missing helper methods
+* Reworked spec handling to make it easier to import rubyspec snapshots almost
+  trivially (Grant Gardner, Jeremy Bopp)
+* Added code coverage tooling
+
+
 ## v0.4.0.pre1 (2025/05/07)
 * Reimplemented all version specific IO::Like modules as a single class
   * **WARNING:** Breaks API compatibility with prior versions

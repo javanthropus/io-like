@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'io-like'
-  s.version     = '0.4.0.pre1'
+  s.version     = '0.4.0'
   s.licenses    = ['MIT']
   s.platform    = Gem::Platform::RUBY
   s.authors     = [
