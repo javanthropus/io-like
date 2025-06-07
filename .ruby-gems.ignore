@@ -1,0 +1,37 @@
+# Editor and source management
+.*.sw?
+.git/
+.gitignore
+/.ruby-gems.ignore
+
+# Non-shipping source files
+/*.gemspec
+/Gemfile
+/Gemfile.lock
+/Rakefile
+/README.md.erb
+/.yardoc/
+/.yardopts
+
+# Generated content except for README
+/pkg/
+/doc/
+/coverage/
+
+# Temporary files
+/tmp/
+
+# Test files
+/spec/
+/mspec/
+/mspec-overrides/
+/spec_helper.rb
+/io-like.mspec
+
+# Examples and experiments
+/examples/
+/experiments/
+
+# Rubyspec files except for the license
+/rubyspec/
+!/rubyspec/LICENSE
