@@ -14,12 +14,11 @@ GEMSPEC = Dir['*.gemspec'].first
 SPEC = eval(File.read(GEMSPEC), nil, GEMSPEC)
 
 # A dynamically generated list of files that should match the manifest (the
-# combined contents of SPEC.files and SPEC.test_files).  The idea is for this
-# list to contain all project files except for those that have been explicitly
-# excluded.  This list will be compared with the manifest from the SPEC in order
-# to help catch the addition or removal of files to or from the project that
-# have not been accounted for either by an exclusion here or an inclusion in the
-# SPEC manifest.
+# contents of SPEC.files).  The idea is for this list to contain all project
+# files except for those that have been explicitly excluded.  This list will be
+# compared with the manifest from the SPEC in order to help catch the addition
+# or removal of files to or from the project that have not been accounted for
+# either by an exclusion here or an inclusion in the SPEC manifest.
 #
 # NOTE:
 # It is critical that the manifest is *not* automatically generated via globbing
@@ -27,28 +26,24 @@ SPEC = eval(File.read(GEMSPEC), nil, GEMSPEC)
 # redundantly generated lists of files that probably will not protect the
 # project from the unintentional inclusion or exclusion of files in the
 # distribution.
-PKG_FILES = FileList.new(Dir.glob('**/*', File::FNM_DOTMATCH)) do |files|
-  # Exclude anything that doesn't exist as well as directories.
-  files.exclude {|file| ! File.exist?(file) || File.directory?(file)}
-  # Exclude Git administrative files.
-  files.exclude(%r{(^|[/\\])\.git(ignore|modules|keep)?([/\\]|$)})
-  # Exclude editor swap/temporary files.
-  files.exclude('**/.*.sw?')
-  # Exclude gemspec files.
-  files.exclude('*.gemspec')
-  # Exclude the README template file.
-  files.exclude('README.md.erb')
-  # Exclude resources for bundler.
-  files.exclude('Gemfile', 'Gemfile.lock')
-  files.exclude(%r{^.bundle([/\\]|$)})
-  files.exclude(%r{^vendor/bundle([/\\]|$)})
-  # Exclude generated content, except for the README file.
-  files.exclude(%r{^(pkg|doc|.yardoc)([/\\]|$)})
-  # Exclude examples.
-  files.exclude(%r{^examples([/\\]|$)})
-  # Exclude Rubinius compiled Ruby files.
-  files.exclude('**/*.rbc')
-  files.exclude('.rbx/**/*')
+PKG_FILES = FileList.new('**/*') do |files|
+  files.exclude(
+    # Test files
+    'spec/**/*', 'mspec/**/*', 'mspec-overrides/**/*', 'spec_helper.rb',
+    'io-like.mspec',
+    # Non-shipping source files
+    '*.gemspec', 'Gemfile', 'Gemfile.lock', 'Rakefile', 'README.md.erb',
+    # Examples and experiments
+    'examples/**/*', 'experiments/**/*',
+    # Bundler files
+    'vendor/bundle/**/*',
+    # Generated content except for README
+    'pkg/**/*', 'doc/**/*', 'coverage/**/*'
+  )
+  # Exclude rubyspec files except for the license.
+  files.exclude { |e| e != 'rubyspec/LICENSE' && e =~ %r{^rubyspec/.*} }
+  # Exclude directories.
+  files.exclude {|file| File.directory?(file)}
 end
 
 # Make sure that :clean and :clobber will not whack the repository files.
@@ -62,7 +57,7 @@ CLEAN.include('**/.*.sw?')
 def get_version_argument
   version = ENV['VERSION']
   if version.to_s.empty?
-    raise "No version specified: Add VERSION=X.Y.Z to the command line"
+    raise 'No version specified: Add VERSION=X.Y.Z to the command line'
   end
   begin
     Gem::Version.create(version.dup)
@@ -120,15 +115,14 @@ namespace :build do
     manifest_files = (SPEC.files + SPEC.test_files).sort.uniq
     pkg_files = PKG_FILES.sort.uniq
     if manifest_files != pkg_files then
-      common_files = manifest_files & pkg_files
-      manifest_files -= common_files
-      pkg_files -= common_files
-      message = ["The manifest does not match the automatic file list."]
-      unless manifest_files.empty? then
-        message << "  Extraneous files:\n    " + manifest_files.join("\n    ")
+      extraneous_files = manifest_files - pkg_files
+      missing_files = pkg_files - manifest_files
+      message = ['The manifest does not match the automatic file list.']
+      unless extraneous_files.empty? then
+        message << "  Extraneous files:\n    " + extraneous_files.join("\n    ")
       end
-      unless pkg_files.empty?
-        message << "  Missing files:\n    " + pkg_files.join("\n    ")
+      unless missing_files.empty?
+        message << "  Missing files:\n    " + missing_files.join("\n    ")
       end
       raise message.join("\n")
     end
@@ -136,11 +130,12 @@ namespace :build do
 
   # Creates the README.md file from a template, the license files, and the
   # gemspec contents.
-  file 'README.md' => ['README.md.erb', 'LICENSE', 'LICENSE-rubyspec', GEMSPEC] do
-    spec = SPEC
+  file 'README.md' => ['README.md.erb', 'LICENSE', 'rubyspec/LICENSE',
+                       'examples/rot13filter.rb', GEMSPEC] do
     File.open('README.md', 'w') do |readme|
       readme.write(
-        ERB.new(File.read('README.md.erb'), nil, '-').result(binding)
+        ERB.new(File.read('README.md.erb'), trim_mode: '-')
+        .result_with_hash(spec: SPEC)
       )
     end
   end
@@ -168,7 +163,7 @@ end
 # Create the test task.
 desc 'Run tests'
 task :test do
-  sh "mspec"
+  sh "mspec/bin/mspec run -B io-like.mspec #{ENV['TEST_OPTS']}"
 end
 
 # Version string management tasks.
@@ -224,5 +219,15 @@ namespace :repo do
     unless `git status --untracked-files=all --porcelain`.empty?
       raise 'Workspace has been modified.  Commit pending changes and try again.'
     end
+  end
+
+  desc 'Update the rubyspec subtree from upstream'
+  task :update_rubyspec do
+    sh 'git subtree pull --squash -P rubyspec https://github.com/ruby/spec.git master'
+  end
+
+  desc 'Update the mspec subtree from upstream'
+  task :update_mspec do
+    sh 'git subtree pull --squash -P mspec https://github.com/ruby/mspec.git master'
   end
 end

@@ -18,3 +18,13 @@
 
 # Yardoc support files
 /.yardoc/
+
+# Temporary directories
+/rubyspec_temp/
+
+# Code coverage reports
+/coverage/
+
+# Experiments and temp files
+/experiments/
+/tmp/

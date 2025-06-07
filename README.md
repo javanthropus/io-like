@@ -1,7 +1,6 @@
 # IO::Like - in the Likeness of IO
 
-A module which provides the functionality of an IO object to any including class
-which provides a couple of simple methods.
+A composable implementation of IO methods.
 
 ## LINKS
 
@@ -11,27 +10,19 @@ which provides a couple of simple methods.
 
 ## DESCRIPTION
 
-The IO::Like module provides all of the methods of typical IO implementations
-such as File; most importantly the read, write, and seek series of methods.  A
-class which includes IO::Like needs to provide only a few methods in order to
-enable the higher level methods.  Buffering is automatically provided by default
-for the methods which normally provide it in IO.
+This gem makes it possible to build filters or pipelines for processing data
+into or out of streams of bytes while maintaining compatibility with native Ruby
+IO classes.  Ruby IO classes may function as both sources and sinks, or entirely
+new IO implementations may be created.
 
 ## FEATURES
 
-* All standard Ruby 1.8.6 IO operations.
-* Buffered operations.
-* Configurable buffer size.
+* All standard Ruby 2.7 to 3.4 IO methods
+* Primitive IO interfaces to facilitate creating IO filters/pipelines
 
 ## KNOWN BUGS/LIMITATIONS
 
-* Only up to version 1.8.6 of Ruby's IO interface is implemented.
-* Ruby's finalization capabilities fall a bit short in a few respects, and as a
-  result, it is impossible to cause the close, close_read, or close_write
-  methods to be called automatically when an including class is garbage
-  collected.  Define a class open method in the manner of File.open which
-  guarantees that an appropriate close method will be called after executing a
-  block.  Other than that, be diligent about calling the close methods.
+* None at this time
 
 ## SYNOPSIS
 
@@ -42,96 +33,96 @@ A simple ROT13 codec:
 
 ```ruby
 require 'io/like'
+require 'io/like_helpers/delegated_io'
+require 'io/like_helpers/io_wrapper'
 
-class ROT13Filter
-  include IO::Like
+include IO::LikeHelpers
 
-  def self.open(delegate_io)
-    filter = new(delegate_io)
-    return filter unless block_given?
+class ROT13IO < IO::Like
+  def initialize(delegate, autoclose: true, **kwargs)
+    delegate = delegate.rot13_filter if self.class === delegate
+    @rot13_filter = ROT13Filter.new(delegate, autoclose: autoclose)
 
-    begin
-      yield(filter)
-    ensure
-      filter.close unless filter.closed?
+    super(@rot13_filter, autoclose: true, **kwargs)
+  end
+
+  protected
+
+  def rot13_filter
+    flush if writable?
+    @rot13_filter
+  end
+end
+
+class ROT13Filter < DelegatedIO
+  def initialize(delegate, autoclose: true, **kwargs)
+    if IO === delegate
+      delegate = IOWrapper.new(delegate, autoclose: autoclose)
+      autoclose = true
     end
+
+    super(delegate, autoclose: autoclose, **kwargs)
   end
 
-  def initialize(delegate_io)
-    @delegate_io = delegate_io
-  end
-
-  private
-
-  def encode_rot13(string)
-    result = string.dup
-    0.upto(result.length) do |i|
-      case result[i]
-      when 65..90
-        result[i] = (result[i] - 52) % 26 + 65
-      when 97..122
-        result[i] = (result[i] - 84) % 26 + 97
-      end
+  def read(length, buffer: nil, buffer_offset: 0)
+    result = super
+    if buffer.nil?
+      encode_rot13(result)
+    else
+      encode_rot13(buffer, buffer_offset: buffer_offset)
     end
     result
   end
 
-  def unbuffered_read(length)
-    encode_rot13(@delegate_io.sysread(length))
+  def write(buffer, length: buffer.bytesize)
+    super(encode_rot13(buffer[0, length]), length: length)
   end
 
-  def unbuffered_seek(offset, whence = IO::SEEK_SET)
-    @delegate_io.sysseek(offset, whence)
-  end
+  private
 
-  def unbuffered_write(string)
-    @delegate_io.syswrite(encode_rot13(string))
-  end
-end
-
-File.open('normal_file.txt', 'w') do |f|
-  f.puts('This is a test')
-end
-
-File.open('rot13_file.txt', 'w') do |f|
-  ROT13Filter.open(f) do |rot13|
-    rot13.puts('This is a test')
+  def encode_rot13(buffer, buffer_offset: 0)
+    buffer_offset.upto(buffer.length - 1) do |i|
+      ord = buffer[i].ord
+      case ord
+      when 65..90
+        buffer[i] = ((ord - 52) % 26 + 65).chr
+      when 97..122
+        buffer[i] = ((ord - 84) % 26 + 97).chr
+      end
+    end
+    buffer
   end
 end
 
-File.open('normal_file.txt') do |f|
-  ROT13Filter.open(f) do |rot13|
-    puts(rot13.read)                      # -> Guvf vf n grfg
+if $0 == __FILE__
+  # Write encoded content to stdout, leaving stdout open after completion.
+  ROT13IO.open(STDOUT, autoclose: false) do |rot13|
+    rot13.puts('This is a test. 1234!')   # -> Guvf vf n grfg. 1234!
   end
-end
 
-File.open('rot13_file.txt') do |f|
-  ROT13Filter.open(f) do |rot13|
-    puts(rot13.read)                      # -> This is a test
+  # Decode content from an input stream and read as lines.
+  IO.pipe do |r, w|
+    w.puts('This is a test. 1234!')
+    w.puts('Guvf vf n grfg. 4567!')
+    w.close
+    ROT13IO.open(r) do |rot13|
+      puts(rot13.each_line.to_a.inspect)  # -> ["Guvf vf n grfg. 1234!\n", "This is a test. 4567!\n"]
+    end
   end
-end
 
-File.open('normal_file.txt') do |f|
-  ROT13Filter.open(f) do |rot13|
-    rot13.pos = 5
-    puts(rot13.read)                      # -> vf n grfg
-  end
-end
-
-File.open('rot13_file.txt') do |f|
-  ROT13Filter.open(f) do |rot13|
-    rot13.pos = 5
-    puts(rot13.read)                      # -> is a test
-  end
-end
-
-File.open('normal_file.txt') do |f|
-  ROT13Filter.open(f) do |rot13|
-    ROT13Filter.open(rot13) do |rot26|    # ;-)
-      puts(rot26.read)                    # -> This is a test
+  # Double decode content (noop) and dump to stdout using IO.copy_stream.
+  IO.pipe do |r, w|
+    w.puts('This is a test. 1234!')
+    w.close
+    ROT13IO.open(r) do |rot13|
+      ROT13IO.open(rot13) do |rot26|
+        IO.copy_stream(rot26, STDOUT)     # -> This is a test. 1234!
+      end
     end
   end
 end
+
+# vim: ts=2 sw=2 et
 ```
 
 ## REQUIREMENTS
@@ -140,17 +131,7 @@ end
 
 ## INSTALL
 
-Download the GEM file and install it with:
-
-    $ gem install io-like-VERSION.gem
-
-or directly with:
-
     $ gem install io-like
-
-Removal is the same in either case:
-
-    $ gem uninstall io-like
 
 ## DEVELOPERS
 
@@ -216,7 +197,7 @@ be more easily accepted if they are consistent with the rest of the code.
 ```
 (The MIT License)
 
-Copyright (c) 2020 Jeremy Bopp
+Copyright (c) 2024 Jeremy Bopp
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -240,8 +221,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## RUBYSPEC LICENSE
 
-Files under the `rubyspec` directory are copied whole or in part from the
-Rubyspec project.
+Files under the `rubyspec` directory are copied in whole from the Rubyspec
+project.
 
 ```
 Copyright (c) 2008 Engine Yard, Inc. All rights reserved.
